@@ -20,6 +20,9 @@ useHead({ titleTemplate: (t?: string) => (t ? `${t} | Streams Charts` : 'Awards 
       href="#main"
       class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-btn focus:bg-gold focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-canvas"
     >Skip to content</a>
+    <!-- the room's light. Not on the ceremony screen: that one is its own stage,
+         and in OBS mode the background has to stay exactly what the host chose. -->
+    <div v-if="chrome" aria-hidden="true" class="rig pointer-events-none fixed inset-0 -z-10" />
     <SiteHeader v-if="chrome" />
     <main id="main">
       <NuxtPage />

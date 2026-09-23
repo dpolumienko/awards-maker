@@ -18,6 +18,7 @@ useSeoMeta({
 
 <template>
   <div id="top">
+    <div aria-hidden="true" class="rig pointer-events-none fixed inset-0 -z-10" />
     <SiteHeader />
     <main id="main" class="shell py-20 text-center">
       <p class="micro text-gold-text">{{ error.statusCode }}</p>

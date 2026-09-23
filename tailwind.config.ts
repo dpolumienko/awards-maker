@@ -14,13 +14,17 @@ export default <Config>{
   ],
   theme: {
     extend: {
+      // The surface ramp carries all the depth in this theme - there are no shadows
+      // to fall back on. On a #000 canvas a #0E0E10 card was a 6/255 step and read
+      // as one flat sheet of black; every surface here is one visible step above
+      // the last, and the canvas sits just off black so a card can be darker too.
       colors: {
-        canvas: '#000000',
-        s1: '#0E0E10',
-        s2: '#17171A',
-        s3: '#1F1F23',
-        hair: '#262629',
-        hair2: '#3A3A40',
+        canvas: '#0A0A0C',
+        s1: '#15151A',
+        s2: '#1E1E24',
+        s3: '#292930',
+        hair: '#32323A',
+        hair2: '#484851',
         gold: { DEFAULT: '#D9A441', pressed: '#B9862E', text: '#EFC97A', 24: 'rgba(217,164,65,0.24)' },
         silver: '#C9CCD1',
         bronze: '#B87333',

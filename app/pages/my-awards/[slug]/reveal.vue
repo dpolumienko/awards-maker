@@ -244,7 +244,9 @@ definePageMeta({ chrome: false })
 </script>
 
 <template>
-  <div class="min-h-screen bg-canvas text-ink" @mousemove="wake">
+  <!-- pinned to true black rather than the site canvas: this screen is a captured
+       stage, and in OBS anything behind the host's own background is a light leak -->
+  <div class="min-h-screen bg-black text-ink" @mousemove="wake">
     <template v-if="award && categories.length">
       <!-- THE STAGE - everything in this box is what the stream sees -->
       <div
