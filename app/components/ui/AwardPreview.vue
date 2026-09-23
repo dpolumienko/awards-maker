@@ -56,9 +56,10 @@ const stepList = (d: number) => (listAt.value = (listAt.value + d + listPages.va
 
 const partners = computed(() => award.partners.filter((p) => p.name.trim()))
 
-// There is no "draft" state in the product - a page is either not published yet
-// or live - so the preview shows the badge the published page will carry.
+// While the show is still being built the chip names what the panel is. Green
+// "Voting open" on a page nobody can reach yet is a state that does not exist.
 const badge = computed(() => {
+  if (state === 'draft') return { tone: 'ended' as const, text: 'Preview' }
   const opens = award.opensAt ? new Date(award.opensAt) : null
   if (opens && opens.getTime() > Date.now()) {
     return { tone: 'ended' as const, text: `Opens ${opens.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}` }

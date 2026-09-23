@@ -356,7 +356,9 @@ useSchemaOrg([
         :class="tab === 'form' && 'hidden lg:block'"
         class="lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pr-1"
       >
-        <p class="micro mb-3">Live preview</p>
+        <!-- no label over the panel: a line of micro type here pushed the preview
+             three rows below the form column and the two stopped lining up. The
+             panel says what it is on its own chip. -->
         <AwardPreview :award="draft" :signed-in="signedIn" />
       </div>
     </div>

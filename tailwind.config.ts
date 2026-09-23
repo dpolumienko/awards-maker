@@ -19,7 +19,12 @@ export default <Config>{
       // as one flat sheet of black; every surface here is one visible step above
       // the last, and the canvas sits just off black so a card can be darker too.
       colors: {
-        canvas: '#0A0A0C',
+        // Two floors, one token. The stage - landing, the public awards page, the
+        // ceremony - stays on true black, because that is the room the audience
+        // sits in. Backstage - the builder and the host's own pages - runs on a
+        // lifted canvas, because that is a tool somebody works in for an hour.
+        // Channels rather than a hex so bg-canvas/90 still works.
+        canvas: 'rgb(var(--canvas) / <alpha-value>)',
         s1: '#15151A',
         s2: '#1E1E24',
         s3: '#292930',

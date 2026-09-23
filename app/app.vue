@@ -10,6 +10,14 @@ const chrome = computed(() => route.meta.chrome !== false)
 // @nuxtjs/seo appends site.name by default; the approved title carries the brand
 // suffix "Streams Charts" instead, so the template is set explicitly here.
 useHead({ titleTemplate: (t?: string) => (t ? `${t} | Streams Charts` : 'Awards Maker | Streams Charts') })
+
+// The landing, a published awards page and the ceremony are the show: true black.
+// The builder and the host's pages are a tool, and a tool that a person works in
+// for an hour needs its panels to come off the background.
+const stage = computed(
+  () => route.path === '/' || route.path.startsWith('/a/') || route.meta.chrome === false,
+)
+useHead({ bodyAttrs: { 'data-stage': () => (stage.value ? '1' : '0') } })
 </script>
 
 <template>

@@ -3,6 +3,14 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    /* backstage: the builder and the host's pages, where cards have to separate */
+    --canvas: 10 10 12;
+  }
+  body[data-stage='1'] {
+    /* the stage: an unlit room, and nothing in it but what is announced */
+    --canvas: 0 0 0;
+  }
   html {
     -webkit-font-smoothing: antialiased;
   }
