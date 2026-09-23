@@ -4,7 +4,7 @@
 // ceiling, and whether it is waiting on them - which it is, every time voting
 // has closed and the winners are still unannounced. A row opens that awards'
 // dashboard; the public page is one click further, from there.
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import UiButton from '~/components/ui/UiButton.vue'
 import UiBadge from '~/components/ui/UiBadge.vue'
 import UiIcon from '~/components/ui/UiIcon.vue'
@@ -12,7 +12,15 @@ import { useAwardDraft } from '~/composables/useAwardDraft'
 import { useVoting } from '~/composables/useVoting'
 import { FREE, type Award } from '~/types/award'
 
-const { published, draft } = useAwardDraft()
+const { published, draft, unpublish } = useAwardDraft()
+
+// Taking a show down cannot be undone, so it asks twice - same as publishing the
+// winners does.
+const armed = ref<string | null>(null)
+function arm(slug: string) {
+  armed.value = slug
+  setTimeout(() => (armed.value = null), 4000)
+}
 const { phaseOf, votersFor } = useVoting()
 
 const badges = {
@@ -69,9 +77,12 @@ useSeoMeta({ title: 'Your awards', robots: 'noindex, follow' })
         </span>
       </NuxtLink>
 
-      <NuxtLink
+      <div
         v-for="a in published"
         :key="a.slug"
+        class="relative"
+      >
+      <NuxtLink
         :to="`/my-awards/${a.slug}`"
         class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-card border bg-s1 p-5 no-underline transition-colors"
         :class="waiting(a) ? 'border-gold-24 hover:border-gold' : 'border-hair hover:border-gold'"
@@ -83,11 +94,23 @@ useSeoMeta({ title: 'Your awards', robots: 'noindex, follow' })
           {{ votersFor(a.slug) }} / {{ FREE.maxVoters }} voters
         </span>
         <span class="text-sm" :class="waiting(a) ? 'text-gold-text' : 'text-ink-muted'">{{ next(a) }}</span>
-        <span class="ml-auto flex items-center gap-1.5 text-sm text-gold-text">
+        <span class="ml-auto flex items-center gap-1.5 pr-24 text-sm text-gold-text">
           Dashboard
           <UiIcon name="chevron-right" :size="14" />
         </span>
       </NuxtLink>
+      <!-- publishing used to be one-way: there was no way to take a test show down -->
+      <button
+        type="button"
+        class="absolute right-5 top-1/2 -translate-y-1/2 text-sm text-ink-muted underline underline-offset-4 transition-colors hover:text-danger"
+        @click="armed === a.slug ? unpublish(a.slug) : arm(a.slug)"
+      >
+        <span class="grid">
+          <span aria-hidden="true" class="col-start-1 row-start-1 invisible">Remove - sure?</span>
+          <span class="col-start-1 row-start-1">{{ armed === a.slug ? 'Remove - sure?' : 'Remove' }}</span>
+        </span>
+      </button>
+      </div>
     </div>
 
     <!-- empty: say what lands here and give the one action, in the same frame -->

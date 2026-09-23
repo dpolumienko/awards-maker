@@ -20,7 +20,11 @@ const { open, settings, accent, name, cover = '' } = defineProps<{
 }>()
 const emit = defineEmits<{ close: []; update: [Partial<CeremonySettings>]; start: [] }>()
 
-const STEPS = ['Stage', 'Type', 'Reveal'] as const
+const STEPS = [
+  { id: 'Stage', note: 'The background behind every slide of the show.' },
+  { id: 'Type', note: 'The face the category and the winner are set in.' },
+  { id: 'Reveal', note: 'How the winner arrives when you click.' },
+] as const
 const step = ref(0)
 const dialog = ref<HTMLElement | null>(null)
 const preview = ref<HTMLElement | null>(null)
@@ -78,14 +82,14 @@ const sample = computed(() => [...(name.trim().split(/\s+/)[0] ?? 'Winner')])
         <div class="flex items-center gap-4 border-b border-hair px-6 py-4">
           <p class="font-semibold">Set up the ceremony</p>
           <ol class="ml-auto flex list-none items-center gap-2 p-0">
-            <li v-for="(s, i) in STEPS" :key="s" class="flex items-center gap-2">
+            <li v-for="(s, i) in STEPS" :key="s.id" class="flex items-center gap-2">
               <button
                 type="button"
                 class="text-[11px] font-semibold uppercase tracking-micro transition-colors"
                 :class="i === step ? 'text-ink' : 'text-ink-muted hover:text-ink-2'"
                 :aria-current="i === step ? 'step' : undefined"
                 @click="step = i"
-              >{{ s }}</button>
+              >{{ s.id }}</button>
               <span v-if="i < STEPS.length - 1" aria-hidden="true" class="h-px w-4 bg-hair2" />
             </li>
           </ol>
@@ -108,8 +112,10 @@ const sample = computed(() => [...(name.trim().split(/\s+/)[0] ?? 'Winner')])
         </div>
 
         <div class="p-6">
-          <!-- 1. stage -->
-          <div v-if="step === 0" class="grid grid-cols-3 gap-3 sm:grid-cols-6">
+          <p class="mb-4 text-sm text-ink-2">{{ STEPS[step]!.note }}</p>
+
+          <!-- 1. stage: one row, however many there are -->
+          <div v-if="step === 0" class="grid grid-cols-4 gap-3 sm:grid-cols-7">
             <!-- a show with a cover keeps it unless the host picks otherwise -->
             <button
               v-if="cover"

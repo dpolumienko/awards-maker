@@ -94,7 +94,9 @@ onMounted(() => {
   readProQuery(route.query.pro)
   const group = ideaGroup(String(route.query.ideas ?? ''))
   if (!group) return
-  group.items.slice(0, FREE.maxNominations).forEach(addIdea)
+  // the whole set, not the free slice: a set that runs past the ceiling is how the
+  // page said it would behave, and the paywall note explains the rest
+  group.items.slice(0, group.set).forEach(addIdea)
 })
 
 function addIdea(title: string) {
@@ -348,7 +350,12 @@ useSchemaOrg([
       </div>
 
       <!-- PREVIEW -->
-      <div :class="tab === 'form' && 'hidden lg:block'" class="lg:sticky lg:top-24">
+      <!-- the preview is a panel, not a page: past three nominations it used to grow
+           under the fold and the bottom of it was unreachable while the form scrolled -->
+      <div
+        :class="tab === 'form' && 'hidden lg:block'"
+        class="lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pr-1"
+      >
         <p class="micro mb-3">Live preview</p>
         <AwardPreview :award="draft" :signed-in="signedIn" />
       </div>

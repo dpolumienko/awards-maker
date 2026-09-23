@@ -503,7 +503,14 @@ if (award.value) {
                     <span class="col-start-1 row-start-1">{{ armPublish ? 'Publish - sure?' : 'Publish the winners' }}</span>
                   </span>
                 </UiButton>
-                <UiButton :to="`/my-awards/${award.slug}/reveal`" variant="ghost" size="sm">Run the ceremony</UiButton>
+                <!-- announcing before the vote is closed would announce a number
+                     that is still moving -->
+                <UiButton
+                  v-if="phase === 'counting' || phase === 'capped' || phase === 'revealed'"
+                  :to="`/my-awards/${award.slug}/reveal`"
+                  variant="ghost"
+                  size="sm"
+                >Run the ceremony</UiButton>
                 <UiButton :to="`/my-awards/${award.slug}`" variant="ghost" size="sm">Your dashboard</UiButton>
               </div>
               <p v-if="phase === 'counting' || phase === 'capped'" class="mt-3 text-sm text-ink-muted">

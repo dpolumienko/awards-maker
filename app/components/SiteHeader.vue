@@ -26,8 +26,10 @@ onMounted(() => window.addEventListener('scroll', onScroll, { passive: true }))
 onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
 
 const onLanding = computed(() => route.path === '/')
+// Same four labels everywhere. Renaming the first one per page made the bar look
+// like it was rearranging itself; only where it points changes.
 const links = computed(() => [
-  onLanding.value ? { to: '#how', label: 'How it works' } : { to: '/', label: 'Overview' },
+  { to: onLanding.value ? '#how' : '/#how', label: 'How it works' },
   { to: '/ideas', label: 'Ideas' },
   { to: '/catalog', label: 'Catalog' },
   { to: '/plans', label: 'Plans' },

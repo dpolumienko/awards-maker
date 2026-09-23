@@ -14,7 +14,7 @@ import UiIcon from '~/components/ui/UiIcon.vue'
 import { useAwardDraft } from '~/composables/useAwardDraft'
 import { useVoting } from '~/composables/useVoting'
 import { prefersReducedMotion, useGsap } from '~/composables/useReveal'
-import { nomineeInitials, nomineeName } from '~/utils/nominee'
+import { nomineeImage, nomineeInitials, nomineeName } from '~/utils/nominee'
 import CeremonySetup from '~/components/ui/CeremonySetup.vue'
 import { COVER, useCeremony } from '~/composables/useCeremony'
 import { themeCss } from '~/data/themes'
@@ -302,8 +302,19 @@ definePageMeta({ chrome: false })
                   slide.shown && !current.winners.includes(row) ? 'opacity-25' : '',
                 ]"
               >
-                <span class="s-plate grid place-items-center font-bold" :style="plate(slide.shown && current.winners.includes(row))">
-                  {{ nomineeInitials(row.nominee) }}
+                <span
+                  class="s-plate grid place-items-center overflow-hidden font-bold"
+                  :style="plate(slide.shown && current.winners.includes(row))"
+                >
+                  <!-- what the host actually nominated: the image, or the clip's
+                       poster frame. Initials are for channels and plain text. -->
+                  <img
+                    v-if="nomineeImage(row.nominee)"
+                    :src="nomineeImage(row.nominee)"
+                    :alt="nomineeName(row.nominee)"
+                    class="h-full w-full object-cover"
+                  />
+                  <template v-else>{{ nomineeInitials(row.nominee) }}</template>
                 </span>
                 <span class="s-name break-words">{{ nomineeName(row.nominee) }}</span>
               </li>
@@ -321,6 +332,13 @@ definePageMeta({ chrome: false })
                 ]"
               >
                 <span class="s-line-i tnum" :style="{ color: ink }">{{ String(i + 1).padStart(2, '0') }}</span>
+                <img
+                  v-if="nomineeImage(row.nominee)"
+                  :src="nomineeImage(row.nominee)"
+                  alt=""
+                  aria-hidden="true"
+                  class="s-line-thumb flex-none object-cover"
+                />
                 <span class="s-line-name min-w-0 flex-1 truncate">{{ nomineeName(row.nominee) }}</span>
                 <span
                   v-if="slide.shown"
@@ -583,6 +601,11 @@ definePageMeta({ chrome: false })
   font-size: 1.6cqw;
   font-weight: 700;
   width: 3cqw;
+}
+.s-line-thumb {
+  width: 5cqw;
+  height: 3.2cqw;
+  border-radius: 0.5cqw;
 }
 .s-line-pct {
   font-size: 1.8cqw;

@@ -23,6 +23,8 @@ export interface CardSpec {
   headline: string
   /** Context under it - the category, the date, the channel. */
   sub?: string
+  /** The line that asks for the click, where the role has one to ask for. */
+  cta?: string
   /** Bottom left, always: where to go. */
   url: string
   look: AwardLook
@@ -190,40 +192,64 @@ export async function renderShareCard(spec: CardSpec): Promise<string> {
   const pad = Math.round(w * 0.075)
   const bodySize = Math.round(w * (story ? 0.033 : 0.028))
 
-  // kicker
+  // The claim - "I am nominated", "I voted", "Winner" - is what the card is for.
+  // It used to be a 20px eyebrow under a headline four times its size, so every
+  // card read as the same shout of the show's name.
   ctx.fillStyle = accent
-  ctx.font = `700 ${Math.round(bodySize * 0.82)}px Archivo, sans-serif`
+  ctx.font = `800 ${Math.round(bodySize * 1.5)}px Archivo, sans-serif`
   ctx.textBaseline = 'top'
-  ctx.letterSpacing = '3px'
+  ctx.letterSpacing = '4px'
   ctx.fillText(spec.kicker.toUpperCase(), pad, pad)
   ctx.letterSpacing = '0px'
 
-  // headline, shrunk until it fits in four lines
-  let size = Math.round(w * (story ? 0.105 : 0.088))
+  // The block is laid out against the footer, not from the middle: with a long
+  // category and a call to action the old version drew the CTA straight through
+  // the address line.
+  const footTop = h - pad - bodySize * 1.4
+  const available = footTop - (pad + bodySize * 2.4)
+
+  let size = Math.round(w * (story ? 0.095 : 0.078))
   let lines: string[] = []
-  for (; size > bodySize * 1.4; size -= 4) {
+  let subLines: string[] = []
+  let blockHeight = 0
+
+  for (; size > bodySize * 1.2; size -= 4) {
     ctx.font = `800 ${size}px ${display}, Archivo, sans-serif`
     lines = wrap(ctx, spec.headline.toUpperCase(), w - pad * 2)
-    if (lines.length <= 4) break
+    ctx.font = `500 ${bodySize}px Archivo, sans-serif`
+    subLines = spec.sub ? wrap(ctx, spec.sub, w - pad * 2).slice(0, 2) : []
+    blockHeight =
+      lines.length * Math.round(size * 1.02) +
+      (subLines.length ? subLines.length * Math.round(bodySize * 1.35) + bodySize * 0.6 : 0) +
+      (spec.cta ? Math.round(bodySize * 2.2) : 0)
+    if (lines.length <= 4 && blockHeight <= available) break
   }
+
   const lineHeight = Math.round(size * 1.02)
-  const blockHeight = lines.length * lineHeight + (spec.sub ? bodySize * 2.2 : 0)
-  let y = story ? Math.round(h * 0.52) : Math.round((h - blockHeight) / 2 + h * 0.04)
+  let y = story ? Math.max(pad + bodySize * 3, footTop - blockHeight - bodySize) : footTop - blockHeight
 
   ctx.fillStyle = '#FFFFFF'
+  ctx.font = `800 ${size}px ${display}, Archivo, sans-serif`
   for (const line of lines) {
     ctx.fillText(line, pad, y)
     y += lineHeight
   }
 
-  if (spec.sub) {
+  if (subLines.length) {
     ctx.fillStyle = '#A5A5AC'
     ctx.font = `500 ${bodySize}px Archivo, sans-serif`
-    for (const line of wrap(ctx, spec.sub, w - pad * 2).slice(0, 2)) {
-      y += Math.round(bodySize * 0.6)
+    y += Math.round(bodySize * 0.6)
+    for (const line of subLines) {
       ctx.fillText(line, pad, y)
-      y += Math.round(bodySize * 1.1)
+      y += Math.round(bodySize * 1.35)
     }
+  }
+
+  if (spec.cta) {
+    ctx.fillStyle = '#FFFFFF'
+    ctx.font = `800 ${Math.round(bodySize * 1.25)}px Archivo, sans-serif`
+    y += Math.round(bodySize * 0.5)
+    ctx.fillText(spec.cta.toUpperCase(), pad, y)
   }
 
   // footer: a dot in the accent and the address
@@ -240,11 +266,18 @@ export async function renderShareCard(spec: CardSpec): Promise<string> {
 }
 
 /** The wording per role. Kept here so every surface says the same thing. */
+/** What a nominee can ask their followers for. The host's card never begs. */
+export const NOMINEE_CTAS = [
+  { id: 'vote', label: 'Vote for me', cta: 'Vote for me' },
+  { id: 'help', label: 'One click helps', cta: 'One click, and I am in' },
+  { id: 'quiet', label: 'No call to action', cta: '' },
+] as const
+
 export function cardCopy(
   role: ShareRole,
   award: Award,
-  opts: { nomination?: string; nominee?: string; closes?: string } = {},
-): { kicker: string; headline: string; sub?: string } {
+  opts: { nomination?: string; nominee?: string; closes?: string; cta?: string } = {},
+): { kicker: string; headline: string; sub?: string; cta?: string } {
   const host = award.host.name
   switch (role) {
     case 'host':
@@ -262,14 +295,14 @@ export function cardCopy(
         sub: opts.nomination
           ? `${opts.nomination} · ${award.name}${opts.closes ? ` · vote until ${opts.closes}` : ''}`
           : award.name,
+        cta: opts.cta,
       }
     case 'voter':
       return {
         kicker: 'I voted',
-        headline: award.name,
-        sub: opts.nomination
-          ? `My pick in ${opts.nomination} is in. Yours?`
-          : `My ballot is in${opts.closes ? ` · voting until ${opts.closes}` : ''}. Yours?`,
+        headline: opts.nomination ? `My pick in ${opts.nomination}` : `My ballot is in`,
+        sub: `${award.name}${opts.closes ? ` · voting until ${opts.closes}` : ''}`,
+        cta: 'Your turn',
       }
     case 'winner':
       return {

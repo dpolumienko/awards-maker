@@ -1,4 +1,5 @@
 import { fmtFollowers } from '~/data/channels.mock'
+import { clipSource } from '~/utils/clip'
 import type { Nominee } from '~/types/award'
 
 // One place decides how a nominee reads, so the builder preview and the public
@@ -15,3 +16,21 @@ export const nomineeSub = (n: Nominee) =>
       : 'Text nominee'
 
 export const nomineeInitials = (n: Nominee) => nomineeName(n).slice(0, 2).toUpperCase()
+
+/**
+ * The picture that stands for a nominee: an uploaded image, or the poster frame
+ * of the clip. Channels and plain text have none - those fall back to initials.
+ *
+ * A ceremony slide showing "12" where the host put a clip is the screen telling
+ * the audience nothing.
+ */
+export function nomineeImage(n: Nominee): string {
+  if (n.kind !== 'media') return ''
+  if (n.image) return n.image
+  if (!n.url) return ''
+  const clip = clipSource(n.url)
+  if (clip.poster) return clip.poster
+  // YouTube publishes a thumbnail for every video id at a fixed address
+  const yt = /youtube\.com\/embed\/([\w-]+)/.exec(clip.embed ?? '')
+  return yt ? `https://i.ytimg.com/vi/${yt[1]}/hqdefault.jpg` : ''
+}

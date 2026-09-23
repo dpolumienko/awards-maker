@@ -93,17 +93,36 @@ useSchemaOrg([
       </a>
     </nav>
 
-    <section v-for="g in IDEA_GROUPS" :id="g.id" :key="g.id" class="js-reveal mt-12 scroll-mt-24">
+    <section
+      v-for="g in IDEA_GROUPS"
+      :id="g.id"
+      :key="g.id"
+      class="js-reveal mt-12 scroll-mt-24 rounded-card border p-5 sm:p-6"
+      :class="g.set > FREE.maxNominations ? 'border-gold-24 bg-gold/[0.04]' : 'border-hair bg-s1'"
+    >
       <div class="flex flex-wrap items-center gap-3">
         <span class="grid h-10 w-10 flex-none place-items-center rounded-btn border border-hair bg-s1">
           <img :src="asset(g.icon)" alt="" aria-hidden="true" class="h-4 w-4" loading="lazy" />
         </span>
         <h2 class="text-2xl font-bold">{{ g.title }}</h2>
-        <UiButton :to="`/create?ideas=${g.id}`" variant="ghost" size="sm" class="ml-auto">
-          Use the first {{ FREE.maxNominations }}
+        <span
+          v-if="g.set > FREE.maxNominations"
+          class="rounded-pill border border-gold-24 px-3 py-1 text-[11px] font-bold uppercase tracking-micro text-gold-text"
+        >Paid · {{ g.set }} categories</span>
+        <UiButton
+          :to="`/create?ideas=${g.id}`"
+          :variant="g.set > FREE.maxNominations ? 'primary' : 'ghost'"
+          size="sm"
+          class="ml-auto"
+        >
+          Use this set · {{ g.set }}
         </UiButton>
       </div>
       <p class="mt-3 max-w-copy text-ink-2">{{ g.blurb }}</p>
+      <p v-if="g.set > FREE.maxNominations" class="mt-2 max-w-copy text-sm text-gold-text">
+        This set fills {{ g.set }} categories - past the {{ FREE.maxNominations }} the free plan covers, so
+        the show goes out on the paid tier.
+      </p>
 
       <ul class="mt-5 grid list-none gap-2 p-0 sm:grid-cols-2 lg:grid-cols-3">
         <li

@@ -192,6 +192,21 @@ export function useAwardDraft() {
     return award
   }
 
+  /** Takes a published awards down. There was no way to undo publishing at all. */
+  function unpublish(slug: string) {
+    published.value = published.value.filter((a) => a.slug !== slug)
+    try {
+      localStorage.setItem(PUBLISHED_KEY, JSON.stringify(published.value))
+      for (const key of ['awards-maker:votes', 'awards-maker:tally', 'awards-maker:ceremony']) {
+        const all = JSON.parse(localStorage.getItem(key) || '{}')
+        delete all[slug]
+        localStorage.setItem(key, JSON.stringify(all))
+      }
+    } catch {
+      /* nothing to write to */
+    }
+  }
+
   function reset() {
     draft.value = emptyDraft()
   }
@@ -214,6 +229,7 @@ export function useAwardDraft() {
     canPublish,
     nameWarning,
     publish,
+    unpublish,
     reset,
   }
 }

@@ -11,7 +11,7 @@ import UiButton from './UiButton.vue'
 import UiIcon from './UiIcon.vue'
 import SnapCarousel from './SnapCarousel.vue'
 import { nomineeName } from '~/utils/nominee'
-import { FORMATS, cardCopy, renderShareCard, type ShareFormat, type ShareRole } from '~/utils/shareCard'
+import { FORMATS, NOMINEE_CTAS, cardCopy, renderShareCard, type ShareFormat, type ShareRole } from '~/utils/shareCard'
 import type { Award } from '~/types/award'
 
 const { award, url, closes = '', winners = {}, isHost = false, hasVoted = false } = defineProps<{
@@ -35,6 +35,8 @@ const ROLES: { id: ShareRole; label: string; note: string }[] = [
 const role = ref<ShareRole>(isHost ? 'host' : 'nominee')
 const format = ref<ShareFormat>('link')
 const nomineeChoice = ref('')
+const nomineeCta = ref<string>(NOMINEE_CTAS[0].id)
+const ctaText = computed(() => NOMINEE_CTAS.find((c) => c.id === nomineeCta.value)?.cta || undefined)
 
 const hasWinners = computed(() => Object.keys(winners).length > 0)
 
@@ -68,7 +70,7 @@ const cards = computed(() => {
           title: `${picked.name} in ${picked.nomination.title}`,
           ...base,
           role: role.value,
-          ...cardCopy('nominee', award, { nomination: picked.nomination.title, nominee: picked.name, closes }),
+          ...cardCopy('nominee', award, { nomination: picked.nomination.title, nominee: picked.name, closes, cta: ctaText.value }),
         }]
       : []
   }
@@ -125,10 +127,20 @@ watch(cards, draw, { immediate: true, deep: true })
 function download(key: string, title: string) {
   const href = images.value[key]
   if (!href) return
+  // A data: URL that long has to come off a Blob, and the anchor has to be in the
+  // document: clicking a detached one with a multi-megabyte href downloaded nothing.
+  const [meta, b64] = href.split(',')
+  const bytes = Uint8Array.from(atob(b64!), (c) => c.charCodeAt(0))
+  const blob = new Blob([bytes], { type: meta!.slice(5).split(';')[0] })
+  const url = URL.createObjectURL(blob)
+
   const a = document.createElement('a')
-  a.href = href
+  a.href = url
   a.download = `${award.slug}-${role.value}-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.png`.replace(/-+/g, '-')
+  document.body.appendChild(a)
   a.click()
+  a.remove()
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
 const shareText = computed(() => {
@@ -175,16 +187,28 @@ const shareText = computed(() => {
 
     <p class="mt-3 text-sm text-ink-muted">{{ roles.find((r) => r.id === role)?.note }}</p>
 
-    <!-- a nominee card is about one person, so it asks which one -->
-    <label v-if="role === 'nominee'" class="mt-4 block">
-      <span class="label">Who are you on this ballot?</span>
-      <select
-        v-model="nomineeChoice"
-        class="mt-2 h-11 w-full max-w-md rounded-btn border border-hair bg-s2 px-3 text-sm text-ink focus:border-gold focus:shadow-focus focus:outline-none"
-      >
-        <option v-for="n in nominees" :key="n.id" :value="n.id">{{ n.name }} - {{ n.nomination.title }}</option>
-      </select>
-    </label>
+    <!-- a nominee card is about one person, and it is the one card that asks the
+         reader for something - both choices sit on their own line -->
+    <div v-if="role === 'nominee'" class="mt-5 grid gap-4 sm:grid-cols-2">
+      <label class="block">
+        <span class="label">Who are you on this ballot?</span>
+        <select
+          v-model="nomineeChoice"
+          class="mt-2 h-11 w-full rounded-btn border border-hair bg-s2 px-3 text-sm text-ink focus:border-gold focus:shadow-focus focus:outline-none"
+        >
+          <option v-for="n in nominees" :key="n.id" :value="n.id">{{ n.name }} - {{ n.nomination.title }}</option>
+        </select>
+      </label>
+      <label class="block">
+        <span class="label">What the card asks for</span>
+        <select
+          v-model="nomineeCta"
+          class="mt-2 h-11 w-full rounded-btn border border-hair bg-s2 px-3 text-sm text-ink focus:border-gold focus:shadow-focus focus:outline-none"
+        >
+          <option v-for="c in NOMINEE_CTAS" :key="c.id" :value="c.id">{{ c.label }}</option>
+        </select>
+      </label>
+    </div>
 
     <!-- one card at a time, dragged: four thumbnails in a row read as a contact
          sheet, and the card is the thing being chosen, not a line item -->
@@ -194,7 +218,7 @@ const shareText = computed(() => {
         :key="`${role}-${format}`"
         label="Share cards"
         :count="cards.length"
-        :per-view="format === 'story' ? 3 : 2"
+        :per-view="format === 'story' ? 4 : 2"
         :gap="20"
         :peek="28"
       >
@@ -229,7 +253,7 @@ const shareText = computed(() => {
       <figure
         v-else-if="cards[0]"
         class="m-0 flex flex-col overflow-hidden rounded-card border border-hair bg-s1"
-        :class="format === 'story' ? 'max-w-sm' : 'max-w-xl'"
+        :class="format === 'story' ? 'max-w-[230px]' : 'max-w-md'"
       >
         <figcaption class="flex items-center gap-3 border-b border-hair px-4 py-3">
           <span class="min-w-0 flex-1 truncate text-sm font-semibold">{{ cards[0].title }}</span>
