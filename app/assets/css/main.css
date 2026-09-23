@@ -1,0 +1,102 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    @apply bg-canvas text-ink font-sans text-base leading-relaxed;
+  }
+  ::selection {
+    @apply bg-gold text-canvas;
+  }
+  input,
+  textarea,
+  select {
+    color-scheme: dark;
+  }
+  /* The native date control is the one place the browser draws for us. Match it
+     to the system: gold picker icon, our type, no beige Chrome default. */
+  input[type='date'] {
+    @apply font-sans text-base;
+  }
+  input[type='date']::-webkit-calendar-picker-indicator {
+    /* the browser glyph is dark: lift it to our gold rather than leave it grey */
+    filter: brightness(0) saturate(100%) invert(78%) sepia(32%) saturate(742%) hue-rotate(348deg) brightness(93%) contrast(89%);
+    cursor: pointer;
+    opacity: 0.85;
+    transition: opacity 0.2s;
+  }
+  input[type='date']::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+  }
+  input[type='date']::-webkit-datetime-edit-text,
+  input[type='date']::-webkit-datetime-edit-month-field,
+  input[type='date']::-webkit-datetime-edit-day-field,
+  input[type='date']::-webkit-datetime-edit-year-field {
+    @apply text-ink;
+  }
+  input[type='date']:invalid::-webkit-datetime-edit {
+    @apply text-ink-disabled;
+  }
+  /* the segment you are editing highlights in our gold, not the browser blue */
+  input[type='date']::-webkit-datetime-edit-day-field:focus,
+  input[type='date']::-webkit-datetime-edit-month-field:focus,
+  input[type='date']::-webkit-datetime-edit-year-field:focus {
+    background: rgba(217, 164, 65, 0.24);
+    color: #fff;
+    border-radius: 2px;
+  }
+  :focus-visible {
+    @apply outline-none ring-2 ring-gold ring-offset-2 ring-offset-canvas;
+  }
+}
+
+@layer components {
+  .shell {
+    @apply mx-auto w-full max-w-shell px-4 sm:px-8;
+  }
+  .display-1 {
+    @apply font-extrabold uppercase tracking-display leading-[0.92];
+    font-size: clamp(34px, 8.2vw, 104px);
+  }
+  .display-2 {
+    @apply font-extrabold uppercase tracking-display leading-[0.96];
+    font-size: clamp(40px, 6vw, 72px);
+  }
+  .heading {
+    @apply font-bold uppercase tracking-heading leading-[1.05];
+    font-size: clamp(30px, 4vw, 48px);
+  }
+  .label {
+    @apply text-xs font-semibold uppercase tracking-label text-ink-muted;
+  }
+  .micro {
+    @apply text-[11px] font-semibold uppercase tracking-micro text-ink-muted;
+  }
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+  .card-radius {
+    @apply rounded-card;
+  }
+  .hairline {
+    @apply h-px w-full bg-hair;
+  }
+}
+
+/* GSAP sets the final state; these are the pre-animation values so nothing flashes.
+   Both queries matter: `scripting: enabled` keeps the page from hiding its own
+   content when JS never arrives - a broken script, a slow network or a failed
+   hydration used to leave a black page with a header on it. */
+@media (prefers-reduced-motion: no-preference) and (scripting: enabled) {
+  .js-reveal {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  .js-line > span {
+    transform: translateY(110%);
+  }
+}

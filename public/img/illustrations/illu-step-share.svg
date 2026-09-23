@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 360" width="560" height="360" role="img" aria-label="Awards page on a phone, a copied link and a social post with a preview image">
+<title>Awards page on a phone, a copied link and a social post with a preview image</title>
+<defs><linearGradient id="cover" x1="0" y1="0" x2="1" y2="1">
+  <stop offset="0" stop-color="#B87333"/><stop offset="1" stop-color="#B9862E"/></linearGradient></defs>
+<rect width="560" height="360" rx="16" fill="#131318"/>
+<rect x="56" y="22" width="190" height="318" rx="28" fill="#0B0B10" stroke="#3A3A40"/>
+<rect x="68" y="42" width="166" height="278" rx="18" fill="#0E0E10"/>
+<path d="M68 60 a18 18 0 0 1 18 -18 h130 a18 18 0 0 1 18 18 v52 h-166 z" fill="url(#cover)"/>
+<rect x="84" y="94" width="42" height="42" rx="10" fill="#EFC97A" stroke="#0E0E10" stroke-width="4"/>
+<polygon points="105.0,104.0 107.7,111.3 115.5,111.6 109.4,116.4 111.5,123.9 105.0,119.6 98.5,123.9 100.6,116.4 94.5,111.6 102.3,111.3" fill="#0B0B10" fill-opacity="0.8"/>
+<rect x="84" y="150" width="118" height="12" rx="6.0" fill="#FFFFFF" fill-opacity="0.9"/>
+<rect x="84" y="170" width="90" height="8" rx="4.0" fill="#A1A1AF" fill-opacity="0.6"/>
+<rect x="84" y="196" width="134" height="8" rx="4.0" fill="#A5A5AC" fill-opacity="0.45"/>
+<rect x="84" y="212" width="110" height="8" rx="4.0" fill="#A5A5AC" fill-opacity="0.45"/>
+<rect x="84" y="262" width="134" height="34" rx="17" fill="#EFC97A"/>
+<rect x="118" y="275" width="66" height="8" rx="4.0" fill="#0B0B10" fill-opacity="0.7"/>
+<path d="M246 150 C 290 150 280 96 318 96" fill="none" stroke="#D9A441" stroke-width="2.4" stroke-dasharray="5 6" stroke-linecap="round"/>
+<rect x="318" y="72" width="214" height="48" rx="24" fill="#0E0E10" stroke="#3A3A40"/>
+<g fill="none" stroke="#D9A441" stroke-width="2.4" stroke-linecap="round"><rect x="336" y="90" width="16" height="10" rx="5" transform="rotate(-40 344 95)"/><rect x="346" y="90" width="16" height="10" rx="5" transform="rotate(-40 354 95)"/></g>
+<rect x="374" y="91" width="120" height="9" rx="4.5" fill="#FFFFFF" fill-opacity="0.75"/>
+<rect x="318" y="142" width="214" height="176" rx="16" fill="#0E0E10" stroke="#3A3A40"/>
+<circle cx="342" cy="166" r="12" fill="#9147FF"/>
+<rect x="362" y="158" width="80" height="9" rx="4.5" fill="#FFFFFF" fill-opacity="0.8"/>
+<rect x="362" y="172" width="50" height="7" rx="3.5" fill="#A1A1AF" fill-opacity="0.5"/>
+<rect x="334" y="192" width="180" height="8" rx="4.0" fill="#A5A5AC" fill-opacity="0.5"/>
+<rect x="334" y="206" width="140" height="8" rx="4.0" fill="#A5A5AC" fill-opacity="0.5"/>
+<rect x="334" y="224" width="182" height="62" rx="10" fill="url(#cover)" fill-opacity=".85"/>
+<polygon points="425.0,241.0 428.5,250.1 438.3,250.7 430.7,256.9 433.2,266.3 425.0,261.0 416.8,266.3 419.3,256.9 411.7,250.7 421.5,250.1" fill="#FFFFFF" fill-opacity="0.8"/>
+<circle cx="344" cy="302" r="5" fill="#B87333"/>
+<rect x="354" y="298" width="22" height="7" rx="3.5" fill="#A1A1AF" fill-opacity="0.6"/>
+<circle cx="396" cy="302" r="5" fill="#3DD68C"/>
+<rect x="406" y="298" width="22" height="7" rx="3.5" fill="#A1A1AF" fill-opacity="0.6"/>
+<circle cx="448" cy="302" r="5" fill="#D9A441"/>
+<rect x="458" y="298" width="22" height="7" rx="3.5" fill="#A1A1AF" fill-opacity="0.6"/>
+<path d="M520 33 Q520 44 531 44 Q520 44 520 55 Q520 44 509 44 Q520 44 520 33 Z" fill="#EFC97A"/>
+<rect x="281" y="270" width="13" height="4" rx="1.5" fill="#B87333" fill-opacity=".85" transform="rotate(145 281 270)"/>
+<circle cx="282" cy="278" r="2.6" fill="#D9A441" fill-opacity=".85"/>
+<rect x="256" y="310" width="11" height="4" rx="1.5" fill="#FFFFFF" fill-opacity=".85" transform="rotate(82 256 310)"/>
+<circle cx="300" cy="284" r="3.1" fill="#3DD68C" fill-opacity=".85"/>
+<rect x="254" y="210" width="12" height="4" rx="1.5" fill="#D9A441" fill-opacity=".85" transform="rotate(106 254 210)"/>
+<rect x="263" y="217" width="11" height="4" rx="1.5" fill="#B9862E" fill-opacity=".85" transform="rotate(50 263 217)"/>
+<rect x="318" y="339" width="9" height="4" rx="1.5" fill="#EFC97A" fill-opacity=".85" transform="rotate(52 318 339)"/>
+<circle cx="255" cy="303" r="2.6" fill="#B87333" fill-opacity=".85"/>
+<circle cx="255" cy="183" r="2.4" fill="#FFFFFF" fill-opacity=".85"/>
+<rect x="312" y="255" width="7" height="5" rx="1.5" fill="#FFFFFF" fill-opacity=".85" transform="rotate(140 312 255)"/>
+<circle cx="268" cy="194" r="2.8" fill="#B9862E" fill-opacity=".85"/>
+<circle cx="313" cy="202" r="2.1" fill="#FFFFFF" fill-opacity=".85"/>
+<circle cx="304" cy="208" r="3.0" fill="#3DD68C" fill-opacity=".85"/>
+<rect x="317" y="303" width="7" height="4" rx="1.5" fill="#B87333" fill-opacity=".85" transform="rotate(38 317 303)"/>
+</svg>
