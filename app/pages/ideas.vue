@@ -96,7 +96,7 @@ useSchemaOrg([
     <section v-for="g in IDEA_GROUPS" :id="g.id" :key="g.id" class="js-reveal mt-12 scroll-mt-24">
       <div class="flex flex-wrap items-center gap-3">
         <span class="grid h-10 w-10 flex-none place-items-center rounded-btn border border-hair bg-s1">
-          <img :src="g.icon" alt="" aria-hidden="true" class="h-4 w-4" loading="lazy" />
+          <img :src="asset(g.icon)" alt="" aria-hidden="true" class="h-4 w-4" loading="lazy" />
         </span>
         <h2 class="text-2xl font-bold">{{ g.title }}</h2>
         <UiButton :to="`/create?ideas=${g.id}`" variant="ghost" size="sm" class="ml-auto">

@@ -69,6 +69,12 @@ export default defineNuxtConfig({
     defaultLocale: 'en',
   },
 
+  // The prerender cache is written into node_modules/.cache, which sits inside a
+  // OneDrive folder here: OneDrive grabs the file between write and rename and the
+  // build dies with EPERM, at a different route every time. The cache buys nothing
+  // for a build that runs once, so it goes to memory.
+  nitro: { storage: { cache: { driver: 'memory' } } },
+
   // hls.js is only pulled in when a Kick clip opens; telling Vite about it up
   // front keeps that first open from triggering a dep re-optimise and a reload.
   vite: { optimizeDeps: { include: ['hls.js'] } },

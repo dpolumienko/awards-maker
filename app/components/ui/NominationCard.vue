@@ -167,7 +167,7 @@ const shortMeta = (n: Nomination['nominees'][number]) =>
           <span class="font-semibold">{{ n.text }}</span>
           <span v-if="n.url" class="max-w-[160px] flex-none truncate text-sm text-ink-muted">{{ n.url }}</span>
           <span class="inline-flex items-center gap-1.5 rounded-pill border border-gold-24 px-2 py-0.5 text-[11px] uppercase tracking-micro text-gold-text">
-            <img :src="'/img/icons/cat-clip.svg'" alt="" aria-hidden="true" class="h-3 w-3 opacity-70" />
+            <img :src="asset('/img/icons/cat-clip.svg')" alt="" aria-hidden="true" class="h-3 w-3 opacity-70" />
             {{ n.image ? 'Image' : 'Clip' }} · Paid
           </span>
         </template>
@@ -197,7 +197,7 @@ const shortMeta = (n: Nomination['nominees'][number]) =>
         :aria-expanded="mediaOpen"
         @click="mediaOpen = !mediaOpen"
       >
-        <img :src="'/img/icons/cat-clip.svg'" alt="" aria-hidden="true" class="h-4 w-4 opacity-70" />
+        <img :src="asset('/img/icons/cat-clip.svg')" alt="" aria-hidden="true" class="h-4 w-4 opacity-70" />
         Image or clip nominee
         <span class="rounded-pill border border-gold-24 px-2 py-0.5 text-[11px] font-bold uppercase tracking-micro text-gold-text">Paid</span>
       </button>

@@ -53,7 +53,7 @@ onBeforeUnmount(() => clearInterval(ticker))
       <div class="border-b border-hair lg:border-b-0 lg:border-r">
         <!-- cover band: category art under a scrim, the way a published page looks -->
         <div class="relative h-28 overflow-hidden border-b border-hair bg-[linear-gradient(135deg,#2a2118,#0E0E10)]">
-          <img :src="'/img/icons/cat-clip.svg'" alt="" aria-hidden="true" class="absolute -right-4 -top-3 h-32 w-32 text-gold opacity-20" />
+          <img :src="asset('/img/icons/cat-clip.svg')" alt="" aria-hidden="true" class="absolute -right-4 -top-3 h-32 w-32 text-gold opacity-20" />
           <span aria-hidden="true" class="absolute inset-0 bg-[linear-gradient(180deg,transparent,rgba(0,0,0,.85))]" />
           <span class="absolute bottom-3 left-8 flex items-center gap-2">
             <span class="grid h-7 w-7 place-items-center rounded-pill bg-s3 text-[11px] font-bold text-ink-muted">ST</span>

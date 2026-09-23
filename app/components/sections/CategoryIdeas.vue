@@ -25,7 +25,7 @@ const rows = IDEA_GROUPS.slice(0, 3).map((g, i) => ({
       <div v-for="row in rows" :key="row.title" class="js-reveal">
         <div class="mb-4 flex items-center gap-3">
           <span class="grid h-9 w-9 flex-none place-items-center rounded-btn border border-hair bg-s1">
-            <img :src="row.icon" alt="" aria-hidden="true" class="h-4 w-4" loading="lazy" />
+            <img :src="asset(row.icon)" alt="" aria-hidden="true" class="h-4 w-4" loading="lazy" />
           </span>
           <h3 class="text-xs font-semibold uppercase tracking-label text-gold-text">{{ row.title }}</h3>
         </div>

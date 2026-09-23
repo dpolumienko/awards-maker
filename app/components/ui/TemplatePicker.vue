@@ -67,7 +67,7 @@ function apply(t: AwardTemplate) {
           class="grid h-9 w-9 flex-none place-items-center rounded-btn border bg-s2 transition-colors duration-300"
           :class="active === t.id ? 'border-ink bg-s3' : 'border-hair group-hover:border-hair2'"
         >
-          <img :src="t.icon" alt="" aria-hidden="true" class="h-4 w-4" loading="lazy" />
+          <img :src="asset(t.icon)" alt="" aria-hidden="true" class="h-4 w-4" loading="lazy" />
         </span>
         <!-- the tick has its own reserved column: appearing between the name and
              the text used to shove the whole card's copy sideways and down -->

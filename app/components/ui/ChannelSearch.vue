@@ -77,7 +77,7 @@ function onKey(e: KeyboardEvent) {
       class="absolute z-20 mt-2 w-full list-none overflow-hidden rounded-card border border-hair bg-s2 p-1 shadow-modal"
     >
       <li class="flex items-center gap-2 px-3 pb-1 pt-2" aria-hidden="true">
-        <img :src="'/img/icons/cat-clip.svg'" alt="" class="h-3.5 w-3.5 opacity-70" />
+        <img :src="asset('/img/icons/cat-clip.svg')" alt="" class="h-3.5 w-3.5 opacity-70" />
         <span class="micro">Channels on</span>
         <PlatformDot platform="twitch" />
         <PlatformDot platform="kick" />

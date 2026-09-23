@@ -60,7 +60,7 @@ onMounted(() => {
         </span>
         <div class="mb-6 overflow-hidden rounded-card border border-hair bg-s1">
           <img
-            :src="s.art"
+            :src="asset(s.art)"
             :alt="''"
             aria-hidden="true"
             loading="lazy"

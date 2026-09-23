@@ -82,7 +82,7 @@ const countdown = computed(() => {
     <div class="relative h-28" :style="themeCss(award.look?.theme, accent, award.look?.coverUrl)">
       <img
         v-if="!award.look?.coverUrl && !award.look?.theme"
-        :src="'/img/icons/cat-clip.svg'"
+        :src="asset('/img/icons/cat-clip.svg')"
         alt=""
         aria-hidden="true"
         class="absolute -right-4 -top-3 h-32 w-32 opacity-20"

@@ -181,7 +181,7 @@ function clearCover() {
         >
           <img v-if="look.coverUrl" :src="look.coverUrl" alt="" class="h-full w-full object-cover" />
           <span v-else class="flex items-center gap-2">
-            <img :src="'/img/icons/cat-clip.svg'" alt="" aria-hidden="true" class="h-4 w-4 opacity-70" />
+            <img :src="asset('/img/icons/cat-clip.svg')" alt="" aria-hidden="true" class="h-4 w-4 opacity-70" />
             Upload a 21:9 cover
           </span>
           <input type="file" accept="image/*" class="sr-only" @change="pickCover" />
