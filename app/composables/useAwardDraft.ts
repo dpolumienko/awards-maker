@@ -21,7 +21,7 @@ const emptyDraft = (): Award => ({
   nominations: [emptyNomination()],
   partners: [],
   look: {},
-  host: { name: 'stintik', platform: 'twitch' },
+  host: { name: 'ishowspeed', platform: 'youtube' },
 })
 
 // One draft per browser until there is a backend; the shape is the future API shape.

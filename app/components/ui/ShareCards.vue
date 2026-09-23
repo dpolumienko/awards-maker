@@ -9,16 +9,21 @@
 import { computed, ref, watch } from 'vue'
 import UiButton from './UiButton.vue'
 import UiIcon from './UiIcon.vue'
+import SnapCarousel from './SnapCarousel.vue'
 import { nomineeName } from '~/utils/nominee'
 import { FORMATS, cardCopy, renderShareCard, type ShareFormat, type ShareRole } from '~/utils/shareCard'
 import type { Award } from '~/types/award'
 
-const { award, url, closes = '', winners = {} } = defineProps<{
+const { award, url, closes = '', winners = {}, isHost = false, hasVoted = false } = defineProps<{
   award: Award
   url: string
   closes?: string
   /** Nomination id → winning nominee name, once the results are out. */
   winners?: Record<string, string>
+  /** Only the host is offered the host's card. */
+  isHost?: boolean
+  /** "I voted" is a claim; it is only offered to somebody who did. */
+  hasVoted?: boolean
 }>()
 
 const ROLES: { id: ShareRole; label: string; note: string }[] = [
@@ -27,16 +32,23 @@ const ROLES: { id: ShareRole; label: string; note: string }[] = [
   { id: 'voter', label: 'Voter', note: 'You voted. This is the one that brings the next voter.' },
 ]
 
-const role = ref<ShareRole>('host')
+const role = ref<ShareRole>(isHost ? 'host' : 'nominee')
 const format = ref<ShareFormat>('link')
 const nomineeChoice = ref('')
 
 const hasWinners = computed(() => Object.keys(winners).length > 0)
-const roles = computed(() =>
-  hasWinners.value
-    ? [...ROLES, { id: 'winner' as const, label: 'Winner', note: 'The result, one card per category.' }]
-    : ROLES,
-)
+
+// A card is a claim about who you are, so the page only offers the ones that are
+// true here: the host's card to the host, "I voted" to somebody who voted, the
+// winner's card once there are winners.
+const roles = computed(() => {
+  const out = ROLES.filter((r) => (r.id === 'host' ? isHost : r.id === 'voter' ? hasVoted : true))
+  if (hasWinners.value) out.push({ id: 'winner', label: 'Winner', note: 'The result, one card per category.' })
+  return out
+})
+watch(roles, (list) => {
+  if (!list.some((r) => r.id === role.value)) role.value = list[0]?.id ?? 'nominee'
+}, { immediate: true })
 
 /** Everyone a nominee card could be about, flattened. */
 const nominees = computed(() =>
@@ -91,8 +103,9 @@ const cards = computed(() => {
   ]
 })
 
-// The card shows the address the way a person reads it out, without the scheme.
-const plainUrl = computed(() => url.replace(/^https?:\/\//, ''))
+// The card shows the address the way a person reads it out: no scheme, and none
+// of the payload the link carries while there is no backend to look a show up in.
+const plainUrl = computed(() => url.replace(/^https?:\/\//, '').split('?')[0]!)
 
 const images = ref<Record<string, string>>({})
 const drawing = ref(false)
@@ -173,33 +186,72 @@ const shareText = computed(() => {
       </select>
     </label>
 
-    <div class="mt-6 grid gap-5" :class="format === 'story' ? 'sm:grid-cols-3 lg:grid-cols-4' : 'sm:grid-cols-2'">
-      <figure v-for="card in cards" :key="card.key" class="m-0">
-        <img
-          v-if="images[card.key]"
-          :src="images[card.key]"
-          :alt="`${card.kicker}: ${card.headline}`"
-          class="w-full rounded-card border border-hair"
-          :width="FORMATS[format].w"
-          :height="FORMATS[format].h"
-        />
-        <span
-          v-else
-          class="block w-full rounded-card border border-dashed border-hair2"
-          :style="{ aspectRatio: `${FORMATS[format].w} / ${FORMATS[format].h}` }"
-        />
-        <figcaption class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
-          <span class="min-w-0 flex-1 truncate text-sm text-ink-2">{{ card.title }}</span>
+    <!-- one card at a time, dragged: four thumbnails in a row read as a contact
+         sheet, and the card is the thing being chosen, not a line item -->
+    <div class="mt-6">
+      <SnapCarousel
+        v-if="cards.length > 1"
+        :key="`${role}-${format}`"
+        label="Share cards"
+        :count="cards.length"
+        :per-view="format === 'story' ? 3 : 2"
+        :gap="20"
+        :peek="28"
+      >
+        <template #slide="{ i }">
+          <figure class="m-0 flex h-full flex-col overflow-hidden rounded-card border border-hair bg-s1">
+            <figcaption class="flex items-center gap-3 border-b border-hair px-4 py-3">
+              <span class="min-w-0 flex-1 truncate text-sm font-semibold">{{ cards[i]!.title }}</span>
+              <button
+                type="button"
+                class="inline-flex flex-none items-center gap-1.5 text-sm text-gold-text underline underline-offset-4 transition-colors hover:text-ink disabled:opacity-40"
+                :disabled="!images[cards[i]!.key]"
+                @click="download(cards[i]!.key, cards[i]!.title)"
+              >
+                Download
+                <UiIcon name="chevron-right" :size="12" />
+              </button>
+            </figcaption>
+            <img
+              v-if="images[cards[i]!.key]"
+              :src="images[cards[i]!.key]"
+              :alt="`${cards[i]!.kicker}: ${cards[i]!.headline}`"
+              class="w-full"
+              :width="FORMATS[format].w"
+              :height="FORMATS[format].h"
+            />
+            <span v-else class="block w-full bg-s2" :style="{ aspectRatio: `${FORMATS[format].w} / ${FORMATS[format].h}` }" />
+          </figure>
+        </template>
+      </SnapCarousel>
+
+      <!-- a single card has nothing to swipe through -->
+      <figure
+        v-else-if="cards[0]"
+        class="m-0 flex flex-col overflow-hidden rounded-card border border-hair bg-s1"
+        :class="format === 'story' ? 'max-w-sm' : 'max-w-xl'"
+      >
+        <figcaption class="flex items-center gap-3 border-b border-hair px-4 py-3">
+          <span class="min-w-0 flex-1 truncate text-sm font-semibold">{{ cards[0].title }}</span>
           <button
             type="button"
-            class="inline-flex items-center gap-1.5 text-sm text-gold-text underline underline-offset-4 transition-colors hover:text-ink disabled:opacity-40"
-            :disabled="!images[card.key]"
-            @click="download(card.key, card.title)"
+            class="inline-flex flex-none items-center gap-1.5 text-sm text-gold-text underline underline-offset-4 transition-colors hover:text-ink disabled:opacity-40"
+            :disabled="!images[cards[0].key]"
+            @click="download(cards[0].key, cards[0].title)"
           >
             Download
             <UiIcon name="chevron-right" :size="12" />
           </button>
         </figcaption>
+        <img
+          v-if="images[cards[0].key]"
+          :src="images[cards[0].key]"
+          :alt="`${cards[0].kicker}: ${cards[0].headline}`"
+          class="w-full"
+          :width="FORMATS[format].w"
+          :height="FORMATS[format].h"
+        />
+        <span v-else class="block w-full bg-s2" :style="{ aspectRatio: `${FORMATS[format].w} / ${FORMATS[format].h}` }" />
       </figure>
     </div>
 

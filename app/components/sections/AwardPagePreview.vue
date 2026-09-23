@@ -19,7 +19,7 @@ const picked = ref(1)
 const flashed = ref(-1)
 const votersNow = ref(218)
 const nominees = [
-  { name: 'stintik', sub: 'Twitch · 214K followers', initial: 'S' },
+  { name: 'ishowspeed', sub: 'YouTube · 41.2M followers', initial: 'I' },
   { name: 'maryana', sub: 'Twitch · 98K followers', initial: 'M' },
   { name: 'The 3am raid', sub: 'Clip · 2026', initial: '3' },
 ]
@@ -57,13 +57,13 @@ onBeforeUnmount(() => clearInterval(ticker))
           <span aria-hidden="true" class="absolute inset-0 bg-[linear-gradient(180deg,transparent,rgba(0,0,0,.85))]" />
           <span class="absolute bottom-3 left-8 flex items-center gap-2">
             <span class="grid h-7 w-7 place-items-center rounded-pill bg-s3 text-[11px] font-bold text-ink-muted">ST</span>
-            <span class="micro">stintik</span>
+            <span class="micro">ishowspeed</span>
           </span>
         </div>
         <div class="p-8">
         <UiBadge tone="live">Voting open</UiBadge>
         <p class="mt-4 text-[32px] font-bold uppercase leading-[1.05] tracking-heading">Chat Awards 2026</p>
-        <p class="text-ink-2">Hosted by stintik · 5 categories · closes 12 Dec</p>
+        <p class="text-ink-2">Hosted by ishowspeed · 5 categories · closes 12 Dec</p>
 
         <p class="label mt-8">Best moment of the year</p>
         <div class="mt-3 flex flex-col gap-2">

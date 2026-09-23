@@ -56,10 +56,13 @@ export function useCeremony(slug: () => string, award: () => Award | null) {
     reveal: all.value[slug()]?.reveal ?? 'cut',
   }))
 
+  /** Has this awards been through the setup, or are these still the defaults? */
+  const configured = computed(() => !!all.value[slug()])
+
   function update(patch: Partial<CeremonySettings>) {
     all.value = { ...all.value, [slug()]: { ...settings.value, ...patch } }
     save()
   }
 
-  return { settings, update }
+  return { settings, update, configured }
 }

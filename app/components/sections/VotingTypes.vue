@@ -6,7 +6,7 @@ import UiIcon from '../ui/UiIcon.vue'
 
 // A chat that actually moves: the link is pinned, viewers react underneath.
 const lines = [
-  { who: 'stintik', tone: 'text-gold-text', text: 'Chat Awards are open, go vote' },
+  { who: 'ishowspeed', tone: 'text-gold-text', text: 'Chat Awards are open, go vote' },
   { who: 'mel0dy', tone: 'text-ink', text: 'on it' },
   { who: 'n1ghtowl', tone: 'text-ink', text: 'voted, mods deserve it' },
   { who: 'pixelpete', tone: 'text-ink', text: 'where do I vote' },
@@ -80,7 +80,7 @@ onBeforeUnmount(() => clearInterval(timer))
         <div class="flex h-48 flex-col justify-center gap-2 p-5">
           <p class="micro mb-1">Best moment of the year</p>
           <span class="flex items-center gap-3 rounded-btn border border-hair bg-s2 px-3 py-2 text-sm">
-            <span aria-hidden="true" class="grid h-6 w-6 flex-none place-items-center rounded-pill bg-s3 text-[11px] font-bold text-ink-muted">ST</span> stintik
+            <span aria-hidden="true" class="grid h-6 w-6 flex-none place-items-center rounded-pill bg-s3 text-[11px] font-bold text-ink-muted">IS</span> ishowspeed
           </span>
           <span class="flex items-center gap-3 rounded-btn border border-gold bg-gold/[0.12] px-3 py-2 text-sm">
             <span aria-hidden="true" class="grid h-6 w-6 flex-none place-items-center rounded-pill bg-s3 text-[11px] font-bold text-ink-muted">MA</span> maryana

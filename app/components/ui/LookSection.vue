@@ -3,8 +3,8 @@
 // Everything here is paid, but nothing is blocked - you set it, the preview
 // follows, and the bill only comes up at publish.
 //
-// The channel logo is not an upload: it is the avatar of the Twitch account that
-// signs in, so the control is a sign-in button until there is one.
+// The channel logo is not an upload: it is the avatar of the account that signs
+// in, so the control is a sign-in button until there is one.
 import { THEMES, themeCss } from '~/data/themes'
 import { ref } from 'vue'
 import { fileToStoredImage } from '~/utils/image'
@@ -198,7 +198,7 @@ function clearCover() {
         <span aria-hidden="true" class="grid h-10 w-10 place-items-center rounded-pill bg-s3 text-xs font-bold text-ink-muted">
           {{ channel.slice(0, 2).toUpperCase() }}
         </span>
-        <span class="text-sm">Taken from <b class="font-semibold">{{ channel }}</b> on Twitch.</span>
+        <span class="text-sm">Taken from <b class="font-semibold">{{ channel }}</b>.</span>
         <span class="text-sm text-ink-muted">Change it there and the awards page follows.</span>
       </div>
       <div v-else class="flex flex-wrap items-center gap-3">

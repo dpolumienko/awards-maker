@@ -1,11 +1,18 @@
 <script setup lang="ts">
-// Header for a site that now has more than one page. On the landing the links
-// are the page's own sections; everywhere else they are real routes, because
-// "#how" from /create scrolled nowhere and looked broken.
-// Below lg the links used to be hidden with nothing in their place - that was
-// the one piece of navigation debt left from the landing build.
+// Header for a site that now has more than one page.
+//
+// The four public links are the same on every page - they used to be four on the
+// landing and five everywhere else, so the bar shifted under the cursor as you
+// moved around. What belongs to the person signed in ("Your awards", the drafts,
+// the dashboards) sits behind the account chip instead, which is also where the
+// real Twitch avatar and sign-out will go.
+//
+// The landing keeps one anchor: "How it works" scrolls, everywhere else the same
+// slot is "Overview" and routes home.
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import UiButton from './ui/UiButton.vue'
+import UiIcon from './ui/UiIcon.vue'
+import { useAwardDraft } from '~/composables/useAwardDraft'
 
 const route = useRoute()
 const stuck = ref(false)
@@ -17,27 +24,34 @@ onMounted(() => window.addEventListener('scroll', onScroll, { passive: true }))
 onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
 
 const onLanding = computed(() => route.path === '/')
-const links = computed(() =>
-  onLanding.value
-    ? [
-        { to: '#how', label: 'How it works' },
-        { to: '/ideas', label: 'Ideas' },
-        { to: '/catalog', label: 'Catalog' },
-        { to: '/plans', label: 'Plans' },
-      ]
-    : [
-        { to: '/', label: 'Overview' },
-        { to: '/ideas', label: 'Ideas' },
-        { to: '/catalog', label: 'Catalog' },
-        { to: '/plans', label: 'Plans' },
-        { to: '/my-awards', label: 'Your awards' },
-      ],
-)
+const links = computed(() => [
+  onLanding.value ? { to: '#how', label: 'How it works' } : { to: '/', label: 'Overview' },
+  { to: '/ideas', label: 'Ideas' },
+  { to: '/catalog', label: 'Catalog' },
+  { to: '/plans', label: 'Plans' },
+])
+
+// What the account chip holds: everything that only exists once you have a show
+// of your own. The count is real, so the chip says whether there is anything in
+// there before it is opened.
+const { published, draft } = useAwardDraft()
+const mine = computed(() => published.value.length)
+const account = ref(false)
+const accountBtn = ref<HTMLButtonElement | null>(null)
+const host = computed(() => draft.value.host.name || 'you')
+const initials = computed(() => host.value.slice(0, 2).toUpperCase())
 
 // The menu never survives a navigation, and Esc puts the focus back where it was.
-watch(() => route.fullPath, () => (open.value = false))
+watch(() => route.fullPath, () => {
+  open.value = false
+  account.value = false
+})
 function onKey(e: KeyboardEvent) {
-  if (e.key === 'Escape' && open.value) {
+  if (e.key !== 'Escape') return
+  if (account.value) {
+    account.value = false
+    accountBtn.value?.focus()
+  } else if (open.value) {
     open.value = false
     toggle.value?.focus()
   }
@@ -73,7 +87,56 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
         </NuxtLink>
       </nav>
 
-      <UiButton to="/create" size="sm" class="ml-auto hidden lg:ml-6 lg:inline-flex">Create your awards</UiButton>
+      <!-- the account: one chip instead of a link that appears and disappears -->
+      <div class="relative ml-auto hidden lg:ml-6 lg:block">
+        <button
+          ref="accountBtn"
+          type="button"
+          class="flex items-center gap-2 rounded-pill border border-hair py-1.5 pl-1.5 pr-3 text-sm text-ink-2 transition-colors hover:border-hair2 hover:text-ink"
+          :aria-expanded="account"
+          aria-controls="account-menu"
+          @click="account = !account"
+        >
+          <span
+            aria-hidden="true"
+            class="grid h-7 w-7 flex-none place-items-center rounded-pill bg-s3 text-[11px] font-bold text-ink"
+          >{{ initials }}</span>
+          <ClientOnly>
+            <span class="tnum">{{ mine || '' }}</span>
+          </ClientOnly>
+          <UiIcon name="chevron-right" :size="12" class="rotate-90" />
+          <span class="sr-only">Your account</span>
+        </button>
+
+        <div
+          v-show="account"
+          id="account-menu"
+          class="absolute right-0 top-full z-50 mt-2 w-56 rounded-card border border-hair bg-s1 p-2 shadow-modal"
+        >
+          <p class="px-3 py-2 text-xs text-ink-muted">
+            Signed in as <ClientOnly><span class="text-ink-2">{{ host }}</span></ClientOnly>
+          </p>
+          <NuxtLink
+            to="/my-awards"
+            class="flex items-center justify-between gap-2 rounded-btn px-3 py-2 text-sm text-ink-2 no-underline transition-colors hover:bg-s2 hover:text-ink"
+          >
+            Your awards
+            <ClientOnly>
+              <span class="tnum text-xs text-ink-muted">{{ mine }}</span>
+            </ClientOnly>
+          </NuxtLink>
+          <NuxtLink
+            to="/create"
+            class="block rounded-btn px-3 py-2 text-sm text-ink-2 no-underline transition-colors hover:bg-s2 hover:text-ink"
+          >Create your awards</NuxtLink>
+          <NuxtLink
+            to="/catalog"
+            class="block rounded-btn px-3 py-2 text-sm text-ink-2 no-underline transition-colors hover:bg-s2 hover:text-ink"
+          >Browse the catalog</NuxtLink>
+        </div>
+      </div>
+
+      <UiButton to="/create" size="sm" class="hidden lg:inline-flex">Create your awards</UiButton>
 
       <!-- mobile: one button, three lines, no library -->
       <button
@@ -115,6 +178,15 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
         class="block border-b border-hair py-4 text-sm font-bold uppercase tracking-button text-ink-2 no-underline transition-colors hover:text-ink"
       >
         {{ l.label }}
+      </NuxtLink>
+      <NuxtLink
+        to="/my-awards"
+        class="flex items-center justify-between border-b border-hair py-4 text-sm font-bold uppercase tracking-button text-ink-2 no-underline transition-colors hover:text-ink"
+      >
+        Your awards
+        <ClientOnly>
+          <span class="tnum text-xs text-ink-muted">{{ mine }}</span>
+        </ClientOnly>
       </NuxtLink>
       <UiButton to="/create" size="sm" class="mt-5 w-full">Create your awards</UiButton>
     </nav>

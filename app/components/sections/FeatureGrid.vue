@@ -6,7 +6,7 @@ import UiIcon from '../ui/UiIcon.vue'
 
 // Bento, not three equal text boxes: each card shows the thing it describes.
 const channels = [
-  { name: 'stintik', meta: 'Twitch · 214K', tone: PLATFORM_COLORS.twitch },
+  { name: 'ishowspeed', meta: 'YouTube · 41.2M', tone: PLATFORM_COLORS.youtube },
   { name: 'dzvin_tv', meta: 'Kick · 88K', tone: PLATFORM_COLORS.kick },
   { name: 'maryana', meta: 'YouTube · 402K', tone: PLATFORM_COLORS.youtube },
 ]
@@ -85,7 +85,7 @@ const channels = [
             </div>
             <div class="hidden w-48 rounded-card bg-gold/[0.06] p-4 sm:block">
               <p class="micro text-gold-text">Winner</p>
-              <p class="mt-2 text-lg font-bold leading-tight text-gold-text">stintik</p>
+              <p class="mt-2 text-lg font-bold leading-tight text-gold-text">ishowspeed</p>
               <p class="mt-1 text-sm text-ink-2">612 of 1 284 votes</p>
               <span class="mt-4 block h-px w-full bg-gradient-to-r from-gold to-transparent" />
               <p class="micro mt-3">Revealed 20 Dec</p>

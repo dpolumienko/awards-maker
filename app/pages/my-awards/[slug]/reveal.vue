@@ -29,8 +29,15 @@ const award = computed(() => published.value.find((a) => a.slug === slug.value) 
 const accent = computed(() => award.value?.look?.accent || '#D9A441')
 const ink = computed(() => accentText(accent.value))
 // The ceremony has its own stage, face and reveal - set once, kept per awards.
-const { settings, update } = useCeremony(() => slug.value, () => award.value)
+const { settings, update, configured } = useCeremony(() => slug.value, () => award.value)
 const setupOpen = ref(false)
+/** Starting the show is a decision too: it saves the settings, so the setup does
+ *  not greet the host again every time they open the ceremony. */
+function onStart() {
+  update({})
+  setupOpen.value = false
+  step.value = 0
+}
 const headlineFont = computed(() => `'${settings.value.font}', Archivo, sans-serif`)
 
 /** A nominee plate: everyone in the house colour, the winner filled and lit. */
@@ -141,6 +148,10 @@ function wake() {
 }
 
 onMounted(() => {
+  // First time through, the setup opens itself: a host who has never seen it would
+  // otherwise go live without knowing the stage, the face and the reveal are theirs
+  // to choose. Saved settings mean it stays out of the way after that.
+  if (!bare.value && !configured.value && categories.value.length) setupOpen.value = true
   window.addEventListener('keydown', onKey)
   document.addEventListener('fullscreenchange', onFullChange)
   wake()
@@ -462,7 +473,7 @@ definePageMeta({ chrome: false })
       :name="award?.name ?? ''"
       @update="update"
       @close="setupOpen = false"
-      @start="setupOpen = false; step = 0"
+      @start="onStart"
     />
   </div>
 </template>

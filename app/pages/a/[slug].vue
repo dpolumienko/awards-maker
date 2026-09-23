@@ -24,6 +24,7 @@ import { useReveal } from '~/composables/useReveal'
 import { playCue } from '~/composables/useCue'
 import { themeCss } from '~/data/themes'
 import { accentText } from '~/utils/accent'
+import { decodeAward, encodeAward } from '~/utils/awardLink'
 import { nomineeName } from '~/utils/nominee'
 import { FREE, PUBLISH } from '~/types/award'
 
@@ -32,7 +33,18 @@ const slug = computed(() => String(route.params.slug))
 const { published } = useAwardDraft()
 const { ballotFor, votersFor, castBallot, publishResults, phaseOf, resultsOf, votesInOf } = useVoting()
 
-const award = computed(() => published.value.find((a) => a.slug === slug.value))
+/**
+ * The show, from this browser's storage - or, when it was published somewhere else,
+ * from the link itself (`?s=`). Without a backend that is the only way a shared
+ * address opens anything at all; see utils/awardLink.ts.
+ */
+const fromLink = computed(() => {
+  const payload = route.query.s
+  return typeof payload === 'string' ? decodeAward(payload) : null
+})
+const award = computed(() => published.value.find((a) => a.slug === slug.value) ?? fromLink.value ?? undefined)
+/** True when the page is reading the link, not storage: votes here stay local. */
+const guestCopy = computed(() => !!fromLink.value && !published.value.some((a) => a.slug === slug.value))
 const root = ref<HTMLElement | null>(null)
 useReveal(root, { stagger: 0.06 })
 
@@ -177,7 +189,12 @@ const partners = computed(() => (award.value?.partners ?? []).filter((p) => p.na
 const nomineeTotal = computed(() =>
   (award.value?.nominations ?? []).reduce((sum, n) => sum + n.nominees.length, 0),
 )
-const shareUrl = computed(() => (import.meta.client ? window.location.href : `/a/${slug.value}`))
+// The link a host hands out carries the show with it, so it opens for somebody
+// who has never been here. Long, and honest about why: there is no server yet.
+const shareUrl = computed(() => {
+  const base = import.meta.client ? `${location.origin}${location.pathname}` : `/a/${slug.value}`
+  return award.value ? `${base}?s=${encodeAward(award.value)}` : base
+})
 
 // SEO. The page is the reason the catalog exists, so it carries its own title,
 // description, FAQ and Event markup. The indexing thresholds are the publishing
@@ -458,6 +475,14 @@ if (award.value) {
 
           <!-- SIDE -->
           <aside class="space-y-6 lg:sticky lg:top-24">
+            <div v-if="guestCopy" class="rounded-card border border-hair bg-s1 p-5">
+              <p class="label">Opened from a link</p>
+              <p class="mt-2 text-sm text-ink-2">
+                This show was published in someone else's browser and travelled here inside the address. You can
+                read it and vote; your ballot is counted on this device until the service has a backend.
+              </p>
+            </div>
+
             <div v-if="isHost" ref="hostPanel" class="relative rounded-card border border-gold-24 bg-gold/[0.06] p-5">
               <p class="micro text-gold-text">You host this awards</p>
               <LimitMeter
@@ -478,6 +503,7 @@ if (award.value) {
                     <span class="col-start-1 row-start-1">{{ armPublish ? 'Publish - sure?' : 'Publish the winners' }}</span>
                   </span>
                 </UiButton>
+                <UiButton :to="`/my-awards/${award.slug}/reveal`" variant="ghost" size="sm">Run the ceremony</UiButton>
                 <UiButton :to="`/my-awards/${award.slug}`" variant="ghost" size="sm">Your dashboard</UiButton>
               </div>
               <p v-if="phase === 'counting' || phase === 'capped'" class="mt-3 text-sm text-ink-muted">
@@ -553,6 +579,8 @@ if (award.value) {
           :url="shareUrl"
           :closes="fmtDate(award.closesAt)"
           :winners="winnerNames"
+          :is-host="isHost"
+          :has-voted="voted"
         />
 
         <!-- reading matter, and the conversion this page owes the product -->
@@ -581,8 +609,10 @@ if (award.value) {
     <div v-else class="shell py-20 text-center">
       <h1 class="heading">This awards page is not here</h1>
       <p class="mx-auto mt-3 max-w-copy text-ink-2">
-        Nothing has been published under <b class="text-ink">/a/{{ slug }}</b> from this browser. Drafts and published
-        awards live locally until the backend lands, so a link from another device will not open here yet.
+        Nothing has been published under <b class="text-ink">/a/{{ slug }}</b> from this browser. Until the backend
+        lands a show lives in the browser that made it - a plain address from another device opens nothing.
+        The <b class="text-ink">Copy link</b> button on an awards page hands out a link that carries the show with
+        it, and that one opens anywhere.
       </p>
       <div class="mt-6 flex flex-wrap justify-center gap-3">
         <UiButton to="/create">Create your awards</UiButton>
