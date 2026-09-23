@@ -50,6 +50,11 @@ export default defineNuxtConfig({
     '/a/**': { ssr: false },
   },
 
+  // A project site on GitHub Pages lives under /<repo>/, and nothing served from a
+  // sub-path may own /robots.txt - the module refuses to build one. The demo does
+  // not need it; the real subdomain deploy has no base URL and keeps it.
+  robots: { robotsTxt: !process.env.NUXT_APP_BASE_URL || process.env.NUXT_APP_BASE_URL === '/' },
+
   // The host's own pages are noindex; a noindex URL in the sitemap is a mixed
   // signal, so they are kept out of it. Award pages are dynamic and get in
   // through their own source once there is an API.

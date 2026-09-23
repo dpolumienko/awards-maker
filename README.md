@@ -6,6 +6,34 @@ Stack matches the other vibe projects (TikTokStats, DoHuya): **Nuxt 3 with Nuxt 
 
 Animation: **GSAP + ScrollTrigger** (reveals, scrubbed step line, counters), **Lenis** (smooth scroll, driven off the GSAP ticker) and **motion-v** (Motion for Vue - the springs inside the ported accordion). Everything is switched off under `prefers-reduced-motion`.
 
+## Running it
+
+```bash
+npm install
+npm run dev        # http://localhost:3000
+```
+
+There is no backend yet. Everything a host builds, every ballot and every tally
+lives in `localStorage` in the shape the API will take, so the whole flow works in
+one browser and nothing is shared between two.
+
+**Pre-release:** the paid tier is unlocked by default (`app/composables/usePro.ts`)
+because there is no checkout to buy it with - that switch goes away with payments.
+
+## Demo
+
+A GitHub Actions workflow that builds the prototype as a static site and publishes
+it to Pages is ready at `.github/workflows/pages.yml` in the working copy. It is not
+pushed yet: that needs a token with the `workflow` scope (`gh auth refresh -s workflow`,
+then commit the file). Pages on a private repository also requires a paid GitHub plan -
+on the free plan the demo starts working the moment the repository is public.
+
+Build it yourself with:
+
+```bash
+NUXT_APP_BASE_URL=/awards-maker/ NITRO_PRESET=github_pages npx nuxi generate
+```
+
 ## Components ported from 21st.dev
 
 Two components were taken 1:1 and ported from React to Vue; the animation values are the authors', unchanged. Attribution sits at the top of each file.
