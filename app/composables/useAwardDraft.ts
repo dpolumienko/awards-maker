@@ -24,6 +24,13 @@ const emptyDraft = (): Award => ({
   host: { name: 'ishowspeed', platform: 'youtube' },
 })
 
+/**
+  * A draft saved before the demo channel changed carries the old host, and the
+  * page then shows a name nobody recognises. Anything stored under the previous
+  * default is moved onto the current account when it is read back.
+  */
+const LEGACY_HOSTS = ['stintik']
+
 // One draft per browser until there is a backend; the shape is the future API shape.
 const draft = ref<Award>(emptyDraft())
 const published = ref<Award[]>([])
@@ -46,10 +53,12 @@ function read<T>(key: string, fallback: T): T {
 function normalize(a: Partial<Award> | undefined): Award {
   const base = emptyDraft()
   if (!a) return base
+  const host = { ...base.host, ...(a.host ?? {}) }
+  if (LEGACY_HOSTS.includes(host.name)) Object.assign(host, base.host)
   return {
     ...base,
     ...a,
-    host: { ...base.host, ...(a.host ?? {}) },
+    host,
     look: { ...base.look, ...(a.look ?? {}) },
     partners: Array.isArray(a.partners) ? a.partners : [],
     nominations:

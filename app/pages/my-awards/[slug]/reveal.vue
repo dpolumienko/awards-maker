@@ -16,7 +16,7 @@ import { useVoting } from '~/composables/useVoting'
 import { prefersReducedMotion, useGsap } from '~/composables/useReveal'
 import { nomineeInitials, nomineeName } from '~/utils/nominee'
 import CeremonySetup from '~/components/ui/CeremonySetup.vue'
-import { useCeremony } from '~/composables/useCeremony'
+import { COVER, useCeremony } from '~/composables/useCeremony'
 import { themeCss } from '~/data/themes'
 import { accentText } from '~/utils/accent'
 
@@ -251,7 +251,11 @@ definePageMeta({ chrome: false })
         ref="stage"
         class="stage relative mx-auto flex w-full flex-col items-center justify-center overflow-hidden text-center"
         :class="bare ? 'h-screen w-screen' : 'mt-4 aspect-video max-w-[1600px] rounded-card'"
-        :style="themeCss(settings.stage, accent, award.look?.coverUrl)"
+        :style="themeCss(
+          settings.stage === COVER ? undefined : settings.stage,
+          accent,
+          settings.stage === COVER ? award.look?.coverUrl : undefined,
+        )"
       >
         <span aria-hidden="true" class="absolute inset-0 bg-black/50" />
 
@@ -471,6 +475,7 @@ definePageMeta({ chrome: false })
       :settings="settings"
       :accent="accent"
       :name="award?.name ?? ''"
+      :cover="award?.look?.coverUrl ?? ''"
       @update="update"
       @close="setupOpen = false"
       @start="onStart"

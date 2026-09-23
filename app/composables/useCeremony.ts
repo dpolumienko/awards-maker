@@ -11,7 +11,11 @@ import type { Award } from '~/types/award'
  * their own colours anyway.
  */
 export interface CeremonySettings {
-  /** Background treatment, ids from data/themes. */
+  /**
+   * Background treatment: a theme id from data/themes, or `cover` for the image
+   * the host uploaded. A cover used to win over any choice, so picking a stage in
+   * the setup did nothing on a show that had one.
+   */
   stage: string
   /** Display face for the names. */
   font: string
@@ -27,6 +31,9 @@ export const REVEALS: { id: RevealStyle; name: string; blurb: string }[] = [
 ]
 
 export const CEREMONY_FONTS = ['Anton', 'Archivo', 'Playfair Display', 'Space Grotesk']
+
+/** The stage id that means "keep the uploaded cover". */
+export const COVER = 'cover'
 
 const KEY = 'awards-maker:ceremony'
 const all = ref<Record<string, CeremonySettings>>({})
@@ -51,7 +58,7 @@ export function useCeremony(slug: () => string, award: () => Award | null) {
   }
 
   const settings = computed<CeremonySettings>(() => ({
-    stage: all.value[slug()]?.stage ?? award()?.look?.theme ?? 'stage',
+    stage: all.value[slug()]?.stage ?? (award()?.look?.coverUrl ? COVER : award()?.look?.theme ?? 'stage'),
     font: all.value[slug()]?.font ?? award()?.look?.font ?? 'Anton',
     reveal: all.value[slug()]?.reveal ?? 'cut',
   }))

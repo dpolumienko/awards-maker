@@ -12,7 +12,9 @@
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import UiButton from './ui/UiButton.vue'
 import UiIcon from './ui/UiIcon.vue'
+import PlatformDot from './ui/PlatformDot.vue'
 import { useAwardDraft } from '~/composables/useAwardDraft'
+import { useAccount } from '~/composables/useAccount'
 
 const route = useRoute()
 const stuck = ref(false)
@@ -34,22 +36,23 @@ const links = computed(() => [
 // What the account chip holds: everything that only exists once you have a show
 // of your own. The count is real, so the chip says whether there is anything in
 // there before it is opened.
-const { published, draft } = useAwardDraft()
+const { published } = useAwardDraft()
+const { signedIn, channel, signIn, signOut } = useAccount()
 const mine = computed(() => published.value.length)
-const account = ref(false)
+const menuOpen = ref(false)
 const accountBtn = ref<HTMLButtonElement | null>(null)
-const host = computed(() => draft.value.host.name || 'you')
+const host = computed(() => channel.value.name)
 const initials = computed(() => host.value.slice(0, 2).toUpperCase())
 
 // The menu never survives a navigation, and Esc puts the focus back where it was.
 watch(() => route.fullPath, () => {
   open.value = false
-  account.value = false
+  menuOpen.value = false
 })
 function onKey(e: KeyboardEvent) {
   if (e.key !== 'Escape') return
-  if (account.value) {
-    account.value = false
+  if (menuOpen.value) {
+    menuOpen.value = false
     accountBtn.value?.focus()
   } else if (open.value) {
     open.value = false
@@ -88,53 +91,74 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
       </nav>
 
       <!-- the account: one chip instead of a link that appears and disappears -->
-      <div class="relative ml-auto hidden lg:ml-6 lg:block">
-        <button
-          ref="accountBtn"
-          type="button"
-          class="flex items-center gap-2 rounded-pill border border-hair py-1.5 pl-1.5 pr-3 text-sm text-ink-2 transition-colors hover:border-hair2 hover:text-ink"
-          :aria-expanded="account"
-          aria-controls="account-menu"
-          @click="account = !account"
-        >
-          <span
-            aria-hidden="true"
-            class="grid h-7 w-7 flex-none place-items-center rounded-pill bg-s3 text-[11px] font-bold text-ink"
-          >{{ initials }}</span>
-          <ClientOnly>
-            <span class="tnum">{{ mine || '' }}</span>
-          </ClientOnly>
-          <UiIcon name="chevron-right" :size="12" class="rotate-90" />
-          <span class="sr-only">Your account</span>
-        </button>
-
-        <div
-          v-show="account"
-          id="account-menu"
-          class="absolute right-0 top-full z-50 mt-2 w-56 rounded-card border border-hair bg-s1 p-2 shadow-modal"
-        >
-          <p class="px-3 py-2 text-xs text-ink-muted">
-            Signed in as <ClientOnly><span class="text-ink-2">{{ host }}</span></ClientOnly>
-          </p>
-          <NuxtLink
-            to="/my-awards"
-            class="flex items-center justify-between gap-2 rounded-btn px-3 py-2 text-sm text-ink-2 no-underline transition-colors hover:bg-s2 hover:text-ink"
+      <ClientOnly>
+        <div class="relative ml-auto hidden lg:ml-6 lg:block">
+          <button
+            v-if="signedIn"
+            ref="accountBtn"
+            type="button"
+            class="flex items-center gap-2 rounded-pill border border-hair py-1.5 pl-1.5 pr-3 text-sm text-ink-2 transition-colors hover:border-hair2 hover:text-ink"
+            :aria-expanded="menuOpen"
+            aria-controls="account-menu"
+            @click="menuOpen = !menuOpen"
           >
-            Your awards
-            <ClientOnly>
+            <span
+              aria-hidden="true"
+              class="grid h-7 w-7 flex-none place-items-center rounded-pill bg-s3 text-[11px] font-bold text-ink"
+            >{{ initials }}</span>
+            <span class="tnum">{{ mine || '' }}</span>
+            <UiIcon name="chevron-right" :size="12" class="rotate-90" />
+            <span class="sr-only">Your account, {{ host }}</span>
+          </button>
+
+          <!-- signed out: the one thing there is to do -->
+          <button
+            v-else
+            type="button"
+            class="flex h-9 items-center gap-2 rounded-btn bg-twitch px-4 text-sm font-bold uppercase tracking-button text-white transition-opacity hover:opacity-90"
+            @click="signIn"
+          >
+            Sign in with Twitch
+          </button>
+
+          <div
+            v-show="menuOpen && signedIn"
+            id="account-menu"
+            class="absolute right-0 top-full z-50 mt-2 w-60 rounded-card border border-hair bg-s1 p-2 shadow-modal"
+          >
+            <p class="flex items-center gap-2 px-3 py-2 text-xs text-ink-muted">
+              Signed in as <span class="text-ink-2">{{ host }}</span>
+              <PlatformDot :platform="channel.platform" :label="false" />
+            </p>
+            <NuxtLink
+              to="/my-awards"
+              class="flex items-center justify-between gap-2 rounded-btn px-3 py-2 text-sm text-ink-2 no-underline transition-colors hover:bg-s2 hover:text-ink"
+            >
+              Your awards
               <span class="tnum text-xs text-ink-muted">{{ mine }}</span>
-            </ClientOnly>
-          </NuxtLink>
-          <NuxtLink
-            to="/create"
-            class="block rounded-btn px-3 py-2 text-sm text-ink-2 no-underline transition-colors hover:bg-s2 hover:text-ink"
-          >Create your awards</NuxtLink>
-          <NuxtLink
-            to="/catalog"
-            class="block rounded-btn px-3 py-2 text-sm text-ink-2 no-underline transition-colors hover:bg-s2 hover:text-ink"
-          >Browse the catalog</NuxtLink>
+            </NuxtLink>
+            <NuxtLink
+              to="/create"
+              class="block rounded-btn px-3 py-2 text-sm text-ink-2 no-underline transition-colors hover:bg-s2 hover:text-ink"
+            >Create your awards</NuxtLink>
+            <NuxtLink
+              to="/catalog"
+              class="block rounded-btn px-3 py-2 text-sm text-ink-2 no-underline transition-colors hover:bg-s2 hover:text-ink"
+            >Browse the catalog</NuxtLink>
+            <button
+              type="button"
+              class="mt-1 block w-full rounded-btn border-t border-hair px-3 py-2 text-left text-sm text-ink-muted transition-colors hover:bg-s2 hover:text-ink"
+              @click="signOut(); menuOpen = false"
+            >
+              Sign out
+            </button>
+          </div>
         </div>
-      </div>
+
+        <template #fallback>
+          <span class="ml-auto hidden h-9 w-24 lg:ml-6 lg:block" />
+        </template>
+      </ClientOnly>
 
       <UiButton to="/create" size="sm" class="hidden lg:inline-flex">Create your awards</UiButton>
 
@@ -179,15 +203,32 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
       >
         {{ l.label }}
       </NuxtLink>
-      <NuxtLink
-        to="/my-awards"
-        class="flex items-center justify-between border-b border-hair py-4 text-sm font-bold uppercase tracking-button text-ink-2 no-underline transition-colors hover:text-ink"
-      >
-        Your awards
-        <ClientOnly>
-          <span class="tnum text-xs text-ink-muted">{{ mine }}</span>
-        </ClientOnly>
-      </NuxtLink>
+      <ClientOnly>
+        <template v-if="signedIn">
+          <NuxtLink
+            to="/my-awards"
+            class="flex items-center justify-between border-b border-hair py-4 text-sm font-bold uppercase tracking-button text-ink-2 no-underline transition-colors hover:text-ink"
+          >
+            Your awards
+            <span class="tnum text-xs text-ink-muted">{{ mine }}</span>
+          </NuxtLink>
+          <button
+            type="button"
+            class="block w-full border-b border-hair py-4 text-left text-sm font-bold uppercase tracking-button text-ink-muted transition-colors hover:text-ink"
+            @click="signOut"
+          >
+            Sign out, {{ host }}
+          </button>
+        </template>
+        <button
+          v-else
+          type="button"
+          class="mt-4 flex h-11 w-full items-center justify-center rounded-btn bg-twitch text-sm font-bold uppercase tracking-button text-white"
+          @click="signIn"
+        >
+          Sign in with Twitch
+        </button>
+      </ClientOnly>
       <UiButton to="/create" size="sm" class="mt-5 w-full">Create your awards</UiButton>
     </nav>
   </header>

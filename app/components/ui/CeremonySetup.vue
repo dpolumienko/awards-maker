@@ -6,15 +6,17 @@ import { computed, nextTick, ref, watch } from 'vue'
 import UiButton from './UiButton.vue'
 import UiIcon from './UiIcon.vue'
 import { THEMES, themeCss } from '~/data/themes'
-import { CEREMONY_FONTS, REVEALS, type CeremonySettings } from '~/composables/useCeremony'
+import { CEREMONY_FONTS, COVER, REVEALS, type CeremonySettings } from '~/composables/useCeremony'
 import { prefersReducedMotion, useGsap } from '~/composables/useReveal'
 
-const { open, settings, accent, name } = defineProps<{
+const { open, settings, accent, name, cover = '' } = defineProps<{
   open: boolean
   settings: CeremonySettings
   accent: string
   /** The show's name, so the preview is the real thing and not lorem. */
   name: string
+  /** The uploaded cover, if this show has one - then it is a stage of its own. */
+  cover?: string
 }>()
 const emit = defineEmits<{ close: []; update: [Partial<CeremonySettings>]; start: [] }>()
 
@@ -92,7 +94,7 @@ const sample = computed(() => [...(name.trim().split(/\s+/)[0] ?? 'Winner')])
         <!-- what the choice does, at the size it will be seen -->
         <div
           class="grid aspect-[16/7] place-items-center overflow-hidden border-b border-hair"
-          :style="themeCss(settings.stage, accent)"
+          :style="themeCss(settings.stage === COVER ? undefined : settings.stage, accent, settings.stage === COVER ? cover : undefined)"
         >
           <p
             ref="preview"
@@ -108,6 +110,22 @@ const sample = computed(() => [...(name.trim().split(/\s+/)[0] ?? 'Winner')])
         <div class="p-6">
           <!-- 1. stage -->
           <div v-if="step === 0" class="grid grid-cols-3 gap-3 sm:grid-cols-6">
+            <!-- a show with a cover keeps it unless the host picks otherwise -->
+            <button
+              v-if="cover"
+              type="button"
+              class="group flex flex-col gap-2 text-left"
+              :aria-pressed="settings.stage === COVER"
+              @click="emit('update', { stage: COVER })"
+            >
+              <span
+                class="block h-12 overflow-hidden rounded-btn border transition-colors"
+                :class="settings.stage === COVER ? 'border-ink' : 'border-hair group-hover:border-hair2'"
+              >
+                <img :src="cover" alt="" class="h-full w-full object-cover" />
+              </span>
+              <span class="text-xs" :class="settings.stage === COVER ? 'text-ink' : 'text-ink-muted'">Your cover</span>
+            </button>
             <button
               v-for="t in THEMES"
               :key="t.id"
