@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 360" width="560" height="360" role="img" aria-label="Nominations with channel and text nominees, and a channel search">
+<title>Nominations with channel and text nominees, and a channel search</title>
+<defs></defs>
+<rect width="560" height="360" rx="16" fill="#131318"/>
+<rect x="30" y="30" width="400" height="290" rx="14" fill="#0E0E10" stroke="#3A3A40"/>
+<circle cx="58" cy="62" r="14" fill="#EFC97A" fill-opacity=".18"/>
+<polygon points="58.0,54.0 60.0,59.2 65.6,59.5 61.2,63.1 62.7,68.5 58.0,65.4 53.3,68.5 54.8,63.1 50.4,59.5 56.0,59.2" fill="#EFC97A" fill-opacity="1.0"/>
+<rect x="82" y="56" width="150" height="12" rx="6.0" fill="#FFFFFF" fill-opacity="0.9"/>
+<rect x="330" y="58" width="70" height="8" rx="4.0" fill="#A1A1AF" fill-opacity="0.6"/>
+<rect x="46" y="84" width="368" height="44" rx="10" fill="#131318"/>
+<circle cx="72" cy="106" r="14" fill="#9147FF"/><text x="72" y="111.0" text-anchor="middle" font-family="'Proxima Nova','Segoe UI',Arial,sans-serif" font-weight="700" font-size="13" fill="#0B0B10">N</text>
+<rect x="96" y="98" width="130" height="9" rx="4.5" fill="#FFFFFF" fill-opacity="0.8"/>
+<rect x="96" y="112" width="60" height="7" rx="3.5" fill="#A1A1AF" fill-opacity="0.5"/>
+<rect x="352" y="98" width="48" height="16" rx="8" fill="#3A3A40"/>
+<rect x="46" y="138" width="368" height="44" rx="10" fill="#131318"/>
+<circle cx="72" cy="160" r="14" fill="#53FC18"/><text x="72" y="165.0" text-anchor="middle" font-family="'Proxima Nova','Segoe UI',Arial,sans-serif" font-weight="700" font-size="13" fill="#0B0B10">L</text>
+<rect x="96" y="152" width="110" height="9" rx="4.5" fill="#FFFFFF" fill-opacity="0.8"/>
+<rect x="96" y="166" width="60" height="7" rx="3.5" fill="#A1A1AF" fill-opacity="0.5"/>
+<rect x="352" y="152" width="48" height="16" rx="8" fill="#3A3A40"/>
+<rect x="46" y="192" width="368" height="44" rx="10" fill="#131318"/>
+<circle cx="72" cy="214" r="14" fill="#17171A"/><text x="72" y="219.0" text-anchor="middle" font-family="'Proxima Nova','Segoe UI',Arial,sans-serif" font-weight="700" font-size="13" fill="#FFFFFF">Q</text>
+<rect x="96" y="206" width="90" height="9" rx="4.5" fill="#FFFFFF" fill-opacity="0.8"/>
+<rect x="96" y="220" width="60" height="7" rx="3.5" fill="#A1A1AF" fill-opacity="0.5"/>
+<rect x="352" y="206" width="48" height="16" rx="8" fill="#3A3A40"/>
+<rect x="46" y="250" width="368" height="44" rx="10" fill="none" stroke="#3A3A40" stroke-dasharray="6 5"/>
+<path d="M222 272 h16 M230 264 v16" stroke="#D9A441" stroke-width="2.4" stroke-linecap="round"/>
+<rect x="300" y="170" width="236" height="150" rx="14" fill="#17171A" stroke="#D9A441" stroke-opacity=".7"/>
+<circle cx="326" cy="198" r="8" fill="none" stroke="#D9A441" stroke-width="2.4"/><path d="M332 204 l7 7" stroke="#D9A441" stroke-width="2.4" stroke-linecap="round"/>
+<rect x="346" y="193" width="60" height="10" rx="5.0" fill="#FFFFFF" fill-opacity="0.85"/>
+<rect x="408" y="189" width="2" height="18" fill="#D9A441"/>
+<rect x="312" y="218" width="212" height="34" rx="17" fill="#0E0E10"/>
+<circle cx="332" cy="235" r="11" fill="#9147FF"/>
+<rect x="352" y="230" width="90" height="9" rx="4.5" fill="#FFFFFF" fill-opacity="0.75"/>
+<rect x="450" y="231" width="40" height="7" rx="3.5" fill="#A1A1AF" fill-opacity="0.5"/>
+<rect x="312" y="258" width="212" height="34" rx="17" fill="#0E0E10"/>
+<circle cx="332" cy="275" r="11" fill="#53FC18"/>
+<rect x="352" y="270" width="70" height="9" rx="4.5" fill="#FFFFFF" fill-opacity="0.75"/>
+<rect x="430" y="271" width="40" height="7" rx="3.5" fill="#A1A1AF" fill-opacity="0.5"/>
+<path d="M512 32 Q512 44 524 44 Q512 44 512 56 Q512 44 500 44 Q512 44 512 32 Z" fill="#EFC97A"/>
+<rect x="466" y="91" width="10" height="5" rx="1.5" fill="#B9862E" fill-opacity=".85" transform="rotate(109 466 91)"/>
+<circle cx="540" cy="81" r="4.0" fill="#3DD68C" fill-opacity=".85"/>
+<rect x="492" y="129" width="13" height="4" rx="1.5" fill="#B87333" fill-opacity=".85" transform="rotate(27 492 129)"/>
+<rect x="542" y="71" width="7" height="5" rx="1.5" fill="#EFC97A" fill-opacity=".85" transform="rotate(106 542 71)"/>
+<rect x="473" y="24" width="12" height="6" rx="1.5" fill="#B9862E" fill-opacity=".85" transform="rotate(129 473 24)"/>
+<rect x="541" y="71" width="13" height="6" rx="1.5" fill="#3DD68C" fill-opacity=".85" transform="rotate(18 541 71)"/>
+<rect x="455" y="48" width="11" height="4" rx="1.5" fill="#FFFFFF" fill-opacity=".85" transform="rotate(91 455 48)"/>
+<rect x="482" y="66" width="8" height="4" rx="1.5" fill="#3DD68C" fill-opacity=".85" transform="rotate(165 482 66)"/>
+<rect x="443" y="56" width="7" height="6" rx="1.5" fill="#3DD68C" fill-opacity=".85" transform="rotate(174 443 56)"/>
+<rect x="540" y="94" width="11" height="6" rx="1.5" fill="#FFFFFF" fill-opacity=".85" transform="rotate(48 540 94)"/>
+<rect x="454" y="83" width="7" height="5" rx="1.5" fill="#FFFFFF" fill-opacity=".85" transform="rotate(74 454 83)"/>
+<rect x="457" y="58" width="6" height="5" rx="1.5" fill="#B87333" fill-opacity=".85" transform="rotate(8 457 58)"/>
+</svg>
