@@ -19,10 +19,10 @@ const { text } = defineProps<{ text: string }>()
   content: attr(data-text);
   position: absolute;
   inset: 0;
-  background: linear-gradient(0deg, #d9a441 0%, #fff3d8 55%);
+  background: linear-gradient(0deg, rgb(var(--gold)) 0%, rgb(var(--ivory)) 55%);
   -webkit-background-clip: text;
   background-clip: text;
-  color: #fff3d8;
+  color: rgb(var(--ivory));
   opacity: 0;
   animation: glow-in 1.4s ease-out 0.5s forwards;
 }

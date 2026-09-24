@@ -49,6 +49,8 @@ onMounted(() => {
   const draw = () => {
     raf = requestAnimationFrame(draw)
     ctx.clearRect(0, 0, w, h)
+    // the palette's light colour, read each frame so a palette switch recolours the dust
+    const mote = `rgb(${getComputedStyle(document.documentElement).getPropertyValue('--gold-text').trim() || '239 201 122'})`
     for (let i = 0; i < motes.length; i++) {
       const m = motes[i]!
       m.y -= m.vy
@@ -59,7 +61,7 @@ onMounted(() => {
       const rise = 1 - m.y / h
       const fade = Math.max(0, 1 - rise * rise) * (0.65 + Math.sin(m.tw) * 0.35)
       ctx.globalAlpha = m.a * fade
-      ctx.fillStyle = '#EFC97A'
+      ctx.fillStyle = mote
       ctx.beginPath()
       ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2)
       ctx.fill()

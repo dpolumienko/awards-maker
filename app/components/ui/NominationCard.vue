@@ -260,7 +260,7 @@ const shortMeta = (n: Nomination['nominees'][number]) =>
         <div class="mt-4 flex flex-wrap items-center gap-3">
           <button
             type="button"
-            class="h-11 rounded-btn bg-gold px-4 text-sm font-bold uppercase tracking-button text-canvas transition-colors hover:bg-gold-pressed disabled:opacity-40"
+            class="btn-primary h-11 rounded-btn px-4 text-sm font-bold uppercase tracking-button transition-colors disabled:opacity-40"
             :disabled="!canAddMedia"
             @click="addMedia"
           >

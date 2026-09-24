@@ -22,7 +22,7 @@ import { PLANS } from '~/data/plans'
       <span
         v-if="p.featured"
         aria-hidden="true"
-        class="absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,#D9A441,transparent)]"
+        class="absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgb(var(--gold)),transparent)]"
       />
       <h3 class="text-xl font-semibold">{{ p.name }}</h3>
       <p class="mt-4 flex items-baseline gap-2">

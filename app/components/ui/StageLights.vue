@@ -23,7 +23,7 @@ onMounted(() => {
       class="js-beam js-beam-a absolute -top-40 left-[18%] h-[900px] w-[320px] origin-top opacity-50 blur-2xl"
       style="
         transform: rotate(-14deg);
-        background: linear-gradient(to bottom, rgba(217, 164, 65, 0.3), rgba(217, 164, 65, 0.06) 45%, transparent 72%);
+        background: linear-gradient(to bottom, rgb(var(--gold) / 0.3), rgb(var(--gold) / 0.06) 45%, transparent 72%);
         clip-path: polygon(42% 0, 58% 0, 100% 100%, 0 100%);
       "
     />
@@ -31,7 +31,7 @@ onMounted(() => {
       class="js-beam js-beam-b absolute -top-40 right-[14%] h-[820px] w-[280px] origin-top opacity-40 blur-2xl"
       style="
         transform: rotate(12deg);
-        background: linear-gradient(to bottom, rgba(239, 201, 122, 0.24), rgba(217, 164, 65, 0.05) 45%, transparent 70%);
+        background: linear-gradient(to bottom, rgb(var(--gold-text) / 0.24), rgb(var(--gold) / 0.05) 45%, transparent 70%);
         clip-path: polygon(44% 0, 56% 0, 100% 100%, 0 100%);
       "
     />

@@ -42,7 +42,7 @@ onBeforeUnmount(() => clearInterval(timer))
     <div class="mt-6 grid gap-6 lg:grid-cols-3">
       <!-- 1. the link lands in chat -->
       <div class="js-reveal overflow-hidden rounded-card border border-hair bg-s1">
-        <div class="flex h-48 flex-col bg-[radial-gradient(120%_90%_at_20%_0%,rgba(217,164,65,.08),transparent)]">
+        <div class="flex h-48 flex-col bg-[radial-gradient(120%_90%_at_20%_0%,rgb(var(--gold)/.08),transparent)]">
           <div class="flex items-center gap-2 border-b border-hair px-4 py-2">
             <span class="micro">Stream chat</span>
             <span class="ml-auto flex items-center gap-1.5">
@@ -84,7 +84,7 @@ onBeforeUnmount(() => clearInterval(timer))
           </span>
           <span class="flex items-center gap-3 rounded-btn border border-gold bg-gold/[0.12] px-3 py-2 text-sm">
             <span aria-hidden="true" class="grid h-6 w-6 flex-none place-items-center rounded-pill bg-s3 text-[11px] font-bold text-ink-muted">MA</span> maryana
-            <span aria-hidden="true" class="ml-auto grid h-5 w-5 place-items-center rounded-btn bg-gold text-canvas"><UiIcon name="check" :size="12" /></span>
+            <span aria-hidden="true" class="ml-auto grid h-5 w-5 place-items-center rounded-btn bg-gold text-on-gold"><UiIcon name="check" :size="12" /></span>
           </span>
           <span class="flex items-center gap-3 rounded-btn border border-hair bg-s2 px-3 py-2 text-sm">
             <span aria-hidden="true" class="grid h-6 w-6 flex-none place-items-center rounded-pill bg-s3 text-[11px] font-bold text-ink-muted">3A</span> The 3am raid
