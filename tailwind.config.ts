@@ -68,8 +68,9 @@ export default <Config>{
         modal: '0 24px 80px rgba(0,0,0,0.9)',
       },
       borderRadius: {
-        card: '10px',
-        btn: '8px',
+        // palettes set their own corners (assets/css/palettes.css)
+        card: 'var(--r-card, 10px)',
+        btn: 'var(--r-btn, 8px)',
         pill: '999px',
       },
       maxWidth: {

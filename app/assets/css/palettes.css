@@ -53,6 +53,66 @@
   --canvas: 3 4 9;
 }
 
+/*
+  SC Neon - the other half of the Streams Charts logo: its gradient runs blue to
+  pink, and this palette takes the pink as the accent and the whole gradient for
+  the primary button and the lit headline. Surfaces lean plum so the pink sits
+  in its own light. Corners are softer than the other palettes.
+*/
+:root[data-palette='neon'] {
+  --gold: 255 79 154;
+  --gold-pressed: 232 56 132;
+  --gold-text: 255 150 196;
+  --on-gold: 26 6 18;
+  --on-gold-soft: 40 8 28;
+  --ivory: 255 236 246;
+  --canvas: 12 8 17;
+  --s1: 24 17 33;
+  --s2: 33 24 45;
+  --s3: 46 34 61;
+  --hair: 58 44 76;
+  --hair2: 84 66 106;
+  --r-card: 16px;
+  --r-btn: 12px;
+  --glow-fill: linear-gradient(90deg, #3d9bff 0%, #a855f7 50%, #ff3d8b 100%);
+  --glow-text: transparent;
+}
+:root[data-palette='neon'] body[data-stage='1'] {
+  --canvas: 6 3 10;
+}
+:root[data-palette='neon'] .glow {
+  filter: url(#glow-neon);
+}
+
+/*
+  Platinum - no hue at all: the awards as a black-tie night. Graphite surfaces,
+  a silver-white accent, white buttons, square corners. The streamer's own
+  colour is the only colour on a show page.
+*/
+:root[data-palette='platinum'] {
+  --gold: 226 229 235;
+  --gold-pressed: 196 200 208;
+  --gold-text: 240 242 246;
+  --on-gold: 12 12 14;
+  --on-gold-soft: 24 24 28;
+  --ivory: 255 255 255;
+  --canvas: 12 13 15;
+  --s1: 23 24 27;
+  --s2: 32 33 37;
+  --s3: 44 45 50;
+  --hair: 56 58 64;
+  --hair2: 82 84 92;
+  --r-card: 3px;
+  --r-btn: 2px;
+  --glow-fill: linear-gradient(0deg, #9aa0ab 0%, #ffffff 60%);
+}
+:root[data-palette='platinum'] body[data-stage='1'] {
+  --canvas: 0 0 0;
+}
+:root[data-palette='platinum'] .glow {
+  filter: url(#glow-platinum);
+}
+
 /* ---------------------------------------------------------------- buttons */
 
 /* solid - what ships today: accent fill, near-black type */
@@ -95,6 +155,17 @@
   background-color: rgb(255 255 255);
 }
 
+/* gradient - the Streams Charts logo's blue-to-pink run as the fill; made for
+   SC Neon, works on any palette */
+:root[data-button='gradient'] .btn-primary {
+  background-image: linear-gradient(90deg, #5aa9ff 0%, #b86bff 50%, #ff4f9a 100%);
+  color: #ffffff;
+  text-shadow: 0 1px 0 rgb(0 0 0 / 0.25);
+}
+:root[data-button='gradient'] .btn-primary:hover {
+  background-image: linear-gradient(90deg, #4a97ee 0%, #a55af0 50%, #ee3f8a 100%);
+}
+
 /* Disabled, in every treatment: a quiet grey plate, not the accent at 40%,
    which read as a brown button rather than an unavailable one (design audit). */
 .btn-primary:disabled,
@@ -119,4 +190,13 @@
 /* GlowText's filter is amber; the blue palette uses its cool twin (GlowFilterDefs.vue) */
 :root[data-palette='sc'] .glow {
   filter: url(#glow-sc);
+}
+
+:root[data-palette='neon'] input[type='date']::-webkit-calendar-picker-indicator,
+:root[data-palette='neon'] input[type='time']::-webkit-calendar-picker-indicator {
+  filter: brightness(0) saturate(100%) invert(55%) sepia(60%) saturate(2400%) hue-rotate(300deg) brightness(102%);
+}
+:root[data-palette='platinum'] input[type='date']::-webkit-calendar-picker-indicator,
+:root[data-palette='platinum'] input[type='time']::-webkit-calendar-picker-indicator {
+  filter: brightness(0) invert(92%);
 }

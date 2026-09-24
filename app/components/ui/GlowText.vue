@@ -19,10 +19,12 @@ const { text } = defineProps<{ text: string }>()
   content: attr(data-text);
   position: absolute;
   inset: 0;
-  background: linear-gradient(0deg, rgb(var(--gold)) 0%, rgb(var(--ivory)) 55%);
+  background: var(--glow-fill, linear-gradient(0deg, rgb(var(--gold)) 0%, rgb(var(--ivory)) 55%));
   -webkit-background-clip: text;
   background-clip: text;
   color: rgb(var(--ivory));
+  /* a palette that sets --glow-text: transparent shows its gradient through */
+  -webkit-text-fill-color: var(--glow-text, currentColor);
   opacity: 0;
   animation: glow-in 1.4s ease-out 0.5s forwards;
 }

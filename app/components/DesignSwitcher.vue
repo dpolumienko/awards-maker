@@ -84,7 +84,7 @@ const seg = (active: boolean) =>
       >
         <div class="flex flex-wrap items-center gap-x-5 gap-y-2 px-4 py-2">
           <span class="micro text-ink-muted">Design preview</span>
-          <div class="flex items-center gap-1" role="radiogroup" aria-label="Palette">
+          <div class="flex flex-wrap items-center gap-1" role="radiogroup" aria-label="Palette">
             <span class="mr-1 text-ink-muted">Palette</span>
             <button
               v-for="p in PALETTES"
@@ -96,7 +96,7 @@ const seg = (active: boolean) =>
               @click="palette = p.id"
             >{{ p.label }}</button>
           </div>
-          <div class="flex items-center gap-1" role="radiogroup" aria-label="Main button">
+          <div class="flex flex-wrap items-center gap-1" role="radiogroup" aria-label="Main button">
             <span class="mr-1 text-ink-muted">Button</span>
             <button
               v-for="b in BUTTONS"
