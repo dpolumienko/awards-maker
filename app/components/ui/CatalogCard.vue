@@ -8,7 +8,7 @@ import UiBadge from './UiBadge.vue'
 import PlatformDot from './PlatformDot.vue'
 import UiIcon from './UiIcon.vue'
 import { themeCss } from '~/data/themes'
-import { accentText } from '~/utils/accent'
+import { accentText, accentOf, onAccent } from '~/utils/accent'
 import { FREE } from '~/types/award'
 import type { AwardSummary } from '~/composables/useAwards'
 import type { Phase } from '~/composables/useVoting'
@@ -23,7 +23,7 @@ const { award, phase, voters } = defineProps<{
   voters: number
 }>()
 
-const accent = computed(() => award.look?.accent || '#D9A441')
+const accent = computed(() => accentOf(award.look))
 const ink = computed(() => accentText(accent.value))
 const nominees = computed(() => award.categories)
 
@@ -71,7 +71,7 @@ const line = computed(() => {
         <span
           aria-hidden="true"
           class="grid h-6 w-6 flex-none place-items-center rounded-pill text-[11px] font-bold"
-          :style="{ background: accent, color: '#000' }"
+          :style="{ background: accent, color: onAccent(accent) }"
         >{{ award.host.name.slice(0, 2).toUpperCase() }}</span>
         {{ award.host.name }}
         <PlatformDot :platform="award.host.platform" :label="false" />

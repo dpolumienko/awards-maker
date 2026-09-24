@@ -7,10 +7,11 @@
 //
 // The geometry lives in a stretched 0..100 viewBox and everything that must not
 // stretch - labels, gridlines, the hover dot - is HTML on top of it.
+import { DEFAULT_ACCENT } from '~/utils/accent'
 import { computed, ref, useId } from 'vue'
 import type { DayCount } from '~/composables/useVoting'
 
-const { points, accent = '#D9A441', label } = defineProps<{
+const { points, accent = DEFAULT_ACCENT, label } = defineProps<{
   points: DayCount[]
   accent?: string
   /** What the curve counts, for the screen-reader table and the hover tooltip. */

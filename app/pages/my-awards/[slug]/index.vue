@@ -21,7 +21,7 @@ import { dailyOf, emptyTally, phaseOf, resultsOf, useVoting, votesInOf } from '~
 import { dayIn, formatInZone } from '#shared/time'
 import { useReveal } from '~/composables/useReveal'
 import { playCue } from '~/composables/useCue'
-import { accentText } from '~/utils/accent'
+import { accentText, accentOf } from '~/utils/accent'
 import { nomineeName, nomineeSub } from '~/utils/nominee'
 import { FREE, type Nomination } from '~/types/award'
 import { DISPLAY_FONTS, useDisplayFonts } from '~/composables/useDisplayFonts'
@@ -40,7 +40,7 @@ useReveal(root, { stagger: 0.05 })
 const award = computed(() => data.value?.award ?? null)
 const tally = computed(() => data.value?.tally ?? emptyTally())
 const phase = computed(() => (award.value ? phaseOf(award.value, data.value?.voters ?? 0) : 'open'))
-const accent = computed(() => award.value?.look?.accent || '#D9A441')
+const accent = computed(() => accentOf(award.value?.look))
 const ink = computed(() => accentText(accent.value))
 
 const voters = computed(() => data.value?.voters ?? 0)

@@ -5,6 +5,7 @@
 // dark cards and for nominee names that are longer than a 200px column.
 //
 // The bar is decorative: every number it draws is also written next to it.
+import { DEFAULT_ACCENT } from '~/utils/accent'
 import { computed } from 'vue'
 
 export interface RankItem {
@@ -18,7 +19,7 @@ export interface RankItem {
   highlight?: boolean
 }
 
-const { items, accent = '#D9A441', max } = defineProps<{
+const { items, accent = DEFAULT_ACCENT, max } = defineProps<{
   items: RankItem[]
   accent?: string
   /** Shared ceiling, so two lists can be compared. Defaults to the biggest row. */

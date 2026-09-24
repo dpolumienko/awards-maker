@@ -40,6 +40,7 @@ export function accentReadable(hex: string) {
  * Hue and character survive; the text becomes readable.
  */
 export function accentText(hex: string) {
+  if (hex === DEFAULT_ACCENT) return 'rgb(var(--gold-text))'
   const rgb = toRgb(hex)
   if (!rgb) return hex
   if (contrast(rgb) >= FLOOR) return hex
@@ -48,4 +49,43 @@ export function accentText(hex: string) {
     if (contrast(lifted) >= FLOOR) return toHex(lifted)
   }
   return '#FFFFFF'
+}
+
+/**
+ * A show with no colour of its own takes the site palette's accent, not a
+ * fixed gold: under SC Blue a default show was still painted gold (review
+ * 2026-09-24). It is a CSS expression, so the server renders the right colour
+ * before any script runs and the design switcher repaints it live.
+ */
+export const DEFAULT_ACCENT = 'rgb(var(--gold))'
+
+/** The show's accent: the streamer's own colour, or the palette's. */
+export function accentOf(look?: { accent?: string } | null) {
+  return look?.accent || DEFAULT_ACCENT
+}
+
+/** Type on an accent fill. */
+export function onAccent(color: string) {
+  return color === DEFAULT_ACCENT ? 'rgb(var(--on-gold))' : '#000'
+}
+
+/**
+ * The accent at an opacity, given as the two hex digits the code used to glue
+ * onto a #RRGGBB. Works for the palette's CSS expression too.
+ */
+export function tint(color: string, alphaHex: string) {
+  if (/^#[\da-f]{6}$/i.test(color)) return color + alphaHex
+  const pct = Math.round((parseInt(alphaHex, 16) / 255) * 100)
+  return `color-mix(in srgb, ${color} ${pct}%, transparent)`
+}
+
+/**
+ * A real #RRGGBB for places CSS variables cannot reach - a canvas. On the
+ * server, or with no palette set, that is the gold.
+ */
+export function resolveAccent(color: string) {
+  if (color !== DEFAULT_ACCENT) return color
+  if (typeof document === 'undefined') return '#D9A441'
+  const v = getComputedStyle(document.documentElement).getPropertyValue('--gold').trim().split(/\s+/).map(Number)
+  return v.length === 3 && v.every((n) => Number.isFinite(n)) ? toHex(v) : '#D9A441'
 }

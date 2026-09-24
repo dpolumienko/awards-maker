@@ -18,7 +18,7 @@ import { nomineeImage, nomineeInitials, nomineeName } from '~/utils/nominee'
 import CeremonySetup from '~/components/ui/CeremonySetup.vue'
 import { COVER, useCeremony } from '~/composables/useCeremony'
 import { themeCss } from '~/data/themes'
-import { accentText } from '~/utils/accent'
+import { accentText, accentOf, onAccent, tint } from '~/utils/accent'
 import { DISPLAY_FONTS, useDisplayFonts } from '~/composables/useDisplayFonts'
 
 // ceremony typefaces and share cards draw in any of the headline faces
@@ -33,7 +33,7 @@ const { publishResults } = useVoting()
 const { data, refresh } = await useAwardPage(() => slug.value)
 const award = computed(() => data.value?.award ?? null)
 const tally = computed(() => data.value?.tally ?? emptyTally())
-const accent = computed(() => award.value?.look?.accent || '#D9A441')
+const accent = computed(() => accentOf(award.value?.look))
 const ink = computed(() => accentText(accent.value))
 // The ceremony has its own stage, face and reveal - set once, kept per awards.
 const { settings, update, configured } = useCeremony(() => slug.value, () => award.value)
@@ -50,8 +50,8 @@ const headlineFont = computed(() => `'${settings.value.font}', Archivo, sans-ser
 /** A nominee plate: everyone in the house colour, the winner filled and lit. */
 const plate = (won: boolean) =>
   won
-    ? { background: accent.value, color: '#000', boxShadow: `0 0 0 0.5cqw ${accent.value}33, 0 0 7cqw ${accent.value}55` }
-    : { background: 'rgba(255,255,255,.07)', color: ink.value, border: `1px solid ${accent.value}55` }
+    ? { background: accent.value, color: onAccent(accent.value), boxShadow: `0 0 0 0.5cqw ${tint(accent.value, '33')}, 0 0 7cqw ${tint(accent.value, '55')}` }
+    : { background: 'rgba(255,255,255,.07)', color: ink.value, border: `1px solid ${tint(accent.value, '55')}` }
 
 /** OBS loads this page with ?bare=1: no controls, no chrome, just the stage. */
 const bare = computed(() => 'bare' in route.query)

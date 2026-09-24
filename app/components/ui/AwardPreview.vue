@@ -7,7 +7,7 @@ import UiBadge from './UiBadge.vue'
 import PlatformDot from './PlatformDot.vue'
 import { nomineeName, nomineeSub } from '~/utils/nominee'
 import { themeCss } from '~/data/themes'
-import { accentText } from '~/utils/accent'
+import { accentText, accentOf, onAccent } from '~/utils/accent'
 import { FREE, type Award } from '~/types/award'
 import UiIcon from './UiIcon.vue'
 import PartnerChip from './PartnerChip.vue'
@@ -25,7 +25,7 @@ const picked = ref<string | null>(null)
 const viewing = ref<{ src?: string; url?: string; title: string } | null>(null)
 // The Look settings are paid, but the preview honours them immediately - that is
 // the whole point of letting people try them before the bill.
-const accent = computed(() => award.look?.accent || '#D9A441')
+const accent = computed(() => accentOf(award.look))
 // Accent as type has to clear 4.5:1; as a fill it stays exactly as picked.
 const ink = computed(() => accentText(accent.value))
 const headlineFont = computed(() =>
@@ -98,7 +98,7 @@ const countdown = computed(() => {
           v-if="signedIn"
           aria-hidden="true"
           class="grid h-6 w-6 place-items-center rounded-pill text-[11px] font-bold"
-          :style="{ background: accent, color: '#000' }"
+          :style="{ background: accent, color: onAccent(accent) }"
         >
           {{ award.host.name.slice(0, 2).toUpperCase() }}
         </span>

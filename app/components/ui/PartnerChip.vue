@@ -4,6 +4,7 @@
 // not through a third-party icon service, so nobody's visitors get logged
 // somewhere else. Anything missing or broken falls back to the initial.
 // With a backend this gets fetched and cached on our side; the shape stays.
+import { tint } from '~/utils/accent'
 import { computed, ref } from 'vue'
 import type { Partner } from '~/types/award'
 
@@ -38,7 +39,7 @@ const tag = computed(() => (href.value ? 'a' : 'span'))
     :target="href ? '_blank' : undefined"
     :rel="href ? 'nofollow sponsored noopener' : undefined"
     class="inline-flex items-center gap-2 rounded-pill border py-1.5 pl-1.5 pr-3.5 text-sm text-ink-2 no-underline transition-colors hover:text-ink"
-    :style="{ borderColor: accent + '66' }"
+    :style="{ borderColor: tint(accent, '66') }"
   >
     <img
       v-if="icon"
