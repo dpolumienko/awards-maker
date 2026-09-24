@@ -23,7 +23,7 @@ import { emptyTally, phaseOf, resultsOf, useVoting, votesInOf } from '~/composab
 import { useReveal } from '~/composables/useReveal'
 import { playCue } from '~/composables/useCue'
 import { themeCss } from '~/data/themes'
-import { accentText } from '~/utils/accent'
+import { accentText, accentOf, onAccent } from '~/utils/accent'
 import { nomineeName } from '~/utils/nominee'
 import { FREE } from '~/types/award'
 import { awardOgImage } from '~/utils/og'
@@ -67,7 +67,7 @@ const phase = computed(() =>
     ? phaseOf(award.value, data.value?.voters ?? 0, now.value, route.query.state as string)
     : 'open',
 )
-const accent = computed(() => award.value?.look?.accent || '#D9A441')
+const accent = computed(() => accentOf(award.value?.look))
 // Fills keep the colour the streamer picked; type takes the readable version.
 const ink = computed(() => accentText(accent.value))
 const headlineFont = computed(() =>
@@ -400,7 +400,7 @@ if (award.value && !thin.value) {
             <span
               aria-hidden="true"
               class="grid h-11 w-11 place-items-center rounded-pill text-sm font-bold"
-              :style="{ background: accent, color: '#000' }"
+              :style="{ background: accent, color: onAccent(accent) }"
             >
               {{ award.host.name.slice(0, 2).toUpperCase() }}
             </span>
@@ -703,7 +703,7 @@ if (award.value && !thin.value) {
           <h2 class="text-2xl font-bold uppercase tracking-heading">Run awards for your own channel</h2>
           <p class="mt-2 max-w-copy text-ink-2">
             Same page, your categories. Free for up to {{ FREE.maxNominations }} categories and
-            {{ FREE.maxVoters }} voters - about ten minutes from an empty form to a link in chat.
+            {{ FREE.maxVoters }} voters - about ten minutes from an empty form to a link your viewers can vote on.
           </p>
           <div class="mt-5 flex flex-wrap gap-3">
             <UiButton to="/create">Create your awards</UiButton>

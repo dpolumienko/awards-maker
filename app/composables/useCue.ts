@@ -1,3 +1,4 @@
+import { DEFAULT_ACCENT } from '~/utils/accent'
 import { nextTick } from 'vue'
 import { prefersReducedMotion, useGsap } from './useReveal'
 
@@ -10,7 +11,7 @@ import { prefersReducedMotion, useGsap } from './useReveal'
  *
  * Same idea as the curtain after publishing, an order of magnitude quieter.
  */
-export async function playCue(el: HTMLElement | null, accent = '#D9A441') {
+export async function playCue(el: HTMLElement | null, accent = DEFAULT_ACCENT) {
   if (!el || prefersReducedMotion()) return
   await nextTick()
   const { gsap } = useGsap()

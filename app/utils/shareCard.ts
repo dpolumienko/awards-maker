@@ -1,3 +1,4 @@
+import { accentOf, resolveAccent } from './accent'
 import type { Award, AwardLook } from '~/types/award'
 
 /**
@@ -36,11 +37,10 @@ export const FORMATS: Record<ShareFormat, { w: number; h: number; name: string; 
   story: { w: 1080, h: 1920, name: 'Story', note: 'Instagram, TikTok, YouTube' },
 }
 
-const GOLD = '#D9A441'
 
 /** The page themes, redrawn with canvas gradients instead of CSS ones. */
 function paintStage(ctx: CanvasRenderingContext2D, look: AwardLook, w: number, h: number) {
-  const accent = look.accent || GOLD
+  const accent = resolveAccent(accentOf(look))
   ctx.fillStyle = '#0E0E10'
   ctx.fillRect(0, 0, w, h)
 
@@ -160,7 +160,7 @@ export async function renderShareCard(spec: CardSpec): Promise<string> {
   canvas.width = w
   canvas.height = h
   const ctx = canvas.getContext('2d')!
-  const accent = spec.look.accent || GOLD
+  const accent = resolveAccent(accentOf(spec.look))
   const display = spec.look.font ? `'${spec.look.font}'` : 'Archivo'
   const story = spec.format === 'story'
 

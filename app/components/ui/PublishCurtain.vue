@@ -12,6 +12,7 @@
 // The letter mechanic is ported from "Vertical Cut Reveal" on 21st.dev: each
 // character sits in its own overflow-hidden box and slides up from below, with
 // the stagger running out from the centre.
+import { accentOf, tint } from '~/utils/accent'
 import { computed, nextTick, ref, watch } from 'vue'
 import { prefersReducedMotion, useGsap } from '~/composables/useReveal'
 import { themeCss } from '~/data/themes'
@@ -30,7 +31,7 @@ const { open, name, url, look = {} } = defineProps<{
 const emit = defineEmits<{ reveal: []; done: [] }>()
 
 const root = ref<HTMLElement | null>(null)
-const accent = computed(() => look.accent || '#D9A441')
+const accent = computed(() => accentOf(look))
 const font = computed(() => (look.font ? `'${look.font}', Archivo, sans-serif` : undefined))
 // Split on words first so a long name wraps where a name should wrap.
 const words = computed(() => name.trim().split(/\s+/).map((w) => [...w]))
@@ -92,7 +93,7 @@ watch(
         aria-hidden="true"
         class="js-beam absolute inset-y-[-30%] left-0 w-1/3 -rotate-12"
         :style="{
-          background: `linear-gradient(100deg, transparent, ${accent}26 35%, ${accent}4D 50%, ${accent}26 65%, transparent)`,
+          background: `linear-gradient(100deg, transparent, ${tint(accent, '26')} 35%, ${tint(accent, '4D')} 50%, ${tint(accent, '26')} 65%, transparent)`,
         }"
       />
 

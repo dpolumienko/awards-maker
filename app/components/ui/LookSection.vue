@@ -8,7 +8,7 @@
 import { THEMES, themeCss } from '~/data/themes'
 import { ref } from 'vue'
 import { fileToStoredImage } from '~/utils/image'
-import { accentReadable } from '~/utils/accent'
+import { DEFAULT_ACCENT, accentReadable, resolveAccent } from '~/utils/accent'
 import type { AwardLook } from '~/types/award'
 import UiMaskIcon from './UiMaskIcon.vue'
 
@@ -19,10 +19,11 @@ const { look, signedIn = false, channel = '' } = defineProps<{
 }>()
 const emit = defineEmits<{ 'update:look': [AwardLook]; signIn: [] }>()
 
-// First swatch is the free default; the rest are the paid palette, plus a custom
-// picker for a channel that has its own brand colour.
+// First swatch is the free default - the site palette's own accent, so it is
+// blue under SC Blue - the rest are the paid palette, plus a custom picker for a
+// channel that has its own brand colour.
 const accents = [
-  '#D9A441', '#EFC97A', '#B87333', '#C9CCD1',
+  DEFAULT_ACCENT, '#EFC97A', '#B87333', '#C9CCD1',
   '#3DD68C', '#1FA98C', '#5AA9FF', '#3B5BDB',
   '#9147FF', '#C86DD7', '#FF4E45', '#FF8A3D',
 ]
@@ -108,7 +109,7 @@ function clearCover() {
           class="h-11 w-full rounded-btn border-2 transition-transform duration-300 ease-gala motion-safe:hover:-translate-y-0.5"
           :class="accent() === c ? 'border-ink' : 'border-transparent opacity-80'"
           :style="{ background: c }"
-          :aria-label="'Accent colour ' + c"
+          :aria-label="c === DEFAULT_ACCENT ? 'Default accent colour' : 'Accent colour ' + c"
           :aria-pressed="accent() === c"
           @click="set({ accent: c === accents[0] ? undefined : c })"
         />
@@ -122,7 +123,7 @@ function clearCover() {
           <input
             type="color"
             class="h-8 w-10 cursor-pointer rounded-btn border border-hair bg-s2 p-0.5"
-            :value="accent()"
+            :value="resolveAccent(accent())"
             aria-label="Custom accent colour"
             @input="set({ accent: ($event.target as HTMLInputElement).value })"
           />
