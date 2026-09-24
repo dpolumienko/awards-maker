@@ -14,7 +14,6 @@ import TemplatePicker from '~/components/ui/TemplatePicker.vue'
 import PaywallNote from '~/components/ui/PaywallNote.vue'
 import LookSection from '~/components/ui/LookSection.vue'
 import PlatformDot from '~/components/ui/PlatformDot.vue'
-import LivePill from '~/components/ui/LivePill.vue'
 import InteractiveAccordion from '~/components/ui/InteractiveAccordion.vue'
 import type { AwardTemplate } from '~/data/templates'
 import { ideaGroup } from '~/data/ideas'
@@ -75,10 +74,13 @@ watch(
 
 // A draft belongs to an account now, so the builder loads it once there is one.
 const { signedIn, isHost, signInAsHost } = useAccount()
-const { load: loadBilling } = usePro()
-onMounted(() => {
-  load()
+const { load: loadBilling, checkout, checkoutError } = usePro()
+onMounted(async () => {
   loadBilling()
+  // the draft first, then anything the URL asks to add to it - the two used to
+  // race, and the async load wiped the ideas that had just been put in (QA P1)
+  await load()
+  applyIdeasFromQuery()
 })
 const tab = ref<'form' | 'preview'>('form')
 const cards = ref<InstanceType<typeof NominationCard>[]>([])
@@ -129,13 +131,15 @@ function applyTemplate(t: AwardTemplate) {
  * empty rows and stops at the free ceiling; an existing draft is never overwritten.
  */
 const route = useRoute()
-onMounted(() => {
+function applyIdeasFromQuery() {
   const group = ideaGroup(String(route.query.ideas ?? ''))
   if (!group) return
   // the whole set, not the free slice: a set that runs past the ceiling is how the
   // page said it would behave, and the paywall note explains the rest
   group.items.slice(0, group.set).forEach(addIdea)
-})
+  // once applied, drop it from the URL so a reload does not add the set twice
+  navigateTo({ query: { ...route.query, ideas: undefined } }, { replace: true })
+}
 
 function addIdea(title: string) {
   const empty = draft.value.nominations.find((n) => !n.title.trim() && !n.nominees.length)
@@ -176,7 +180,7 @@ const faq = [
     a: 'Yes - three sets of five. One follows the categories the big streaming award shows run (Streamer of the Year, Rising Star, Best Variety Streamer and so on), the other two are built for a single channel and its chat. One click fills the form, and single ideas - genre awards, collabs, marathons - can be added one at a time. Rename or drop anything after.',
   },
   {
-    q: 'How do I set up awards for my chat?',
+    q: 'How do I set up awards for my viewers?',
     a: 'Start from one of the three sets above or add nominations yourself, put at least two nominees in each, set the dates and publish. Nominees can be any channel we track or plain text, so a clip, a mod or a running joke all work.',
   },
   {
@@ -239,7 +243,6 @@ useSeoMeta({
       </span>
       <span class="font-semibold">{{ draft.host.name }}</span>
       <PlatformDot :platform="draft.host.platform" />
-      <LivePill game="Just Chatting" />
       <span class="micro ml-auto">Building awards for this channel</span>
     </div>
 
@@ -402,9 +405,11 @@ useSeoMeta({
           :paid-features="paidFeatures"
           :error="publishError"
           @publish="onPublish"
-          @upgrade="paywallOpen = true"
+          @upgrade="checkout"
           @downgrade="onPublishFree"
         />
+        <!-- the payment goes straight to checkout from here; Stripe off answers 503 and says so -->
+        <p v-if="checkoutError" class="mt-3 text-sm text-danger" role="alert">{{ checkoutError }}</p>
       </div>
 
       <!-- PREVIEW -->

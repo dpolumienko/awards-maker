@@ -20,15 +20,23 @@ const host = computed(() => {
   }
 })
 const icon = computed(() => (host.value && !failed.value ? `https://${host.value}/favicon.ico` : ''))
-const tag = computed(() => (partner.url?.trim() ? 'a' : 'span'))
+// Only an http(s) address becomes a link - never javascript: or data:, whatever
+// is stored. A bare domain is read as https (the API normalises new ones).
+const href = computed(() => {
+  const raw = partner.url?.trim() ?? ''
+  if (!raw) return ''
+  if (/^https?:\/\//i.test(raw)) return raw
+  return /^[a-z][a-z0-9+.-]*:/i.test(raw) ? '' : `https://${raw}`
+})
+const tag = computed(() => (href.value ? 'a' : 'span'))
 </script>
 
 <template>
   <component
     :is="tag"
-    :href="partner.url?.trim() || undefined"
-    :target="partner.url?.trim() ? '_blank' : undefined"
-    :rel="partner.url?.trim() ? 'nofollow sponsored noopener' : undefined"
+    :href="href || undefined"
+    :target="href ? '_blank' : undefined"
+    :rel="href ? 'nofollow sponsored noopener' : undefined"
     class="inline-flex items-center gap-2 rounded-pill border py-1.5 pl-1.5 pr-3.5 text-sm text-ink-2 no-underline transition-colors hover:text-ink"
     :style="{ borderColor: accent + '66' }"
   >

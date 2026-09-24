@@ -13,6 +13,8 @@ import { computed, ref } from 'vue'
  */
 export interface Order {
   id: number
+  /** the show this payment was spent on; null while it is still unspent */
+  award_id: number | null
   slug: string | null
   name: string | null
   tier: string
@@ -35,11 +37,11 @@ const billing = ref<Billing>({ orders: [], payments: false, comped: false })
 const loaded = ref(false)
 
 export function usePro() {
-  const { isAdmin } = useAccount()
+  const { isAdmin, signedIn } = useAccount()
 
-  /** One fetch per page load, whoever asks first. */
+  /** One fetch per page load, whoever asks first. Nothing to fetch signed out. */
   async function load(force = false) {
-    if (loaded.value && !force) return
+    if ((loaded.value && !force) || !signedIn.value) return
     loaded.value = true
     try {
       billing.value = await $fetch<Billing>('/api/billing/orders')
@@ -49,8 +51,23 @@ export function usePro() {
     }
   }
 
-  const paid = computed(() => billing.value.orders.some((o) => o.status === 'paid'))
+  // $50 buys one show: a payment counts until a published show has spent it
+  // (server/utils/billing.ts claimOrder)
+  const credits = computed(() => billing.value.orders.filter((o) => o.status === 'paid' && !o.award_id).length)
+  const paid = computed(() => credits.value > 0)
   const pro = computed(() => isAdmin.value || billing.value.comped || paid.value)
 
-  return { pro, paid, billing, load }
+  const checkoutError = ref('')
+  /** Off to Stripe. Comes back to the builder, where the draft is waiting. */
+  async function checkout() {
+    checkoutError.value = ''
+    try {
+      const { url } = await $fetch<{ url: string }>('/api/billing/checkout', { method: 'POST' })
+      window.location.href = url
+    } catch (error) {
+      checkoutError.value = (error as { statusMessage?: string }).statusMessage || 'Could not start the checkout'
+    }
+  }
+
+  return { pro, paid, credits, billing, load, checkout, checkoutError }
 }

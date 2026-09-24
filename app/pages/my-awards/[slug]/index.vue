@@ -278,7 +278,7 @@ useSeoMeta({
           <p class="micro text-gold-text">Your move</p>
           <p class="mt-3 max-w-copy text-sm text-ink-2">
             <template v-if="phase === 'open' || phase === 'soon'">
-              Voting runs to {{ fmt(award.closesAt) }} on its own. Close it earlier if the chat has voted and
+              Voting runs to {{ fmt(award.closesAt) }} on its own. Close it earlier if your viewers have voted and
               you want to announce sooner - votes already cast are kept.
             </template>
             <template v-else-if="phase === 'revealed'">

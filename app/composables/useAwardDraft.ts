@@ -36,6 +36,40 @@ const loaded = ref(false)
 const saving = ref(false)
 let watching = false
 
+// A host may build the whole show before signing in - the builder invites it.
+// Until there is an account to save to, the draft lives in this browser, and it
+// is handed to the account on sign-in (QA P0: signing in to publish used to
+// come back to an empty form and lose everything).
+const LOCAL_KEY = 'am-draft-local'
+function readLocal(): Partial<Award> | null {
+  try {
+    const raw = localStorage.getItem(LOCAL_KEY)
+    return raw ? (JSON.parse(raw) as Partial<Award>) : null
+  } catch {
+    return null
+  }
+}
+function writeLocal(a: Award) {
+  try {
+    localStorage.setItem(LOCAL_KEY, JSON.stringify(a))
+  } catch {
+    /* private mode or full: the draft lives for this page only */
+  }
+}
+function clearLocal() {
+  try {
+    localStorage.removeItem(LOCAL_KEY)
+  } catch {
+    /* nothing to clear */
+  }
+}
+/** Whether a draft has anything in it a person typed. */
+const hasContent = (a: Partial<Award> | null | undefined) =>
+  !!a &&
+  (!!a.name?.trim() ||
+    !!a.description?.trim() ||
+    !!a.nominations?.some((n) => n.title?.trim() || n.nominees?.length))
+
 /**
  * Fills in anything the server left out, so a draft saved before a field existed
  * cannot crash the builder on read.
@@ -95,16 +129,33 @@ function toPayload(a: Award) {
 export function useAwardDraft() {
   const { signedIn, channel } = useAccount()
 
-  /** Pulls the account's draft. Idempotent - the builder calls it on mount. */
+  /**
+   * Pulls the account's draft, or this browser's when signed out. Idempotent -
+   * the builder calls it on mount and awaits it before touching the form.
+   */
   async function load() {
-    if (loaded.value || !import.meta.client || !signedIn.value) return
+    if (loaded.value || !import.meta.client) return
     loaded.value = true
+    const local = readLocal()
+    if (!signedIn.value) {
+      if (hasContent(local)) draft.value = normalize(local!)
+      startAutosave()
+      return
+    }
     try {
       const res = await $fetch<{ draft: Partial<Award> }>('/api/draft')
-      draft.value = normalize(res.draft)
+      // the account's draft wins when it has anything in it; otherwise what was
+      // built here before signing in becomes the account's draft
+      if (!hasContent(res.draft) && hasContent(local)) {
+        draft.value = normalize(local!)
+        await $fetch('/api/draft', { method: 'PUT', body: toPayload(draft.value) }).catch(() => {})
+      } else {
+        draft.value = normalize(res.draft)
+      }
+      clearLocal()
       if (!draft.value.host.name) draft.value.host = { ...channel.value }
     } catch {
-      draft.value = emptyDraft()
+      draft.value = hasContent(local) ? normalize(local!) : emptyDraft()
     }
     startAutosave()
   }
@@ -120,8 +171,12 @@ export function useAwardDraft() {
     watch(
       draft,
       () => {
-        if (!signedIn.value) return
         clearTimeout(timer)
+        if (!signedIn.value) {
+          // no account yet: keep it in this browser (see LOCAL_KEY)
+          timer = setTimeout(() => writeLocal(draft.value), 400)
+          return
+        }
         timer = setTimeout(async () => {
           saving.value = true
           try {

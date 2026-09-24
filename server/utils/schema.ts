@@ -8,6 +8,22 @@ import { isTimeZone } from '#shared/time'
 const platform = z.enum(['twitch', 'kick', 'youtube'])
 
 /**
+ * A link a visitor will click: http(s) only. A bare "loot.gg" is read as
+ * https://loot.gg rather than becoming a relative link to a 404, and anything
+ * with another scheme - javascript:, data: - is refused (QA P1: a partner link
+ * was rendered as href="javascript:…" on the public page).
+ */
+const webUrl = z.preprocess(
+  (v) => {
+    if (typeof v !== 'string') return v
+    const t = v.trim()
+    if (!t) return ''
+    return /^[a-z][a-z0-9+.-]*:/i.test(t) ? t : `https://${t.replace(/^\/+/, '')}`
+  },
+  z.string().max(1024).refine((v) => v === '' || /^https?:\/\/[^\s/]+\.[^\s]+/i.test(v), 'not a web address'),
+)
+
+/**
  * An instant (ISO 8601 with a zone or Z), or a bare YYYY-MM-DD from a builder
  * that predates times - shared/time.ts `toInstant` reads that in the show's zone.
  */
@@ -21,9 +37,9 @@ const instant = z
 export const nomineeSchema = z.object({
   kind: z.enum(['channel', 'text', 'media']),
   text: z.string().max(191).optional(),
-  url: z.string().max(1024).optional(),
+  url: webUrl.optional(),
   // an uploads path we handed out, never a data: URL - see server/api/uploads.post.ts
-  image: z.string().max(512).optional(),
+  image: z.string().max(512).regex(/^\/uploads\/[\w-]+\/[\w.-]+$/).or(z.literal('')).optional(),
   channel: z
     .object({
       name: z.string().max(191),
@@ -44,7 +60,7 @@ export const awardInputSchema = z.object({
   timezone: z.string().max(64).refine(isTimeZone, 'unknown time zone').optional(),
   look: z.record(z.string(), z.unknown()).default({}),
   host: z.object({ name: z.string().max(191), platform }),
-  partners: z.array(z.object({ name: z.string().max(191), url: z.string().max(512) })).max(40).default([]),
+  partners: z.array(z.object({ name: z.string().max(191), url: webUrl })).max(40).default([]),
   nominations: z
     .array(z.object({ title: z.string().max(191), nominees: z.array(nomineeSchema).max(60) }))
     .max(60)
