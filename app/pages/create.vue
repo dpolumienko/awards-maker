@@ -211,7 +211,7 @@ useSchemaOrg([
   <div class="shell py-10">
     <h1 class="heading">Create your own streamer awards</h1>
     <p class="mt-3 max-w-copy text-lg text-ink-2">
-      Start from a ready-made set of categories or write your own, nominate any channel or your chat's favourite meme,
+      Start from a ready-made set of categories or write your own, nominate channels from Twitch, Kick and YouTube or your community's favourite meme,
       then publish a page your viewers vote on.
       Free: up to {{ FREE.maxNominations }} nominations, one awards at a time, {{ FREE.maxVoters }} voters.
     </p>

@@ -29,15 +29,15 @@ onMounted(() => {
 })
 onBeforeUnmount(() => clearInterval(timer))
 
-// Jury vote was cut (decision 2026-09-14): chat votes, full stop.
+// Jury vote was cut (decision 2026-09-14): viewers vote, full stop.
 // Shown as three small mock screens - the flow is easier to look at than to read.
 </script>
 
 <template>
   <SectionShell
     id="voting"
-    heading="Let chat vote for every winner"
-    intro="Three taps from a link in chat to a counted vote."
+    heading="Let your viewers vote for every winner"
+    intro="Three taps from a shared link to a counted vote."
   >
     <div class="mt-6 grid gap-6 lg:grid-cols-3">
       <!-- 1. the link lands in chat -->
@@ -70,7 +70,7 @@ onBeforeUnmount(() => clearInterval(timer))
           </div>
         </div>
         <div class="border-t border-hair p-5">
-          <h3 class="text-xl font-semibold">The link goes in your chat</h3>
+          <h3 class="text-xl font-semibold">The link goes wherever your viewers are</h3>
           <p class="m-0 mt-1 text-sm text-ink-2">No account needed to look at the nominees.</p>
         </div>
       </div>

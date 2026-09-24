@@ -31,7 +31,7 @@ export const IDEA_GROUPS: IdeaGroup[] = [
   {
     id: 'chat',
     emoji: '💬',
-    title: 'For your chat',
+    title: 'For your community',
     set: 5,
     blurb:
       'The ones your regulars will argue about. Every name here points at a person in the room, which is why these get the most votes.',

@@ -38,7 +38,7 @@ const faq = [
 
 useSeoMeta({
   title: `${IDEA_TOTAL} Award Category Ideas for Streamers`,
-  description: `${IDEA_TOTAL} award category ideas for a streamer awards show: chat awards, clips and collabs, funny ones and the classics. Open any group as a draft and run it free.`,
+  description: `${IDEA_TOTAL} award category ideas for a streamer awards show: community awards, clips and collabs, funny ones and the classics. Open any group as a draft and run it free.`,
   ogImage: ogCard('ideas'),
 })
 

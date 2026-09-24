@@ -21,7 +21,7 @@ useReveal(root)
 
         <div class="relative">
           <h2 class="mt-4 text-[clamp(30px,5vw,64px)] font-extrabold uppercase leading-[0.98] tracking-display">
-            Your chat already has
+            Your viewers already have
             <span class="block text-gold"><GlowText text="favorites" /></span>
           </h2>
           <p class="mx-auto mt-6 max-w-[46ch] text-lg text-ink-2">Give them a ballot. Setup takes a few minutes, and the free plan covers a first season.</p>

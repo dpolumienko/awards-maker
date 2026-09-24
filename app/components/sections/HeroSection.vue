@@ -73,8 +73,8 @@ onMounted(() => {
       </h1>
 
       <p class="js-reveal mt-8 max-w-[60ch] text-xl text-ink-2">
-        Run your own streamer awards: pick the categories, nominate any channel or your chat's favorite meme, and let
-        your viewers vote for every winner.
+        Run your own streamer awards: pick the categories, nominate channels from Twitch, Kick and YouTube or your
+        community's favorite meme, and let your viewers vote for every winner.
       </p>
 
       <div class="js-reveal mt-8 flex flex-wrap items-center gap-4">

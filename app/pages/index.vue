@@ -12,7 +12,7 @@ import FaqSection, { type FaqItem } from '~/components/sections/FaqSection.vue'
 
 // Copy is frozen in outputs/awards-landing-copy-2026-09-13.md - change it there first.
 const faq: FaqItem[] = [
-  { q: 'How do I host my own streamer awards for my Twitch chat?', a: 'Log in with Twitch, add up to 5 nominations and fill each one with channels or text nominees, publish, and paste the page link in chat.' },
+  { q: 'How do I host my own streamer awards?', a: 'Sign in with Twitch, add up to 5 categories and fill each one with channels from Twitch, Kick or YouTube, or text nominees, publish, and share the page link with your viewers.' },
   { q: 'Is the awards maker free?', a: 'It\u2019s free. One awards can be active at a time, with up to 5 nominations in it.' },
   { q: 'Who can vote, and how are fake votes stopped?', a: 'In an open viewer vote, anyone can vote after signing in with Twitch. Each account gets exactly one vote per category, and that limit is always on.' },
   { q: 'What are good categories for end of year awards?', a: 'Mix one or two big ones, like Clip of the Year or Chatter of the Year, with something only your community gets, like Rage Quit of the Year. The 30 ideas above are a good place to start.' },
@@ -24,9 +24,9 @@ const faq: FaqItem[] = [
 ]
 
 useSeoMeta({
-  title: 'Awards Maker: Twitch Awards for Your Chat',
+  title: 'Awards Maker: Create Your Own Streamer Awards',
   description:
-    'Run your own streamer awards: pick categories, nominate any channel, let chat vote or choose winners yourself. Free with a Twitch login.',
+    'Run your own streamer awards: pick the categories, nominate channels from Twitch, Kick and YouTube, and let your viewers vote. Free to start.',
   ogImage: ogCard('home'),
 })
 

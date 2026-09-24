@@ -29,14 +29,14 @@ describe('ogCopy', () => {
   it('asks for a vote while voting is open', () => {
     const c = ogCopy(award(), 4, 'https://awards.streamscharts.com', NOW)
     expect(c.kicker).toBe('kaicenat presents')
-    expect(c.sub).toBe('4 categories, voted by chat · closes 20 Dec, 23:00 Kyiv time')
+    expect(c.sub).toBe('4 categories, voted by viewers · closes 20 Dec, 23:00 Kyiv time')
     expect(c.cta).toBe('Vote now')
     expect(c.url).toBe('awards.streamscharts.com/a/kai-cenat-awards')
   })
 
   it('says when voting opens, and asks for nothing, before it does', () => {
     const c = ogCopy(award({ opens_at: '2026-11-01 16:00:00' }), 1, 'https://x.test', NOW)
-    expect(c.sub).toBe('1 category, voted by chat · opens 1 Nov, 18:00 Kyiv time')
+    expect(c.sub).toBe('1 category, voted by viewers · opens 1 Nov, 18:00 Kyiv time')
     expect(c.cta).toBe('')
   })
 
