@@ -2,7 +2,7 @@
 // The limit is the sales moment, not an apology. Same block wherever the free
 // plan runs out, so the pitch reads the same in every place it appears.
 import UiButton from './UiButton.vue'
-import { FREE } from '~/types/award'
+import { FREE, PAID } from '~/types/award'
 
 type Reason = 'nominations' | 'media' | 'look' | 'voters'
 const { compact = false, reason = 'nominations' } = defineProps<{ compact?: boolean; reason?: Reason }>()
@@ -24,24 +24,11 @@ const emit = defineEmits<{ dismiss: [] }>()
     <p class="micro text-gold-text">Paid version</p>
     <p class="mt-2 font-semibold" :class="!compact && 'text-lg'">{{ headline[reason] }}</p>
     <p class="mt-1 max-w-[52ch] text-sm text-ink-2">
-      The paid version lifts both limits - as many nominations as your show needs and no ceiling on voters -
-      and adds your own cover, colours and logo on the page. It is a one-off purchase per awards, no subscription.
+      ${{ PAID.priceUsd }} once for this awards: no limits on categories or voters, and your own look on the page.
+      You pay when you publish.
     </p>
 
-    <ul class="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-ink-2">
-      <li class="flex items-center gap-2">
-        <span aria-hidden="true" class="h-1 w-1 rounded-pill bg-gold" /> Unlimited nominations
-      </li>
-      <li class="flex items-center gap-2">
-        <span aria-hidden="true" class="h-1 w-1 rounded-pill bg-gold" /> No 200-voter cap
-      </li>
-      <li class="flex items-center gap-2">
-        <span aria-hidden="true" class="h-1 w-1 rounded-pill bg-gold" /> Your branding on the page
-      </li>
-    </ul>
-
     <div class="mt-4 flex flex-wrap items-center gap-3">
-      <UiButton size="sm" to="/plans#early-access">Get early access</UiButton>
       <UiButton size="sm" variant="text" to="/plans">See the plans</UiButton>
       <button
         type="button"
@@ -50,7 +37,6 @@ const emit = defineEmits<{ dismiss: [] }>()
       >
         Stay on free
       </button>
-      <span class="micro ml-auto">Ships before December</span>
     </div>
   </div>
 </template>

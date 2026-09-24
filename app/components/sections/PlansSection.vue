@@ -10,7 +10,7 @@ import PlanCards from '../ui/PlanCards.vue'
   <SectionShell
     id="plans"
     heading="Free, paid, or we run it for you"
-    intro="Start free, upgrade when the show outgrows it. Nothing you set up is lost in between."
+    intro="Start free. Pay once if the show needs more."
   >
     <PlanCards class="mt-6" />
     <div class="js-reveal mt-8">
