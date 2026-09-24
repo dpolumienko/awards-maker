@@ -113,3 +113,32 @@ done, is in `../outputs/awards-maker-builder-plan-2026-09-14.md`.
 - The domain in `nuxt.config.ts` (`site.url`) is a placeholder until the subdomain decision is final.
 - Known debt: no mobile nav (links are hidden below `lg`), and the logged-in `Your awards` block from the
   spec is not built yet - it waits for real auth.
+
+## Running it
+
+    cp .env.example .env          # fill in NUXT_SESSION_PASSWORD at least
+    docker compose up -d db       # MySQL on 127.0.0.1:3307
+    npm install
+    npm run dev                   # http://localhost:3000
+
+The schema is applied by the app itself on boot, so there is no migration step to
+remember. `npm run migrate -- --status` lists what has been applied if you want
+to look.
+
+Signing in needs a Twitch application with **two** redirect URIs, because Twitch
+matches them exactly:
+
+- `http://localhost:3000/auth/twitch` - voters (`user:read:email`)
+- `http://localhost:3000/auth/twitch-host` - hosts (the full set, as on Streams Charts)
+
+Put its client id and secret in `.env`. Without them the pages all work; the
+sign-in buttons are what stops.
+
+`ADMIN_TWITCH_LOGINS` lists Twitch logins that are admins from their first
+sign-in. An admin publishes paid shows without paying, which is how the paid tier
+gets exercised before Stripe is switched on.
+
+    npm test                      # handler tests, no database needed
+    npm run build                 # .output/, the node-server bundle
+
+Deploying: `deploy/README.md`.
