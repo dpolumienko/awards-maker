@@ -44,12 +44,12 @@ function next(a: AwardSummary) {
     case 'soon':
       return `Opens ${fmt(a.opensAt)}`
     case 'open':
-      return `Closes ${fmt(a.closesAt)}`
+      return a.closesAt ? `Closes ${fmt(a.closesAt)}` : 'Open until you close it'
     case 'counting':
     case 'capped':
       return 'Waiting on you: publish the winners'
     default:
-      return `Announced ${fmt(a.ceremonyAt)}`
+      return a.ceremonyAt ? `Announced ${fmt(a.ceremonyAt)}` : 'Winners announced'
   }
 }
 const waiting = (a: AwardSummary) => ['counting', 'capped'].includes(phaseOf(a as never, a.voters))
@@ -93,8 +93,10 @@ useSeoMeta({ title: 'Your awards', robots: 'noindex, follow' })
       >
         <UiBadge :tone="badges[phaseOf(a as never, a.voters)].tone">{{ badges[phaseOf(a as never, a.voters)].text }}</UiBadge>
         <span class="text-lg font-semibold">{{ a.name }}</span>
-        <span class="tnum text-sm text-ink-muted">{{ a.nominations.length }} nominations</span>
-        <span class="tnum text-sm" :class="a.voters / FREE.maxVoters >= 0.8 ? 'text-warn' : 'text-ink-muted'">
+        <span class="tnum text-sm text-ink-muted">{{ a.categories }} nominations</span>
+        <!-- the ceiling is a free-plan thing; a paid show has none -->
+        <span v-if="a.tier === 'paid'" class="tnum text-sm text-ink-muted">{{ a.voters }} voters</span>
+        <span v-else class="tnum text-sm" :class="a.voters / FREE.maxVoters >= 0.8 ? 'text-warn' : 'text-ink-muted'">
           {{ a.voters }} / {{ FREE.maxVoters }} voters
         </span>
         <span class="text-sm" :class="waiting(a) ? 'text-gold-text' : 'text-ink-muted'">{{ next(a) }}</span>
