@@ -27,6 +27,7 @@ import { accentText } from '~/utils/accent'
 import { nomineeName } from '~/utils/nominee'
 import { FREE, PUBLISH } from '~/types/award'
 import { awardOgImage } from '~/utils/og'
+import { formatInZone } from '#shared/time'
 
 const route = useRoute()
 const slug = computed(() => String(route.params.slug))
@@ -158,16 +159,16 @@ const winnerNames = computed<Record<string, string>>(() => {
 
 const isHost = computed(() => Boolean(data.value?.isHost))
 
-const fmtDate = (d?: string) =>
-  d ? new Date(`${d}T00:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
+// A voter is rarely in the host's zone, so every time here names the zone.
+const fmtDate = (d?: string) => (d && award.value ? formatInZone(d, award.value.timezone) : '')
 
 // One countdown, pointed at whatever happens next.
 const target = computed(() => {
   const a = award.value
   if (!a) return null
-  if (phase.value === 'soon' && a.opensAt) return new Date(`${a.opensAt}T00:00:00`).getTime()
-  if (phase.value === 'open' && a.closesAt) return new Date(`${a.closesAt}T23:59:59`).getTime()
-  if (phase.value === 'counting' && a.ceremonyAt) return new Date(`${a.ceremonyAt}T00:00:00`).getTime()
+  if (phase.value === 'soon' && a.opensAt) return Date.parse(a.opensAt)
+  if (phase.value === 'open' && a.closesAt) return Date.parse(a.closesAt)
+  if (phase.value === 'counting' && a.ceremonyAt) return Date.parse(a.ceremonyAt)
   return null
 })
 const countdown = computed(() => {
@@ -609,7 +610,7 @@ if (award.value) {
           class="mt-12"
           :award="award"
           :url="shareUrl"
-          :closes="fmtDate(award.closesAt)"
+          :closes="formatInZone(award.closesAt, award.timezone, { month: 'short' })"
           :winners="winnerNames"
           :is-host="isHost"
           :has-voted="voted"

@@ -3,6 +3,7 @@ import { join, normalize, sep } from 'node:path'
 import satori from 'satori'
 import { Resvg } from '@resvg/resvg-js'
 import type { AwardRow } from './awards'
+import { DEFAULT_TIME_ZONE, formatInZone, fromDbDateTime } from '#shared/time'
 
 // The link card for a published awards, drawn on the server.
 //
@@ -191,8 +192,9 @@ export interface OgCardCopy {
   url: string
 }
 
-const fmt = (d: string | null) =>
-  d ? new Date(`${String(d).slice(0, 10)}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' }) : ''
+/** "20 Dec, 21:00 Kyiv time" - the card is read far from the host's zone. */
+const fmt = (d: string | null, zone: string) => formatInZone(fromDbDateTime(d), zone, { month: 'short' })
+const at = (d: string | null) => (d ? Date.parse(fromDbDateTime(d)) : NaN)
 
 /**
  * The host card's wording from shareCard.ts `cardCopy('host')`, plus the one
@@ -201,14 +203,17 @@ const fmt = (d: string | null) =>
  * offers them.
  */
 export function ogCopy(
-  award: Pick<AwardRow, 'name' | 'host_name' | 'slug' | 'closes_at' | 'ceremony_at' | 'closed_at' | 'results_at' | 'opens_at'>,
+  award: Pick<AwardRow, 'name' | 'host_name' | 'slug' | 'closes_at' | 'ceremony_at' | 'closed_at' | 'results_at' | 'opens_at'> & {
+    timezone?: string
+  },
   categories: number,
   siteUrl: string,
   now = new Date(),
 ): OgCardCopy {
-  const closes = fmt(award.closes_at)
-  const closedByDate = award.closes_at && new Date(`${String(award.closes_at).slice(0, 10)}T23:59:59`) < now
-  const notOpen = award.opens_at && new Date(`${String(award.opens_at).slice(0, 10)}T00:00:00`) > now
+  const zone = award.timezone || DEFAULT_TIME_ZONE
+  const closes = fmt(award.closes_at, zone)
+  const closedByDate = at(award.closes_at) < now.getTime()
+  const notOpen = at(award.opens_at) > now.getTime()
   const cats = `${categories} ${categories === 1 ? 'category' : 'categories'}`
 
   let sub: string
@@ -217,10 +222,10 @@ export function ogCopy(
     sub = `Winners announced · ${cats}`
     cta = 'See the winners'
   } else if (award.closed_at || closedByDate) {
-    sub = award.ceremony_at ? `Voting closed · winners on ${fmt(award.ceremony_at)}` : 'Voting closed · winners coming'
+    sub = award.ceremony_at ? `Voting closed · winners on ${fmt(award.ceremony_at, zone)}` : 'Voting closed · winners coming'
     cta = ''
   } else if (notOpen) {
-    sub = `${cats}, voted by chat · opens ${fmt(award.opens_at)}`
+    sub = `${cats}, voted by chat · opens ${fmt(award.opens_at, zone)}`
     cta = ''
   } else {
     sub = `${cats}, voted by chat${closes ? ` · closes ${closes}` : ''}`

@@ -1,5 +1,6 @@
 import { computed, ref, watch } from 'vue'
 import { FREE, PUBLISH, type Award, type Nomination, type Nominee, type Partner } from '~/types/award'
+import { canonicalZone, localTimeZone } from '#shared/time'
 
 // The draft a host is building. It is still edited locally and reactively - a
 // builder that awaited the network on every keystroke would feel broken - but it
@@ -22,6 +23,8 @@ const emptyDraft = (): Award => ({
   opensAt: '',
   closesAt: '',
   ceremonyAt: '',
+  // the host's own zone until they pick another
+  timezone: localTimeZone(),
   nominations: [emptyNomination()],
   partners: [],
   look: {},
@@ -45,6 +48,12 @@ function normalize(a: Partial<Award> | undefined): Award {
     ...a,
     host: { ...base.host, ...(a.host ?? {}) },
     look: { ...base.look, ...(a.look ?? {}) },
+    // A fresh draft row carries the column default, UTC. Until the host has set
+    // a date it is not a choice anybody made, so the browser's own zone wins.
+    timezone:
+      a.timezone && !(a.timezone === 'UTC' && !a.opensAt && !a.closesAt && !a.ceremonyAt)
+        ? canonicalZone(a.timezone)
+        : base.timezone,
     partners: Array.isArray(a.partners) ? a.partners : [],
     nominations:
       Array.isArray(a.nominations) && a.nominations.length
@@ -66,6 +75,7 @@ function toPayload(a: Award) {
     opensAt: a.opensAt || null,
     closesAt: a.closesAt || null,
     ceremonyAt: a.ceremonyAt || null,
+    timezone: a.timezone || localTimeZone(),
     look: a.look ?? {},
     host: a.host,
     partners: a.partners.filter((p) => p.name.trim() || p.url.trim()).map((p) => ({ name: p.name, url: p.url })),
@@ -276,5 +286,6 @@ export function useAwardDraft() {
 
 function datesOk(d: Award) {
   if (!d.opensAt || !d.closesAt || !d.ceremonyAt) return false
-  return d.opensAt < d.closesAt && d.closesAt <= d.ceremonyAt
+  const [o, c, w] = [d.opensAt, d.closesAt, d.ceremonyAt].map(Date.parse)
+  return o! < c! && c! <= w!
 }

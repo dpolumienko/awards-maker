@@ -2,8 +2,9 @@
 // The builder. Form on the left, the page being built on the right, exactly the
 // split the mockup used. No backend yet: the draft lives in localStorage and the
 // channel search runs on mock data, but the shape is the future API shape.
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import UiField from '~/components/ui/UiField.vue'
+import UiDateTimeField from '~/components/ui/UiDateTimeField.vue'
 import UiTextarea from '~/components/ui/UiTextarea.vue'
 import UiButton from '~/components/ui/UiButton.vue'
 import NominationCard from '~/components/ui/NominationCard.vue'
@@ -19,6 +20,7 @@ import type { AwardTemplate } from '~/data/templates'
 import { ideaGroup } from '~/data/ideas'
 import { useAwardDraft } from '~/composables/useAwardDraft'
 import { FIELD, FREE } from '~/types/award'
+import { allTimeZones, utcToZoned, zoneCity, zoneOffset, zonedToUtc } from '#shared/time'
 
 const {
   draft,
@@ -41,6 +43,32 @@ const {
   load,
   saving,
 } = useAwardDraft()
+
+// Most useful first, then everything; the label carries today's offset.
+const zones = computed(() => {
+  const list = allTimeZones()
+  if (draft.value.timezone && !list.includes(draft.value.timezone)) list.unshift(draft.value.timezone)
+  return list.map((id) => ({ id, label: `${zoneCity(id)} (${zoneOffset(id)})${id.includes('/') ? ` - ${id}` : ''}` }))
+})
+
+// A host who picks another zone means "21:00 there", not "the same instant":
+// the clock times stay, the instants move with the zone.
+// A draft arriving from the server changes the zone too, with its own dates -
+// that is not a host changing their mind, so only a change within the same
+// draft object moves anything.
+watch(
+  () => ({ d: draft.value, tz: draft.value.timezone }),
+  (next, prev) => {
+    const [to, from] = [next.tz, prev.tz]
+    if (next.d !== prev.d || !from || !to || to === from) return
+    for (const key of ['opensAt', 'closesAt', 'ceremonyAt'] as const) {
+      const at = draft.value[key]
+      if (!at) continue
+      const { date, time } = utcToZoned(at, from)
+      draft.value[key] = zonedToUtc(date, time, to)
+    }
+  },
+)
 
 // A draft belongs to an account now, so the builder loads it once there is one.
 const { signedIn, isHost, signInAsHost } = useAccount()
@@ -261,10 +289,27 @@ useSchemaOrg([
               :limit="FIELD.descriptionLimit"
               helper="A description is required before publishing. Two sentences is plenty."
             />
-            <div class="grid gap-4 sm:grid-cols-2">
-              <UiField v-model="draft.opensAt" label="Voting opens" type="date" />
-              <UiField v-model="draft.closesAt" label="Voting closes" type="date" />
-              <UiField v-model="draft.ceremonyAt" label="Ceremony" type="date" />
+            <!-- dates are moments in the show's zone, not whole days (review 2026-09-24) -->
+            <div>
+              <label for="show-zone" class="label mb-2 block">Time zone</label>
+              <select
+                id="show-zone"
+                v-model="draft.timezone"
+                class="h-12 w-full rounded-btn border border-hair bg-s2 px-4 text-base text-ink transition-colors hover:border-hair2 focus:border-gold focus:shadow-focus focus:outline-none"
+                aria-describedby="show-zone-help"
+              >
+                <option v-for="z in zones" :key="z.id" :value="z.id">{{ z.label }}</option>
+              </select>
+              <p id="show-zone-help" class="mt-2 text-sm text-ink-muted">
+                Every date on the page is shown in this zone, and says so.
+              </p>
+            </div>
+            <!-- one per row: a date and a time side by side do not fit two to a row
+                 in the form column, and the browser clipped them to "mm/dd/y" -->
+            <div class="grid gap-4">
+              <UiDateTimeField v-model="draft.opensAt" label="Voting opens" :time-zone="draft.timezone" default-time="12:00" />
+              <UiDateTimeField v-model="draft.closesAt" label="Voting closes" :time-zone="draft.timezone" default-time="21:00" />
+              <UiDateTimeField v-model="draft.ceremonyAt" label="Ceremony" :time-zone="draft.timezone" default-time="20:00" />
             </div>
           </div>
         </section>

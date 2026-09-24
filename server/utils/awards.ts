@@ -1,5 +1,6 @@
 import type { PoolConnection } from 'mysql2/promise'
 import { query, queryOne, transaction } from './db'
+import { DEFAULT_TIME_ZONE, canonicalZone, fromDbDateTime, isTimeZone, toDbDateTime, toInstant } from '#shared/time'
 
 // Everything that reads or writes a show. Handlers stay thin and call in here;
 // no SQL lives in a route file.
@@ -34,6 +35,8 @@ export interface AwardRow {
   opens_at: string | null
   closes_at: string | null
   ceremony_at: string | null
+  /** IANA zone the show runs in; the dates above are UTC. */
+  timezone: string
   look: string | Record<string, unknown> | null
   host_name: string
   host_platform: 'twitch' | 'kick' | 'youtube'
@@ -43,7 +46,7 @@ export interface AwardRow {
 }
 
 const AWARD_COLUMNS = `id, owner_id, slug, status, tier, name, description, template_id,
-  opens_at, closes_at, ceremony_at, look, host_name, host_platform,
+  opens_at, closes_at, ceremony_at, timezone, look, host_name, host_platform,
   closed_at, results_at, published_at`
 
 /** mysql2 hands JSON back parsed on some server versions and as text on others. */
@@ -114,9 +117,10 @@ export async function hydrate(row: AwardRow) {
     name: row.name,
     description: row.description,
     templateId: row.template_id ?? undefined,
-    opensAt: row.opens_at ?? '',
-    closesAt: row.closes_at ?? '',
-    ceremonyAt: row.ceremony_at ?? '',
+    opensAt: fromDbDateTime(row.opens_at),
+    closesAt: fromDbDateTime(row.closes_at),
+    ceremonyAt: fromDbDateTime(row.ceremony_at),
+    timezone: row.timezone || DEFAULT_TIME_ZONE,
     look: readLook(row.look),
     host: { name: row.host_name, platform: row.host_platform },
     tier: row.tier,
@@ -164,9 +168,10 @@ export async function awardSummaries(where: string, params: (string | number)[] 
     slug: r.slug ?? '',
     name: r.name,
     description: r.description,
-    opensAt: r.opens_at ?? '',
-    closesAt: r.closes_at ?? '',
-    ceremonyAt: r.ceremony_at ?? '',
+    opensAt: fromDbDateTime(r.opens_at),
+    closesAt: fromDbDateTime(r.closes_at),
+    ceremonyAt: fromDbDateTime(r.ceremony_at),
+    timezone: r.timezone || DEFAULT_TIME_ZONE,
     look: readLook(r.look),
     host: { name: r.host_name, platform: r.host_platform },
     tier: r.tier,
@@ -185,9 +190,10 @@ export interface AwardInput {
   name: string
   description: string
   templateId?: string | null
-  opensAt: string | null
-  closesAt: string | null
-  ceremonyAt: string | null
+  opensAt?: string | null
+  closesAt?: string | null
+  ceremonyAt?: string | null
+  timezone?: string
   look: Record<string, unknown>
   host: { name: string; platform: 'twitch' | 'kick' | 'youtube' }
   partners: { name: string; url: string }[]
@@ -272,18 +278,22 @@ export async function draftFor(userId: number, host: { name: string; platform: s
 }
 
 export async function saveAward(awardId: number, input: AwardInput) {
+  // stored dates are UTC; the zone is what they are shown in, and what a bare
+  // YYYY-MM-DD from an older builder is read in
+  const zone = isTimeZone(input.timezone) ? canonicalZone(input.timezone) : DEFAULT_TIME_ZONE
   await transaction(async (conn) => {
     await conn.query(
       `UPDATE awards SET name = ?, description = ?, template_id = ?, opens_at = ?, closes_at = ?,
-              ceremony_at = ?, look = ?, host_name = ?, host_platform = ?
+              ceremony_at = ?, timezone = ?, look = ?, host_name = ?, host_platform = ?
         WHERE id = ?`,
       [
         input.name.trim(),
         input.description.trim(),
         input.templateId ?? null,
-        input.opensAt || null,
-        input.closesAt || null,
-        input.ceremonyAt || null,
+        toDbDateTime(toInstant(input.opensAt, zone, 'start')),
+        toDbDateTime(toInstant(input.closesAt, zone, 'end')),
+        toDbDateTime(toInstant(input.ceremonyAt, zone, 'start')),
+        zone,
         JSON.stringify(input.look ?? {}),
         input.host.name,
         input.host.platform,

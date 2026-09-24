@@ -3,6 +3,7 @@ import { awardBySlug } from '../../../utils/awards'
 import { ballotSchema, parseOr400 } from '../../../utils/schema'
 import { requireUser } from '../../../utils/users'
 import { FREE } from '#shared/limits'
+import { fromDbDateTime } from '#shared/time'
 import { queryOne } from '../../../utils/db'
 
 /**
@@ -18,11 +19,13 @@ export default defineEventHandler(async (event) => {
   const award = await awardBySlug(getRouterParam(event, 'slug') ?? '')
   if (!award) throw createError({ statusCode: 404, statusMessage: 'No such awards' })
 
-  const now = new Date()
-  if (award.closed_at || (award.closes_at && new Date(`${award.closes_at}T23:59:59`) < now)) {
+  // opens_at / closes_at are UTC instants (migration 002), not calendar days
+  const now = Date.now()
+  const at = (v: string | null) => (v ? Date.parse(fromDbDateTime(v)) : NaN)
+  if (award.closed_at || at(award.closes_at) < now) {
     throw createError({ statusCode: 409, statusMessage: 'Voting is closed' })
   }
-  if (award.opens_at && new Date(`${award.opens_at}T00:00:00`) > now) {
+  if (at(award.opens_at) > now) {
     throw createError({ statusCode: 409, statusMessage: 'Voting has not opened yet' })
   }
 

@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { isTimeZone } from '#shared/time'
 
 // The one description of what a show looks like coming off the wire. Handlers
 // `safeParse` against it and throw their own 400 - a zod error is a map of our
@@ -6,11 +7,14 @@ import { z } from 'zod'
 
 const platform = z.enum(['twitch', 'kick', 'youtube'])
 
-/** Calendar days, not instants: the builder's date inputs emit exactly this. */
-const day = z
+/**
+ * An instant (ISO 8601 with a zone or Z), or a bare YYYY-MM-DD from a builder
+ * that predates times - shared/time.ts `toInstant` reads that in the show's zone.
+ */
+const instant = z
   .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/)
-  .or(z.literal(''))
+  .max(40)
+  .refine((v) => v === '' || /^\d{4}-\d{2}-\d{2}$/.test(v) || !Number.isNaN(Date.parse(v)), 'not a date')
   .nullable()
   .optional()
 
@@ -33,9 +37,11 @@ export const awardInputSchema = z.object({
   name: z.string().max(191).default(''),
   description: z.string().max(500).default(''),
   templateId: z.string().max(64).nullable().optional(),
-  opensAt: day,
-  closesAt: day,
-  ceremonyAt: day,
+  opensAt: instant,
+  closesAt: instant,
+  ceremonyAt: instant,
+  // IANA zone the show runs in; anything the runtime does not know is refused
+  timezone: z.string().max(64).refine(isTimeZone, 'unknown time zone').optional(),
   look: z.record(z.string(), z.unknown()).default({}),
   host: z.object({ name: z.string().max(191), platform }),
   partners: z.array(z.object({ name: z.string().max(191), url: z.string().max(512) })).max(40).default([]),

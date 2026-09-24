@@ -18,6 +18,7 @@ import TrendArea from '~/components/ui/TrendArea.vue'
 import RankBars from '~/components/ui/RankBars.vue'
 import { useAwardPage } from '~/composables/useAwards'
 import { dailyOf, emptyTally, phaseOf, resultsOf, useVoting, votesInOf } from '~/composables/useVoting'
+import { dayIn, formatInZone } from '#shared/time'
 import { useReveal } from '~/composables/useReveal'
 import { playCue } from '~/composables/useCue'
 import { accentText } from '~/utils/accent'
@@ -40,7 +41,13 @@ const ink = computed(() => accentText(accent.value))
 
 const voters = computed(() => data.value?.voters ?? 0)
 const trend = computed(() =>
-  award.value ? dailyOf(tally.value, award.value.opensAt, award.value.closesAt) : [],
+  award.value
+    ? dailyOf(
+        tally.value,
+        award.value.opensAt ? dayIn(award.value.opensAt, award.value.timezone) : undefined,
+        award.value.closesAt ? dayIn(award.value.closesAt, award.value.timezone) : undefined,
+      )
+    : [],
 )
 
 
@@ -92,11 +99,11 @@ const coverage = computed(() =>
 const weakest = computed(() => coverage.value[coverage.value.length - 1])
 const ties = computed(() => races.value.filter((r) => r.tied).length)
 
-const fmt = (d?: string) =>
-  d ? new Date(`${d}T00:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''
+// dates are UTC instants; the host sees them in the show's zone, named
+const fmt = (d?: string) => (d && award.value ? formatInZone(d, award.value.timezone, { month: 'short' }) : '')
 const daysLeft = computed(() => {
   if (!award.value?.closesAt || phase.value !== 'open') return null
-  const end = new Date(`${award.value.closesAt}T23:59:59`).getTime()
+  const end = Date.parse(award.value.closesAt)
   return Math.max(0, Math.ceil((end - Date.now()) / 86_400_000))
 })
 
