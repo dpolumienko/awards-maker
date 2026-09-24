@@ -45,7 +45,7 @@ const describedBy = computed(() => [error && `${id}-err`, warning && `${id}-warn
       :aria-invalid="error ? true : undefined"
       :aria-describedby="describedBy"
       class="h-12 w-full rounded-btn border bg-s2 px-4 text-base text-ink transition-colors placeholder:text-ink-disabled focus:border-gold focus:shadow-focus focus:outline-none"
-      :class="error ? 'border-danger' : 'border-hair hover:border-hair2'"
+      :class="error ? 'border-danger' : 'border-hair2 hover:border-ink-muted'"
       @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
     />
     <div class="mt-2 flex items-start gap-3">

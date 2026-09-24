@@ -110,7 +110,7 @@ useSchemaOrg([
           <p class="m-0 mt-1 max-w-copy text-ink-2">{{ g.blurb }}</p>
         </div>
         <UiButton :to="`/create?ideas=${g.id}`" variant="ghost" size="sm" class="sm:ml-auto">
-          Start a draft · {{ g.set }}
+          Start with these {{ g.set }}
         </UiButton>
       </div>
 

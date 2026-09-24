@@ -7,8 +7,9 @@ import ChannelSearch from './ChannelSearch.vue'
 import PlatformDot from './PlatformDot.vue'
 import LivePill from './LivePill.vue'
 import { fmtFollowers } from '~/data/channels.mock'
-import { PUBLISH, type Channel, type Nomination } from '~/types/award'
+import { FREE, PUBLISH, type Channel, type Nomination } from '~/types/award'
 import UiIcon from './UiIcon.vue'
+import UiMaskIcon from './UiMaskIcon.vue'
 
 const { nomination, index, overFreeLimit = false } = defineProps<{
   nomination: Nomination
@@ -101,9 +102,10 @@ const shortMeta = (n: Nomination['nominees'][number]) =>
   <div class="rounded-card border bg-s1 p-5" :class="overFreeLimit ? 'border-gold-24' : 'border-hair'">
     <div v-if="overFreeLimit" class="mb-3 flex items-center gap-2">
       <span class="rounded-pill border border-gold-24 px-2 py-0.5 text-[11px] font-bold uppercase tracking-micro text-gold-text">Paid</span>
-      <span class="text-sm text-ink-muted">Beyond the free {{ 5 }} nominations</span>
+      <span class="text-sm text-ink-muted">Beyond the free {{ FREE.maxNominations }} nominations</span>
     </div>
-    <div class="flex items-center gap-3">
+    <!-- wraps on a phone rather than squeezing the title to 134px beside Remove -->
+    <div class="flex flex-wrap items-center gap-3">
       <span aria-hidden="true" class="tnum grid h-8 w-8 flex-none place-items-center rounded-btn border border-hair2 text-sm font-bold text-ink-muted">
         {{ index + 1 }}
       </span>
@@ -113,7 +115,7 @@ const shortMeta = (n: Nomination['nominees'][number]) =>
         type="text"
         :aria-label="'Nomination ' + (index + 1) + ' title'"
         placeholder="Nomination title, e.g. Best moment of the year"
-        class="h-11 w-full rounded-btn border border-hair bg-s2 px-3 text-base font-semibold text-ink placeholder:font-normal placeholder:text-ink-disabled hover:border-hair2 focus:border-gold focus:shadow-focus focus:outline-none"
+        class="h-11 min-w-0 flex-1 basis-[12rem] rounded-btn border border-hair2 bg-s2 px-3 text-base font-semibold text-ink placeholder:font-normal placeholder:text-ink-disabled hover:border-hair2 focus:border-gold focus:shadow-focus focus:outline-none"
         @input="emit('update:title', ($event.target as HTMLInputElement).value)"
       />
       <UiConfirmButton
@@ -148,7 +150,7 @@ const shortMeta = (n: Nomination['nominees'][number]) =>
           <span class="font-semibold">{{ n.text }}</span>
           <span v-if="n.url" class="max-w-[160px] flex-none truncate text-sm text-ink-muted">{{ n.url }}</span>
           <span class="inline-flex items-center gap-1.5 rounded-pill border border-gold-24 px-2 py-0.5 text-[11px] uppercase tracking-micro text-gold-text">
-            <img :src="asset('/img/icons/cat-clip.svg')" alt="" aria-hidden="true" class="h-3 w-3 opacity-70" />
+            <UiMaskIcon src="/img/icons/cat-clip.svg" class="h-3 w-3 text-gold opacity-70" />
             {{ n.image ? 'Image' : 'Clip' }} · Paid
           </span>
         </template>
@@ -178,7 +180,7 @@ const shortMeta = (n: Nomination['nominees'][number]) =>
         :aria-expanded="mediaOpen"
         @click="mediaOpen = !mediaOpen"
       >
-        <img :src="asset('/img/icons/cat-clip.svg')" alt="" aria-hidden="true" class="h-4 w-4 opacity-70" />
+        <UiMaskIcon src="/img/icons/cat-clip.svg" class="h-4 w-4 text-gold opacity-70" />
         Image or clip nominee
         <span class="rounded-pill border border-gold-24 px-2 py-0.5 text-[11px] font-bold uppercase tracking-micro text-gold-text">Paid</span>
       </button>

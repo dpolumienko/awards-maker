@@ -361,7 +361,8 @@ if (award.value && !thin.value) {
     <template v-if="award">
       <!-- cover band: the streamer's theme or their own cover, full width -->
       <div class="relative h-48 sm:h-64" :style="themeCss(award.look?.theme, accent, award.look?.coverUrl)">
-        <span aria-hidden="true" class="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,.35),#000)]" />
+        <!-- fades into the page's own canvas, which is not pure black under SC Blue -->
+        <span aria-hidden="true" class="absolute inset-0 bg-[linear-gradient(180deg,rgb(var(--canvas)/.35),rgb(var(--canvas)))]" />
         <div class="shell relative flex h-full flex-col justify-end pb-5">
           <nav aria-label="Breadcrumb" class="mb-auto pt-24">
             <ol class="flex list-none flex-wrap items-center gap-2 p-0 text-[11px] font-semibold uppercase tracking-micro text-ink-muted">
@@ -468,6 +469,7 @@ if (award.value && !thin.value) {
 
               <CountdownRow
                 v-if="countdown"
+                class="mt-5"
                 :label="countdownLabel"
                 :days="countdown.days"
                 :hrs="countdown.hrs"
@@ -511,27 +513,28 @@ if (award.value && !thin.value) {
             <!-- submit: sticky, because the ballot is longer than a screen -->
             <div
               v-if="mode === 'vote'"
-              class="sticky bottom-0 z-30 -mx-4 mt-6 border-t border-hair bg-canvas/95 px-4 py-4 backdrop-blur sm:-mx-8 sm:px-8"
+              class="sticky bottom-0 z-30 -mx-4 mt-6 border-t border-hair bg-canvas/95 px-4 py-3 backdrop-blur sm:-mx-8 sm:px-8 lg:mx-0 lg:rounded-card lg:border lg:px-5"
             >
               <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
                 <p class="text-sm" aria-live="polite">
                   <b class="tnum">{{ pickedCount }} of {{ award.nominations.length }}</b>
                   <span class="text-ink-2"> categories picked</span>
                 </p>
-                <p v-if="pickedCount < award.nominations.length" class="text-sm text-ink-muted">
+                <p v-if="pickedCount < award.nominations.length" class="hidden text-sm text-ink-muted sm:block">
                   You get one submit, so finish the ones you care about first.
                 </p>
                 <button
                   v-if="!signedIn"
                   type="button"
-                  class="ml-auto flex min-h-[48px] max-w-full items-center gap-2 rounded-btn bg-twitch px-5 py-2 text-center text-[15px] font-bold uppercase leading-tight tracking-button text-white transition-opacity hover:opacity-90 disabled:opacity-40"
+                  class="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-btn bg-twitch px-5 py-2 text-center text-[15px] font-bold uppercase leading-tight tracking-button text-white transition-opacity hover:opacity-90 disabled:opacity-40 sm:ml-auto sm:w-auto"
                   :disabled="!pickedCount"
                   @click="submit"
                 >
-                  Sign in with Twitch to submit
+                  <!-- a disabled button that does not say why reads as broken -->
+                  {{ pickedCount ? 'Sign in with Twitch to submit' : 'Pick at least one' }}
                 </button>
-                <UiButton v-else class="ml-auto" :disabled="!pickedCount" @click="submit">
-                  Submit {{ pickedCount }} {{ pickedCount === 1 ? 'vote' : 'votes' }}
+                <UiButton v-else class="w-full sm:ml-auto sm:w-auto" :disabled="!pickedCount" @click="submit">
+                  {{ pickedCount ? `Submit ${pickedCount} ${pickedCount === 1 ? 'vote' : 'votes'}` : 'Pick at least one' }}
                 </UiButton>
               </div>
               <!-- already voted, voting closed, ceiling reached: all things the

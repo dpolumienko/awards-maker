@@ -82,7 +82,7 @@ const rules = [
                 ]"
                 @click="picked = i"
               >
-                <span class="grid h-8 w-8 flex-none place-items-center rounded-pill bg-s3 text-[13px] font-bold text-ink-muted">{{ n.initial }}</span>
+                <span class="grid h-8 w-8 flex-none place-items-center rounded-pill bg-s3 text-[13px] font-bold text-ink-2">{{ n.initial }}</span>
                 <span>
                   <span class="block font-semibold">{{ n.name }}</span>
                   <span class="flex items-center gap-1.5 text-sm text-ink-2">

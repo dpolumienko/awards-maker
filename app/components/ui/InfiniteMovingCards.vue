@@ -11,6 +11,7 @@ const {
   direction = 'left',
   speed = 'normal',
   pauseOnHover = true,
+  paused = false,
   gap = 16,
   showGradientMask = true,
 } = defineProps<{
@@ -18,6 +19,8 @@ const {
   direction?: 'left' | 'right'
   speed?: 'slow' | 'normal' | 'fast'
   pauseOnHover?: boolean
+  /** Held still from outside - the section's pause button (WCAG 2.2.2). */
+  paused?: boolean
   gap?: number
   showGradientMask?: boolean
 }>()
@@ -45,7 +48,7 @@ function frame(now: number) {
   const delta = last ? now - last : 16
   last = now
   raf = requestAnimationFrame(frame)
-  if (singleWidth.value <= 0 || (pauseOnHover && hovered.value)) return
+  if (singleWidth.value <= 0 || paused || (pauseOnHover && hovered.value)) return
 
   const velocity = SPEED_PX_PER_SEC[speed] * (delta / 1000)
   let next = x.value + (direction === 'left' ? -velocity : velocity)

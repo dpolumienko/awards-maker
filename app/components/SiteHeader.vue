@@ -119,7 +119,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
           <button
             v-else
             type="button"
-            class="flex h-9 items-center gap-2 rounded-btn bg-twitch px-4 text-sm font-bold uppercase tracking-button text-white transition-opacity hover:opacity-90"
+            class="flex h-11 items-center gap-2 rounded-btn border border-twitch px-4 text-[13px] font-bold uppercase tracking-button text-ink transition-colors hover:bg-twitch/15"
             @click="signIn"
           >
             Sign in with Twitch
@@ -165,7 +165,16 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
         </template>
       </ClientOnly>
 
-      <UiButton to="/create" size="sm" class="hidden lg:inline-flex">Create your awards</UiButton>
+      <!-- One filled button per screen (design audit): on an awards page voting is
+           the action, so the header's builder link steps back; on /create it
+           would point at the page you are on. -->
+      <UiButton
+        v-if="route.path !== '/create'"
+        to="/create"
+        size="sm"
+        :variant="route.path.startsWith('/a/') ? 'ghost' : 'primary'"
+        class="hidden lg:inline-flex"
+      >Create your awards</UiButton>
 
       <!-- mobile: one button, three lines, no library -->
       <button

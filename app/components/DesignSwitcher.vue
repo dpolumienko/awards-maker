@@ -9,6 +9,8 @@ import { BUTTONS, DESIGN_KEYS, PALETTES } from '~/data/design'
 const palette = ref<string>('gold')
 const button = ref<string>('solid')
 const copied = ref(false)
+// collapsed to a pill by default: open, it covered the ballot's sticky submit bar
+const open = ref(false)
 
 onMounted(() => {
   const d = document.documentElement
@@ -57,41 +59,57 @@ const seg = (active: boolean) =>
     <!-- Floating, not in the flow: a strip above the header mounted after
          hydration and pushed every page down (CLS 0.1 in the SEO audit), and its
          words were the first text Google read on each page. -->
-    <div
-      data-nosnippet
-      class="fixed inset-x-3 bottom-3 z-50 mx-auto max-w-[760px] rounded-card border border-hair2 bg-s1/95 text-xs shadow-modal backdrop-blur"
-      role="region"
-      aria-label="Design preview"
-    >
-      <div class="flex flex-wrap items-center gap-x-5 gap-y-2 px-4 py-2">
-        <span class="micro text-ink-muted">Design preview</span>
-        <div class="flex items-center gap-1" role="radiogroup" aria-label="Palette">
-          <span class="mr-1 text-ink-muted">Palette</span>
-          <button
-            v-for="p in PALETTES"
-            :key="p.id"
-            type="button"
-            role="radio"
-            :aria-checked="palette === p.id"
-            :class="seg(palette === p.id)"
-            @click="palette = p.id"
-          >{{ p.label }}</button>
+    <!-- above the sticky submit bars on a phone, in the corner on a desktop -->
+    <div data-nosnippet class="fixed bottom-36 right-3 z-50 text-xs sm:bottom-3">
+      <button
+        v-if="!open"
+        type="button"
+        class="flex min-h-11 items-center gap-2 rounded-pill border border-hair2 bg-s1/95 px-4 shadow-modal backdrop-blur"
+        :aria-expanded="false"
+        aria-controls="design-preview"
+        @click="open = true"
+      >
+        <span class="micro text-ink-muted">Design</span>
+        <span class="font-semibold text-ink">{{ PALETTES.find((p) => p.id === palette)?.label }} · {{ BUTTONS.find((b) => b.id === button)?.label }}</span>
+      </button>
+      <div
+        v-else
+        id="design-preview"
+        role="region"
+        aria-label="Design preview"
+        class="w-[min(760px,calc(100vw-24px))] rounded-card border border-hair2 bg-s1/95 shadow-modal backdrop-blur"
+      >
+        <div class="flex flex-wrap items-center gap-x-5 gap-y-2 px-4 py-2">
+          <span class="micro text-ink-muted">Design preview</span>
+          <div class="flex items-center gap-1" role="radiogroup" aria-label="Palette">
+            <span class="mr-1 text-ink-muted">Palette</span>
+            <button
+              v-for="p in PALETTES"
+              :key="p.id"
+              type="button"
+              role="radio"
+              :aria-checked="palette === p.id"
+              :class="seg(palette === p.id)"
+              @click="palette = p.id"
+            >{{ p.label }}</button>
+          </div>
+          <div class="flex items-center gap-1" role="radiogroup" aria-label="Main button">
+            <span class="mr-1 text-ink-muted">Button</span>
+            <button
+              v-for="b in BUTTONS"
+              :key="b.id"
+              type="button"
+              role="radio"
+              :aria-checked="button === b.id"
+              :class="seg(button === b.id)"
+              @click="button = b.id"
+            >{{ b.label }}</button>
+          </div>
+          <button type="button" class="text-ink-2 underline underline-offset-4 hover:text-ink" @click="share">
+            {{ copied ? 'Link copied' : 'Copy link' }}
+          </button>
+          <button type="button" class="ml-auto text-ink-muted hover:text-ink" aria-label="Close design preview" @click="open = false">✕</button>
         </div>
-        <div class="flex items-center gap-1" role="radiogroup" aria-label="Main button">
-          <span class="mr-1 text-ink-muted">Button</span>
-          <button
-            v-for="b in BUTTONS"
-            :key="b.id"
-            type="button"
-            role="radio"
-            :aria-checked="button === b.id"
-            :class="seg(button === b.id)"
-            @click="button = b.id"
-          >{{ b.label }}</button>
-        </div>
-        <button type="button" class="ml-auto text-ink-2 underline underline-offset-4 hover:text-ink" @click="share">
-          {{ copied ? 'Link copied' : 'Copy link to this variant' }}
-        </button>
       </div>
     </div>
   </ClientOnly>

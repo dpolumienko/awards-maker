@@ -62,7 +62,8 @@ const pad = (i: number) => String(i + 1).padStart(2, '0')
             class="text-lg font-semibold sm:text-xl"
             :animate="{
               x: active === i || hovered === i ? 4 : 0,
-              color: active === i || hovered === i ? '#FFFFFF' : '#A5A5AC',
+              // white at rest: grey questions read as disabled (design audit)
+              color: '#FFFFFF',
             }"
             :transition="springSlow"
           >
@@ -81,7 +82,7 @@ const pad = (i: number) => String(i + 1).padStart(2, '0')
               viewBox="0 0 16 16"
               fill="none"
               class="text-gold"
-              :animate="{ opacity: active === i || hovered === i ? 1 : 0.4 }"
+              :animate="{ opacity: active === i || hovered === i ? 1 : 0.7 }"
               :transition="prefersReducedMotion() ? still : { duration: 0.2 }"
             >
               <path d="M8 1V15M1 8H15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />

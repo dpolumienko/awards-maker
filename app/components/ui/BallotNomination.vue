@@ -88,7 +88,7 @@ function onKey(e: KeyboardEvent, i: number) {
           :style="{ transform: `scaleX(${r.pct / 100})`, background: accent, opacity: r.top ? 0.18 : 0.08 }"
         />
         <span class="relative flex items-center gap-3">
-          <span aria-hidden="true" class="grid h-8 w-8 flex-none place-items-center rounded-pill bg-s3 text-[13px] font-bold text-ink-muted">
+          <span aria-hidden="true" class="grid h-8 w-8 flex-none place-items-center rounded-pill bg-s3 text-[13px] font-bold text-ink-2">
             {{ nomineeInitials(r.nominee) }}
           </span>
           <span class="min-w-0">
@@ -123,7 +123,9 @@ function onKey(e: KeyboardEvent, i: number) {
         :class="[
           picked === n.id ? 'bg-s2' : 'border-hair bg-canvas',
           mode === 'vote' && 'hover:border-hair2 motion-safe:hover:-translate-y-0.5',
-          mode === 'locked' && picked !== n.id && 'opacity-60',
+          // dim the rest only around the visitor's own pick; a closed show seen by
+          // someone who never voted is not a page of greyed-out names
+          mode === 'locked' && picked && picked !== n.id && 'opacity-60',
         ]"
         :style="picked === n.id ? { borderColor: accent } : undefined"
         @click="mode === 'vote' && emit('pick', n.id)"
@@ -135,7 +137,7 @@ function onKey(e: KeyboardEvent, i: number) {
           alt=""
           class="h-12 w-16 flex-none rounded-btn object-cover"
         />
-        <span v-else aria-hidden="true" class="grid h-10 w-10 flex-none place-items-center rounded-pill bg-s3 text-sm font-bold text-ink-muted">
+        <span v-else aria-hidden="true" class="grid h-10 w-10 flex-none place-items-center rounded-pill bg-s3 text-sm font-bold text-ink-2">
           {{ nomineeInitials(n) }}
         </span>
         <span class="min-w-0">

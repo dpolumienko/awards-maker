@@ -101,7 +101,7 @@ const agreed = ref(false)
     <div class="mt-5">
       <UiButton
         :variant="paidFeatures.length && !pro ? 'ghost' : 'primary'"
-        :class="!(canPublish && agreed) && 'pointer-events-none opacity-40'"
+        :disabled="!(canPublish && agreed)"
         @click="canPublish && agreed && emit(paidFeatures.length && !pro ? 'downgrade' : 'publish')"
       >
         {{ paidFeatures.length && !pro ? 'Publish the free version' : 'Publish awards' }}
