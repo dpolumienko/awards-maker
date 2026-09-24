@@ -381,9 +381,12 @@ if (award.value && !thin.value) {
   <div ref="root" class="pb-24">
     <template v-if="award">
       <!-- cover band: the streamer's theme or their own cover, full width -->
-      <div class="relative h-48 sm:h-64" :style="themeCss(award.look?.theme, accent, award.look?.coverUrl)">
+      <div class="relative h-48 sm:h-64">
+        <!-- the band runs up under the transparent header, so the page has no seam
+             where the navigation ends and the show begins -->
+        <span aria-hidden="true" class="absolute inset-x-0 -top-40 bottom-0" :style="themeCss(award.look?.theme, accent, award.look?.coverUrl)" />
         <!-- fades into the page's own canvas, which is not pure black under SC Blue -->
-        <span aria-hidden="true" class="absolute inset-0 bg-[linear-gradient(180deg,rgb(var(--canvas)/.35),rgb(var(--canvas)))]" />
+        <span aria-hidden="true" class="absolute inset-x-0 -top-40 bottom-0 bg-[linear-gradient(180deg,rgb(var(--canvas)/.35),rgb(var(--canvas)))]" />
         <div class="shell relative flex h-full flex-col justify-end pb-5">
           <nav aria-label="Breadcrumb" class="mb-auto pt-24">
             <ol class="flex list-none flex-wrap items-center gap-2 p-0 text-[11px] font-semibold uppercase tracking-micro text-ink-muted">

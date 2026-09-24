@@ -120,3 +120,10 @@
 :root[data-palette='sc'] .glow {
   filter: url(#glow-sc);
 }
+
+/* the date and time pickers' glyph is recoloured with a filter, not a variable
+   (assets/css/main.css) - under SC Blue it is lifted to the blue instead */
+:root[data-palette='sc'] input[type='date']::-webkit-calendar-picker-indicator,
+:root[data-palette='sc'] input[type='time']::-webkit-calendar-picker-indicator {
+  filter: brightness(0) saturate(100%) invert(74%) sepia(36%) saturate(1300%) hue-rotate(176deg) brightness(102%);
+}
