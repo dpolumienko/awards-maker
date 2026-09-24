@@ -12,6 +12,7 @@ export interface AwardSummary {
   opensAt: string
   closesAt: string
   ceremonyAt: string
+  timezone: string
   look: Award['look']
   host: Award['host']
   tier: 'free' | 'paid'

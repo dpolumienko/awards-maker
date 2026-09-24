@@ -12,6 +12,7 @@ import { useAwardDraft } from '~/composables/useAwardDraft'
 import { useMyAwards, type AwardSummary } from '~/composables/useAwards'
 import { phaseOf } from '~/composables/useVoting'
 import { FREE } from '~/types/award'
+import { formatInZone } from '#shared/time'
 
 const { draft, load, unpublish } = useAwardDraft()
 const { data, refresh } = await useMyAwards()
@@ -35,21 +36,21 @@ const badges = {
   revealed: { tone: 'results' as const, text: 'Winners announced' },
 }
 
-const fmt = (d?: string) =>
-  d ? new Date(`${d}T00:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''
+// UTC instants, shown in the show's own zone
+const fmt = (d?: string, zone = 'UTC') => (d ? formatInZone(d, zone, { month: 'short', zone: false }) : '')
 
 /** What happens next, in the host's words. */
 function next(a: AwardSummary) {
   switch (phaseOf(a as never, a.voters)) {
     case 'soon':
-      return `Opens ${fmt(a.opensAt)}`
+      return `Opens ${fmt(a.opensAt, a.timezone)}`
     case 'open':
-      return a.closesAt ? `Closes ${fmt(a.closesAt)}` : 'Open until you close it'
+      return a.closesAt ? `Closes ${fmt(a.closesAt, a.timezone)}` : 'Open until you close it'
     case 'counting':
     case 'capped':
       return 'Waiting on you: publish the winners'
     default:
-      return a.ceremonyAt ? `Announced ${fmt(a.ceremonyAt)}` : 'Winners announced'
+      return a.ceremonyAt ? `Announced ${fmt(a.ceremonyAt, a.timezone)}` : 'Winners announced'
   }
 }
 const waiting = (a: AwardSummary) => ['counting', 'capped'].includes(phaseOf(a as never, a.voters))

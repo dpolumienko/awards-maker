@@ -48,9 +48,12 @@ export interface Award {
   templateId?: string
   name: string
   description: string
+  /** UTC ISO instants, or '' - see shared/time.ts. */
   opensAt: string
   closesAt: string
   ceremonyAt: string
+  /** IANA zone the show runs in; every page shows the dates in it. */
+  timezone: string
   nominations: Nomination[]
   partners: Partner[]
   look: AwardLook

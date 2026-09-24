@@ -28,8 +28,8 @@ export const emptyTally = (): Tally => ({ voters: 0, counts: {}, days: {} })
 const dayKey = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 
-const startOf = (date: string) => new Date(`${date}T00:00:00`).getTime()
-const endOf = (date: string) => new Date(`${date}T23:59:59`).getTime()
+/** Dates are UTC instants (shared/time.ts); NaN for an empty one, which compares false. */
+const at = (iso: string) => (iso ? Date.parse(iso) : NaN)
 
 export function countFor(tally: Tally, nominationId: string, nomineeId: string): number {
   return tally.counts?.[nominationId]?.[nomineeId] ?? 0
@@ -50,10 +50,10 @@ export function phaseOf(
   if (override && phases.includes(override as Phase)) return override as Phase
   if (award.resultsAt) return 'revealed'
   if (award.closedAt) return 'counting'
-  if (award.closesAt && now > endOf(award.closesAt)) return 'counting'
+  if (now > at(award.closesAt)) return 'counting'
   // the ceiling is a free-plan thing; a paid show has none
   if (award.tier !== 'paid' && voters >= FREE.maxVoters) return 'capped'
-  if (award.opensAt && now < startOf(award.opensAt)) return 'soon'
+  if (now < at(award.opensAt)) return 'soon'
   return 'open'
 }
 

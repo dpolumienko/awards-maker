@@ -23,8 +23,10 @@ const handler = (await import('../server/api/awards/[slug]/ballot.post')).defaul
   e: unknown,
 ) => Promise<unknown>
 
-const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10)
-const yesterday = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10)
+// as mysql2 hands a DATETIME back (UTC, dateStrings)
+const dbAt = (ms: number) => new Date(Date.now() + ms).toISOString().slice(0, 19).replace('T', ' ')
+const tomorrow = dbAt(86_400_000)
+const yesterday = dbAt(-86_400_000)
 
 const openAward = {
   id: 1,
@@ -70,6 +72,16 @@ describe('POST /api/awards/:slug/ballot', () => {
 
   it('refuses after the closing date', async () => {
     vi.mocked(awardBySlug).mockResolvedValue({ ...openAward, closes_at: yesterday } as never)
+    await expect(handler({})).rejects.toMatchObject({ statusCode: 409 })
+  })
+
+  it('closes at the hour the host set, not at the end of that day', async () => {
+    vi.mocked(awardBySlug).mockResolvedValue({ ...openAward, closes_at: dbAt(-3_600_000) } as never)
+    await expect(handler({})).rejects.toMatchObject({ statusCode: 409 })
+  })
+
+  it('opens at the hour the host set, not at the start of that day', async () => {
+    vi.mocked(awardBySlug).mockResolvedValue({ ...openAward, opens_at: dbAt(3_600_000) } as never)
     await expect(handler({})).rejects.toMatchObject({ statusCode: 409 })
   })
 

@@ -12,6 +12,7 @@ import { FREE, type Award } from '~/types/award'
 import UiIcon from './UiIcon.vue'
 import PartnerChip from './PartnerChip.vue'
 import MediaLightbox from './MediaLightbox.vue'
+import { formatInZone } from '#shared/time'
 
 const { award, state = 'draft', signedIn = false } = defineProps<{
   award: Award
@@ -62,7 +63,7 @@ const badge = computed(() => {
   if (state === 'draft') return { tone: 'ended' as const, text: 'Preview' }
   const opens = award.opensAt ? new Date(award.opensAt) : null
   if (opens && opens.getTime() > Date.now()) {
-    return { tone: 'ended' as const, text: `Opens ${opens.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}` }
+    return { tone: 'ended' as const, text: `Opens ${formatInZone(award.opensAt, award.timezone, { month: 'short', zone: false })}` }
   }
   return { tone: 'live' as const, text: 'Voting open' }
 })
@@ -211,6 +212,18 @@ const countdown = computed(() => {
             </span>
           </div>
           <p v-else class="mt-2 text-sm text-ink-muted">Set a closing date to start the clock.</p>
+          <!-- the exact moments, in the show's zone: the countdown alone never said
+               when the ceremony is (review 2026-09-24) -->
+          <dl v-if="award.closesAt || award.ceremonyAt" class="m-0 mt-4 space-y-2 text-sm">
+            <div v-if="award.closesAt">
+              <dt class="micro">Voting closes</dt>
+              <dd class="m-0 mt-0.5 text-ink">{{ formatInZone(award.closesAt, award.timezone) }}</dd>
+            </div>
+            <div v-if="award.ceremonyAt">
+              <dt class="micro">Ceremony</dt>
+              <dd class="m-0 mt-0.5 text-ink">{{ formatInZone(award.ceremonyAt, award.timezone) }}</dd>
+            </div>
+          </dl>
         </div>
 
         <div>

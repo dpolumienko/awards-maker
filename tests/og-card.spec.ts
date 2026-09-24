@@ -15,7 +15,9 @@ const award = (over: Record<string, string | null> = {}) => ({
   host_name: 'kaicenat',
   slug: 'kai-cenat-awards',
   opens_at: null,
-  closes_at: '2026-12-20',
+  // UTC, as mysql2 returns a DATETIME; shown in the show's zone
+  closes_at: '2026-12-20 21:00:00',
+  timezone: 'Europe/Kyiv',
   ceremony_at: null,
   closed_at: null,
   results_at: null,
@@ -27,21 +29,21 @@ describe('ogCopy', () => {
   it('asks for a vote while voting is open', () => {
     const c = ogCopy(award(), 4, 'https://awards.streamscharts.com', NOW)
     expect(c.kicker).toBe('kaicenat presents')
-    expect(c.sub).toBe('4 categories, voted by chat · closes 20 Dec')
+    expect(c.sub).toBe('4 categories, voted by chat · closes 20 Dec, 23:00 Kyiv time')
     expect(c.cta).toBe('Vote now')
     expect(c.url).toBe('awards.streamscharts.com/a/kai-cenat-awards')
   })
 
   it('says when voting opens, and asks for nothing, before it does', () => {
-    const c = ogCopy(award({ opens_at: '2026-11-01' }), 1, 'https://x.test', NOW)
-    expect(c.sub).toBe('1 category, voted by chat · opens 1 Nov')
+    const c = ogCopy(award({ opens_at: '2026-11-01 16:00:00' }), 1, 'https://x.test', NOW)
+    expect(c.sub).toBe('1 category, voted by chat · opens 1 Nov, 18:00 Kyiv time')
     expect(c.cta).toBe('')
   })
 
   it('stops asking for votes once voting has closed, by date or by the host', () => {
-    expect(ogCopy(award({ closes_at: '2026-09-01' }), 3, 'https://x.test', NOW).cta).toBe('')
-    const closed = ogCopy(award({ closed_at: '2026-09-30 10:00:00', ceremony_at: '2026-12-30' }), 3, 'https://x.test', NOW)
-    expect(closed.sub).toBe('Voting closed · winners on 30 Dec')
+    expect(ogCopy(award({ closes_at: '2026-09-01 12:00:00' }), 3, 'https://x.test', NOW).cta).toBe('')
+    const closed = ogCopy(award({ closed_at: '2026-09-30 10:00:00', ceremony_at: '2026-12-30 18:00:00' }), 3, 'https://x.test', NOW)
+    expect(closed.sub).toBe('Voting closed · winners on 30 Dec, 20:00 Kyiv time')
     expect(closed.cta).toBe('')
   })
 

@@ -12,6 +12,7 @@ import { accentText } from '~/utils/accent'
 import { FREE } from '~/types/award'
 import type { AwardSummary } from '~/composables/useAwards'
 import type { Phase } from '~/composables/useVoting'
+import { formatInZone } from '#shared/time'
 
 // A summary, not the whole show: the catalog needs a name, a look and two
 // numbers, and shipping every nominee of every card down the wire to render a
@@ -34,22 +35,22 @@ const STATE: Record<Phase, { tone: 'live' | 'results' | 'ended'; text: string }>
   revealed: { tone: 'results', text: 'Winners announced' },
 }
 
-const fmt = (d?: string) =>
-  d ? new Date(`${d}T00:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''
+// UTC instants, shown in the show's own zone
+const fmt = (d?: string, zone = 'UTC') => (d ? formatInZone(d, zone, { month: 'short', zone: false }) : '')
 
 /** The one line under the title: what this awards is waiting for. */
 const line = computed(() => {
   switch (phase) {
     case 'soon':
-      return award.opensAt ? `Opens ${fmt(award.opensAt)}` : 'Not open yet'
+      return award.opensAt ? `Opens ${fmt(award.opensAt, award.timezone)}` : 'Not open yet'
     case 'open':
-      return award.closesAt ? `Closes ${fmt(award.closesAt)}` : 'Voting open'
+      return award.closesAt ? `Closes ${fmt(award.closesAt, award.timezone)}` : 'Voting open'
     case 'capped':
       return `Closed at ${FREE.maxVoters} voters`
     case 'counting':
-      return award.ceremonyAt ? `Winners ${fmt(award.ceremonyAt)}` : 'Winners coming'
+      return award.ceremonyAt ? `Winners ${fmt(award.ceremonyAt, award.timezone)}` : 'Winners coming'
     default:
-      return award.ceremonyAt ? `Announced ${fmt(award.ceremonyAt)}` : 'Winners announced'
+      return award.ceremonyAt ? `Announced ${fmt(award.ceremonyAt, award.timezone)}` : 'Winners announced'
   }
 })
 </script>
