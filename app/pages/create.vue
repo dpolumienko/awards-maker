@@ -87,7 +87,9 @@ function applyTemplate(t: AwardTemplate) {
   // A set is a starting point for the whole page, not only the category list, so
   // it brings its own theme, colour and face - switching sets visibly changes the
   // preview. An uploaded cover is the streamer's own asset and survives.
-  draft.value.look = { ...draft.value.look, ...t.look }
+  // Categories only. A preset used to bring its own theme, colour and font too,
+  // and the Look is paid - so one click on a free-looking preset made the whole
+  // show paid (review 2026-09-24: "paid things scare people off at once").
   draft.value.templateId = t.id
 }
 

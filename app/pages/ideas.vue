@@ -9,8 +9,7 @@ import { ref } from 'vue'
 import UiButton from '~/components/ui/UiButton.vue'
 import InteractiveAccordion from '~/components/ui/InteractiveAccordion.vue'
 import { useReveal } from '~/composables/useReveal'
-import { IDEA_GROUPS, IDEA_TOTAL } from '~/data/ideas'
-import { FREE } from '~/types/award'
+import { IDEA_GROUPS, IDEA_TOTAL, ideaEmoji } from '~/data/ideas'
 
 const root = ref<HTMLElement | null>(null)
 useReveal(root, { stagger: 0.04 })
@@ -30,13 +29,13 @@ const faq = [
   },
   {
     q: 'Can I use these for a Discord server or a game community?',
-    a: 'Yes. Nominees do not have to be channels - type in any name, or use a clip or an image on the paid tier. The last group here is written for servers and guilds rather than for streams.',
+    a: 'Yes. Nominees do not have to be channels - type in any name, or use a clip or an image on the paid tier. The chat group works for a server as well as for a stream.',
   },
 ]
 
 useSeoMeta({
   title: `${IDEA_TOTAL} Award Category Ideas for Streamers`,
-  description: `Award category ideas for a streamer awards show: chat awards, clips and collabs, funny ones, and sets for a Discord. ${IDEA_TOTAL} to pick from, free to run.`,
+  description: `${IDEA_TOTAL} award category ideas for a streamer awards show: chat awards, clips and collabs, funny ones and the classics. Open any group as a draft and run it free.`,
   ogImage: ogCard('ideas'),
 })
 
@@ -70,9 +69,8 @@ useSchemaOrg([
 
     <h1 class="heading max-w-[22ch]">End of year awards category ideas</h1>
     <p class="mt-4 max-w-copy text-lg text-ink-2">
-      {{ IDEA_TOTAL }} categories for a streamer awards show, grouped by what they are for. Take
-      {{ FREE.maxNominations }} of them, put them in the builder, and your chat votes on the rest of the
-      evening.
+      {{ IDEA_TOTAL }} categories for a streamer awards show, in four groups. Open a group as a draft,
+      keep the ones that fit your channel, rename the rest.
     </p>
 
     <div class="mt-6 flex flex-wrap gap-3">
@@ -80,7 +78,7 @@ useSchemaOrg([
       <UiButton to="/catalog" variant="ghost">See shows running now</UiButton>
     </div>
 
-    <!-- jump list: six groups is more than fits on one screen -->
+    <!-- jump list: four groups is more than fits on one screen -->
     <nav aria-label="Groups" class="mt-10 flex flex-wrap gap-2 border-y border-hair py-4">
       <a
         v-for="g in IDEA_GROUPS"
@@ -88,48 +86,38 @@ useSchemaOrg([
         :href="`#${g.id}`"
         class="rounded-pill border border-hair px-4 py-2 text-sm text-ink-2 no-underline transition-colors hover:border-gold hover:text-ink"
       >
-        {{ g.title }}
+        <span aria-hidden="true" class="mr-1">{{ g.emoji }}</span>{{ g.title }}
         <span class="tnum ml-1 text-ink-muted">{{ g.items.length }}</span>
       </a>
     </nav>
 
+    <!-- A group is a starting draft, not a product: all of them open free, and
+         the builder is where a show past the free ceiling finds out (review
+         2026-09-24 - "paid labels here scare people off"). -->
     <section
       v-for="g in IDEA_GROUPS"
       :id="g.id"
       :key="g.id"
-      class="js-reveal mt-12 scroll-mt-24 rounded-card border p-5 sm:p-6"
-      :class="g.set > FREE.maxNominations ? 'border-gold-24 bg-gold/[0.04]' : 'border-hair bg-s1'"
+      class="js-reveal mt-12 scroll-mt-24 rounded-card border border-hair bg-s1 p-5 sm:p-6"
     >
-      <div class="flex flex-wrap items-center gap-3">
-        <span class="grid h-10 w-10 flex-none place-items-center rounded-btn border border-hair bg-s1">
-          <img :src="asset(g.icon)" alt="" aria-hidden="true" class="h-4 w-4" loading="lazy" />
-        </span>
-        <h2 class="text-2xl font-bold">{{ g.title }}</h2>
-        <span
-          v-if="g.set > FREE.maxNominations"
-          class="rounded-pill border border-gold-24 px-3 py-1 text-[11px] font-bold uppercase tracking-micro text-gold-text"
-        >Paid · {{ g.set }} categories</span>
-        <UiButton
-          :to="`/create?ideas=${g.id}`"
-          :variant="g.set > FREE.maxNominations ? 'primary' : 'ghost'"
-          size="sm"
-          class="ml-auto"
-        >
-          Use this set · {{ g.set }}
+      <div class="flex flex-wrap items-center gap-4">
+        <span aria-hidden="true" class="grid h-14 w-14 flex-none place-items-center rounded-card border border-hair bg-s2 text-[30px] leading-none">{{ g.emoji }}</span>
+        <div class="min-w-0">
+          <h2 class="text-2xl font-bold">{{ g.title }}</h2>
+          <p class="m-0 mt-1 max-w-copy text-ink-2">{{ g.blurb }}</p>
+        </div>
+        <UiButton :to="`/create?ideas=${g.id}`" variant="ghost" size="sm" class="sm:ml-auto">
+          Start a draft · {{ g.set }}
         </UiButton>
       </div>
-      <p class="mt-3 max-w-copy text-ink-2">{{ g.blurb }}</p>
-      <p v-if="g.set > FREE.maxNominations" class="mt-2 max-w-copy text-sm text-gold-text">
-        This set fills {{ g.set }} categories - past the {{ FREE.maxNominations }} the free plan covers, so
-        the show goes out on the paid tier.
-      </p>
 
-      <ul class="mt-5 grid list-none gap-2 p-0 sm:grid-cols-2 lg:grid-cols-3">
+      <ul class="mt-6 grid list-none gap-2 p-0 sm:grid-cols-2 lg:grid-cols-3">
         <li
           v-for="item in g.items"
           :key="item"
-          class="rounded-card border border-hair bg-s1 px-4 py-3 text-[15px] text-ink-2"
+          class="flex items-center gap-3 rounded-card border border-hair bg-canvas px-4 py-3 text-[15px] font-medium text-ink"
         >
+          <span aria-hidden="true" class="text-xl leading-none">{{ ideaEmoji(item, g) }}</span>
           {{ item }}
         </li>
       </ul>
@@ -145,8 +133,8 @@ useSchemaOrg([
     <div class="mt-12 rounded-card border border-gold-24 bg-gold/[0.06] p-6 sm:p-8">
       <h2 class="text-2xl font-bold">Take five and run the show</h2>
       <p class="mt-3 max-w-copy text-ink-2">
-        The builder starts from a ready-made set, nominates any channel Streams Charts tracks, and gives
-        your awards a public page your chat can vote on. Free with a Twitch login.
+        Start from a draft, nominate any channel Streams Charts tracks, and your awards get a public
+        page your viewers can vote on. Free with a Twitch login.
       </p>
       <div class="mt-6 flex flex-wrap gap-3">
         <UiButton to="/create">Create your awards</UiButton>

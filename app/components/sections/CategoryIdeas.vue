@@ -2,7 +2,7 @@
 import SectionShell from './SectionShell.vue'
 import InfiniteMovingCards from '../ui/InfiniteMovingCards.vue'
 import UiButton from '../ui/UiButton.vue'
-import { IDEA_GROUPS, IDEA_TOTAL } from '~/data/ideas'
+import { IDEA_GROUPS, IDEA_TOTAL, ideaEmoji } from '~/data/ideas'
 
 // Crawlable ideas in the DOM - this section is the page's traffic play for
 // "end of year awards" / "award categories" - but drifting instead of stacked in
@@ -24,17 +24,17 @@ const rows = IDEA_GROUPS.slice(0, 3).map((g, i) => ({
     <div class="mt-6 space-y-8">
       <div v-for="row in rows" :key="row.title" class="js-reveal">
         <div class="mb-4 flex items-center gap-3">
-          <span class="grid h-9 w-9 flex-none place-items-center rounded-btn border border-hair bg-s1">
-            <img :src="asset(row.icon)" alt="" aria-hidden="true" class="h-4 w-4" loading="lazy" />
+          <span aria-hidden="true" class="grid h-9 w-9 flex-none place-items-center rounded-btn border border-hair bg-s1 text-lg leading-none">
+            {{ row.emoji }}
           </span>
           <h3 class="text-xs font-semibold uppercase tracking-label text-gold-text">{{ row.title }}</h3>
         </div>
         <InfiniteMovingCards :items="row.items" :direction="row.dir" speed="slow" :gap="12">
           <template #default="{ item }">
             <span
-              class="block rounded-pill border border-hair bg-s1 px-5 py-2.5 text-[15px] text-ink-2 transition-[color,border-color,transform] duration-300 ease-gala hover:border-gold hover:text-ink motion-safe:hover:-translate-y-0.5"
+              class="flex items-center gap-2 rounded-pill border border-hair bg-s1 px-5 py-2.5 text-[15px] text-ink-2 transition-[color,border-color,transform] duration-300 ease-gala hover:border-gold hover:text-ink motion-safe:hover:-translate-y-0.5"
             >
-              {{ item }}
+              <span aria-hidden="true">{{ ideaEmoji(String(item), row) }}</span>{{ item }}
             </span>
           </template>
         </InfiniteMovingCards>

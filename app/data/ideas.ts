@@ -15,6 +15,8 @@ export interface IdeaGroup {
   /** One line on the page: who this group is for and how to use it. */
   blurb: string
   icon: string
+  /** Big and in colour on /ideas - the page read as a wall of grey pills. */
+  emoji: string
   /**
    * How many of the items the "use this set" button puts in the builder. Two of
    * the four sets fit the free plan exactly; the other two are deliberately
@@ -28,6 +30,7 @@ export interface IdeaGroup {
 export const IDEA_GROUPS: IdeaGroup[] = [
   {
     id: 'chat',
+    emoji: '💬',
     title: 'For your chat',
     set: 5,
     blurb:
@@ -50,6 +53,7 @@ export const IDEA_GROUPS: IdeaGroup[] = [
   },
   {
     id: 'streams',
+    emoji: '🎬',
     title: 'Streams and collabs',
     set: 8,
     blurb:
@@ -72,6 +76,7 @@ export const IDEA_GROUPS: IdeaGroup[] = [
   },
   {
     id: 'funny',
+    emoji: '🤪',
     title: 'Funny categories',
     set: 12,
     blurb:
@@ -94,6 +99,7 @@ export const IDEA_GROUPS: IdeaGroup[] = [
   },
   {
     id: 'classics',
+    emoji: '🏆',
     title: 'Award-show classics',
     set: 5,
     blurb:
@@ -111,6 +117,57 @@ export const IDEA_GROUPS: IdeaGroup[] = [
     ],
   },
 ]
+
+/** One emoji per idea, so a list of forty-four reads at a glance. */
+export const IDEA_EMOJI: Record<string, string> = {
+  'Chatter of the Year': '🗣️',
+  'Mod MVP': '🛡️',
+  'Best Emote': '😂',
+  'Lurker of the Year': '👀',
+  'Most Loyal Viewer': '🤝',
+  'Best Clip Maker': '✂️',
+  'Hype Train Conductor': '🚂',
+  'First Chatter Award': '🥇',
+  'Best Community Meme': '🐸',
+  'Most Wholesome Chatter': '🥰',
+  'Best Copypasta': '📋',
+  'Donation of the Year': '💸',
+  'Clip of the Year': '🎞️',
+  'Stream of the Year': '📺',
+  'Best Collab': '🤜',
+  'Best Stream Duo': '👯',
+  'Best Marathon Stream': '⏱️',
+  'Best Streamed Event': '🎪',
+  'Best Charity Stream': '💛',
+  'Speedrun of the Year': '🏃',
+  'Best IRL Moment': '📍',
+  'Biggest Comeback': '🔥',
+  'Best Guest Streamer': '🎙️',
+  'Best Subathon Moment': '🌙',
+  'Rage Quit of the Year': '😡',
+  'Best Fail': '💥',
+  'Most Chaotic Stream': '🌪️',
+  'Worst Take of the Year': '🙃',
+  'Best Background Cameo': '🐾',
+  'Pet of the Year': '🐶',
+  'Meme That Wouldn’t Die': '🧟',
+  'Technical Difficulties Award': '🔌',
+  'Game We Should Never Have Played': '🎮',
+  'Longest "Just One More Game"': '⏳',
+  'Loudest Scream': '📢',
+  'Worst Aim, Best Vibes': '🎯',
+  'Streamer of the Year': '🏆',
+  'Rising Star': '⭐',
+  'Best Variety Streamer': '🎲',
+  'Best IRL Streamer': '🌍',
+  'Best Just Chatting Streamer': '☕',
+  'Breakout of the Year': '🚀',
+  'Best Returning Streamer': '🔁',
+  'Content Creator of the Year': '🎥',
+}
+
+/** An idea's emoji, or the group's when it has none of its own. */
+export const ideaEmoji = (name: string, group?: IdeaGroup) => IDEA_EMOJI[name] ?? group?.emoji ?? '🏅'
 
 export const IDEA_TOTAL = IDEA_GROUPS.reduce((sum, g) => sum + g.items.length, 0)
 
