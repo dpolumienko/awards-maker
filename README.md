@@ -28,11 +28,11 @@ pushed yet: that needs a token with the `workflow` scope (`gh auth refresh -s wo
 then commit the file). Pages on a private repository also requires a paid GitHub plan -
 on the free plan the demo starts working the moment the repository is public.
 
-Build it yourself with:
-
-```bash
-NUXT_APP_BASE_URL=/awards-maker/ NITRO_PRESET=github_pages npx nuxi generate
-```
+Build it with `scripts/build-demo.sh` (usage at the top of the file): it renders
+the landing pages plus the award pages listed in `PRERENDER_ROUTES` from a local
+database, marks every page noindex, and puts a sign-in screen over the site
+(`scripts/demo-gate.mjs` - a screen, not security: the branch is public). Commit
+`.output/public` as the `gh-pages` branch.
 
 ## Components ported from 21st.dev
 

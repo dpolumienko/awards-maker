@@ -175,6 +175,9 @@ export default defineNuxtConfig({
     // without this the built server answered every /og/a/ card with a 500.
     externals: { traceInclude: [fileURLToPath(new URL('./node_modules/harfbuzzjs/hb.wasm', import.meta.url))] },
     compressPublicAssets: true,
+    // The static demo (scripts/build-demo.sh) renders a few award pages from a
+    // local database; a normal build prerenders nothing extra.
+    prerender: { routes: (process.env.PRERENDER_ROUTES || '').split(',').filter(Boolean) },
     // The prerender cache is written into node_modules/.cache, which sits inside a
     // OneDrive folder here: OneDrive grabs the file between write and rename and
     // the build dies with EPERM, at a different route every time. It goes to the
