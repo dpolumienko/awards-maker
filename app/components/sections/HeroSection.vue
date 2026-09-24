@@ -7,6 +7,12 @@ import StageLights from '../ui/StageLights.vue'
 import GlowDivider from '../ui/GlowDivider.vue'
 import SparkleField from '../ui/SparkleField.vue'
 import { useGsap, prefersReducedMotion } from '~/composables/useReveal'
+import { FREE } from '~/types/award'
+import { IDEA_TOTAL } from '~/data/ideas'
+import { PLATFORM_NAMES } from '~/data/platforms'
+
+// the platforms a channel nominee can come from, not everything SC tracks
+const PLATFORMS = Object.keys(PLATFORM_NAMES).length
 
 const root = ref<HTMLElement | null>(null)
 
@@ -81,10 +87,12 @@ onMounted(() => {
         <GlowDivider />
       </div>
 
+      <!-- What is true on day one. Site-wide totals (shows published, votes
+           counted) come back here once there are real ones worth showing. -->
       <div class="js-reveal flex flex-wrap gap-12 pt-2">
-        <UiCounter :value="312" label="Awards published" />
-        <UiCounter :value="48" label="Running right now" />
-        <UiCounter :value="27400" label="Votes counted" />
+        <UiCounter :value="PLATFORMS" label="Platforms to nominate from" />
+        <UiCounter :value="IDEA_TOTAL" label="Category ideas to start from" />
+        <UiCounter :value="FREE.maxNominations" label="Categories free" />
       </div>
 
     </div>
