@@ -19,6 +19,10 @@ import CeremonySetup from '~/components/ui/CeremonySetup.vue'
 import { COVER, useCeremony } from '~/composables/useCeremony'
 import { themeCss } from '~/data/themes'
 import { accentText } from '~/utils/accent'
+import { DISPLAY_FONTS, useDisplayFonts } from '~/composables/useDisplayFonts'
+
+// ceremony typefaces and share cards draw in any of the headline faces
+useDisplayFonts(DISPLAY_FONTS)
 
 const route = useRoute()
 const slug = computed(() => String(route.params.slug))

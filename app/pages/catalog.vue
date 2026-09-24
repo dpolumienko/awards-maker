@@ -95,7 +95,7 @@ useSeoMeta({
 
 
 useSchemaOrg([
-  defineWebPage({ name: 'Community awards catalog' }),
+  defineWebPage({ '@type': ['WebPage', 'FAQPage'], name: 'Community awards catalog' }),
   defineBreadcrumb({
     itemListElement: [
       { name: 'Awards Maker', item: '/' },

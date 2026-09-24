@@ -9,6 +9,9 @@
 import UiButton from './UiButton.vue'
 import UiIcon from './UiIcon.vue'
 import { PLANS } from '~/data/plans'
+
+// h3 under the landing's section h2; /plans puts the cards straight under its h1
+const { level = 'h3' } = defineProps<{ level?: 'h2' | 'h3' }>()
 </script>
 
 <template>
@@ -24,7 +27,7 @@ import { PLANS } from '~/data/plans'
         aria-hidden="true"
         class="absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgb(var(--gold)),transparent)]"
       />
-      <h3 class="text-xl font-semibold">{{ p.name }}</h3>
+      <component :is="level" class="text-xl font-semibold">{{ p.name }}</component>
       <p class="mt-4 flex items-baseline gap-2">
         <span class="tnum text-[44px] font-extrabold leading-none tracking-heading" :class="p.featured && 'text-gold-text'">{{ p.price }}</span>
         <span class="text-sm text-ink-muted">{{ p.per }}</span>

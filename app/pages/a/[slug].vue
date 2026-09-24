@@ -25,9 +25,11 @@ import { playCue } from '~/composables/useCue'
 import { themeCss } from '~/data/themes'
 import { accentText } from '~/utils/accent'
 import { nomineeName } from '~/utils/nominee'
-import { FREE, PUBLISH } from '~/types/award'
+import { FREE } from '~/types/award'
 import { awardOgImage } from '~/utils/og'
 import { formatInZone } from '#shared/time'
+import { isIndexable } from '#shared/indexable'
+import { useDisplayFonts } from '~/composables/useDisplayFonts'
 
 const route = useRoute()
 const slug = computed(() => String(route.params.slug))
@@ -47,6 +49,8 @@ if (error.value) {
   })
 }
 const award = computed(() => data.value?.award)
+// the show's own headline face, if it has one - nothing else
+useDisplayFonts(() => [award.value?.look?.font])
 const tally = computed(() => data.value?.tally ?? emptyTally())
 const root = ref<HTMLElement | null>(null)
 useReveal(root, { stagger: 0.06 })
@@ -207,24 +211,25 @@ const nomineeTotal = computed(() =>
 // Just the address now. It used to carry the whole show base64'd into a query
 // string, because without a server that was the only way a shared link opened
 // anything at all - see the deleted utils/awardLink.ts.
-const shareUrl = computed(() =>
-  import.meta.client ? `${location.origin}/a/${slug.value}` : `/a/${slug.value}`,
-)
+const siteUrl = String(useSiteConfig().url)
+// absolute on the server too: the Event markup and the share links need it
+const shareUrl = computed(() => `${import.meta.client ? location.origin : siteUrl}/a/${slug.value}`)
 
 // SEO. The page is the reason the catalog exists, so it carries its own title,
 // description, FAQ and Event markup. The indexing thresholds are the publishing
 // thresholds - an awards below them is kept out of search rather than shipped
 // as a thin page, and so is anything trading on the name of the show we do not
 // own.
+// The rule lives in shared/indexable.ts so the sitemap reads the same one.
 const thin = computed(() => {
   const a = award.value
   if (!a) return true
-  return (
-    a.nominations.length < PUBLISH.minNominations ||
-    a.nominations.some((n) => n.nominees.length < PUBLISH.minNomineesPerNomination) ||
-    a.description.trim().length < 20 ||
-    /streamer\s+awards/i.test(a.name)
-  )
+  return !isIndexable({
+    name: a.name,
+    description: a.description,
+    categories: a.nominations.length,
+    minNominees: Math.min(...a.nominations.map((n) => n.nominees.length)),
+  })
 })
 
 const faq = computed(() => {
@@ -256,7 +261,6 @@ const faq = computed(() => {
   ]
 })
 
-const siteUrl = String(useSiteConfig().url)
 // the phase without the ?state= preview override, so a host previewing the
 // results screen does not mint a card URL nobody else will ever request
 const ogImageUrl = computed(() =>
@@ -264,12 +268,49 @@ const ogImageUrl = computed(() =>
     ? awardOgImage(siteUrl, award.value.slug, phaseOf(award.value, data.value?.voters ?? 0), award.value.publishedAt)
     : undefined,
 )
+// A long name is cut on a word boundary so the title keeps its ending.
+const shortName = (name: string, max = 45) =>
+  name.length <= max ? name : `${name.slice(0, max).replace(/\s+\S*$/, '')}…`
+
+// The title follows the phase: a show with winners out is searched for its winners.
+const seoPhase = computed(() => (award.value ? phaseOf(award.value, data.value?.voters ?? 0) : 'open'))
+const seoTitle = computed(() => {
+  const a = award.value
+  if (!a) return 'Awards page'
+  const name = shortName(a.name)
+  if (seoPhase.value === 'revealed') return `${name} Winners`
+  if (seoPhase.value === 'counting' || seoPhase.value === 'capped') return `${name}: Voting Closed`
+  return `${name}: Vote for the Winners`
+})
+const seoDescription = computed(() => {
+  const a = award.value
+  if (!a) return 'This awards page is not published.'
+  const titles = a.nominations.slice(0, 3).map((n) => n.title).filter(Boolean).join(', ')
+  const more = a.nominations.length > 3 ? ` and ${a.nominations.length - 3} more` : ''
+  const closed = seoPhase.value === 'counting' || seoPhase.value === 'capped'
+  const parts =
+    seoPhase.value === 'revealed'
+      ? [`The winners of ${a.name}, run by ${a.host.name}.`, titles && `${titles}${more}.`]
+      : closed
+        ? [
+            `${a.host.name} ran ${a.name}: ${titles}${more}.`,
+            'Voting is closed.',
+            a.ceremonyAt ? `The winners are announced ${fmtDate(a.ceremonyAt)}.` : 'The winners are announced soon.',
+          ]
+        : [
+          `${a.host.name} is running ${a.name}: ${titles}${more}.`,
+          `${nomineeTotal.value} nominees, and anyone can vote with a Twitch login.`,
+          a.closesAt && `Voting closes ${fmtDate(a.closesAt)}.`,
+        ]
+  return parts.filter(Boolean).join(' ')
+})
+
+// Header and meta must agree: the module sends X-Robots-Tag from this.
+useRobotsRule(computed(() => (award.value && !thin.value ? 'index, follow' : 'noindex, follow')))
+
 useSeoMeta({
-  title: () => (award.value ? `${award.value.name}: Vote for the Winners` : 'Awards page'),
-  description: () =>
-    award.value
-      ? `${award.value.host.name} is running ${award.value.name} - ${award.value.nominations.length} categories, ${nomineeTotal.value} nominees, open to any Twitch account. ${award.value.closesAt ? `Voting closes ${fmtDate(award.value.closesAt)}.` : ''}`
-      : 'This awards page has not been published from this browser.',
+  title: () => seoTitle.value,
+  description: () => seoDescription.value,
   robots: () => (award.value && !thin.value ? 'index, follow' : 'noindex, follow'),
   ogType: 'website',
   ogImage: () => ogImageUrl.value,
@@ -280,9 +321,14 @@ useSeoMeta({
 })
 
 
-// Everything here is known synchronously (the page is client-rendered off
-// localStorage), so the markup is built from plain values, not getters.
-if (award.value) {
+// The channel a host runs, as a URL, where the platform has one by name.
+const channelUrl = (h: { name: string; platform: string }) =>
+  h.platform === 'twitch' ? `https://www.twitch.tv/${h.name}` : h.platform === 'kick' ? `https://kick.com/${h.name}` : undefined
+
+// Event markup only for a page search is allowed to index. The FAQ below the
+// ballot stays on the page but is not marked up: Google no longer shows FAQ
+// results for a site like this, and the Event is what the page is.
+if (award.value && !thin.value) {
   useSchemaOrg([
     defineBreadcrumb({
       // a getter: whether the catalog is open is only known once its fetch lands
@@ -295,13 +341,17 @@ if (award.value) {
     defineEvent({
       name: award.value.name,
       description: award.value.description,
-      startDate: award.value.opensAt || undefined,
-      endDate: award.value.ceremonyAt || undefined,
+      // required by Google; a show with no opening date opened when it was published
+      startDate: award.value.opensAt || award.value.publishedAt || undefined,
+      endDate: award.value.ceremonyAt || award.value.closesAt || undefined,
+      eventStatus: 'https://schema.org/EventScheduled',
       eventAttendanceMode: 'https://schema.org/OnlineEventAttendanceMode',
-      organizer: { name: award.value.host.name },
+      image: ogImageUrl.value,
+      // a person running a show, not the site's publisher
+      organizer: definePerson({ name: award.value.host.name, url: channelUrl(award.value.host) }),
       location: defineVirtualLocation({ url: shareUrl.value }),
+      offers: { price: 0, priceCurrency: 'USD', availability: 'https://schema.org/InStock', url: shareUrl.value },
     }),
-    ...faq.value.map((f) => defineQuestion({ name: f.q, acceptedAnswer: f.a })),
   ])
 }
 </script>

@@ -117,3 +117,26 @@
     transform: translateY(110%);
   }
 }
+
+/* The hero's entrance (components/sections/HeroSection.vue): movement only, no
+   opacity and no mask, so the largest paint happens on the first frame and
+   never waits for JavaScript. `--d` staggers the pieces. */
+@media (prefers-reduced-motion: no-preference) {
+  .hero-rise {
+    animation: hero-rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) var(--d, 0ms) both;
+  }
+  .hero-spot {
+    animation: hero-spot 2.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+}
+@keyframes hero-rise {
+  from {
+    transform: translateY(14px);
+  }
+}
+@keyframes hero-spot {
+  from {
+    opacity: 0;
+  }
+}
+

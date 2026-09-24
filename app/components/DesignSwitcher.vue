@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// A strip above the header for comparing the palettes and the primary-button
+// A floating panel for comparing the palettes and the primary-button
 // treatments on the real pages (review 2026-09-24, items 1 and 14). Temporary by
 // design: once a winner is picked, delete this, data/design.ts and the losing
 // blocks in assets/css/palettes.css.
@@ -54,8 +54,16 @@ const seg = (active: boolean) =>
 
 <template>
   <ClientOnly>
-    <div class="border-b border-hair bg-s1/95 text-xs" role="region" aria-label="Design preview">
-      <div class="shell flex min-h-10 flex-wrap items-center gap-x-5 gap-y-2 py-1.5">
+    <!-- Floating, not in the flow: a strip above the header mounted after
+         hydration and pushed every page down (CLS 0.1 in the SEO audit), and its
+         words were the first text Google read on each page. -->
+    <div
+      data-nosnippet
+      class="fixed inset-x-3 bottom-3 z-50 mx-auto max-w-[760px] rounded-card border border-hair2 bg-s1/95 text-xs shadow-modal backdrop-blur"
+      role="region"
+      aria-label="Design preview"
+    >
+      <div class="flex flex-wrap items-center gap-x-5 gap-y-2 px-4 py-2">
         <span class="micro text-ink-muted">Design preview</span>
         <div class="flex items-center gap-1" role="radiogroup" aria-label="Palette">
           <span class="mr-1 text-ink-muted">Palette</span>

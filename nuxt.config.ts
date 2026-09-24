@@ -25,13 +25,23 @@ export default defineNuxtConfig({
         // outranked every page's own card - /plans unfurled on X as the landing.
       ],
       link: [
+        // the Streams Charts mark (public/icon.svg, cut from the SC logo)
+        { rel: 'icon', href: '/favicon.ico', sizes: '48x48' },
+        { rel: 'icon', type: 'image/svg+xml', href: '/icon.svg' },
+        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
+        // Archivo only - the paid headline faces load where they are drawn
+        // (composables/useDisplayFonts.ts). Not render-blocking: the stylesheet
+        // is fetched as `print` and switched on when it lands, so the first
+        // paint happens in the fallback and swaps (Lighthouse had it holding
+        // mobile FCP for ~780 ms).
+        { rel: 'preload', as: 'style', href: 'https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap' },
         {
           rel: 'stylesheet',
-          // Archivo is the system font; the other three are the paid headline
-          // options in the builder's Look section.
-          href: 'https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Anton&family=Playfair+Display:wght@700;800&family=Space+Grotesk:wght@500;700&display=swap',
+          href: 'https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap',
+          media: 'print',
+          onload: "this.media='all'",
         },
       ],
     },
@@ -51,9 +61,15 @@ export default defineNuxtConfig({
   // workspace, they are noindex anyway, and rendering them on the server buys
   // a signed-in user nothing.
   routeRules: {
-    '/create': { ssr: false },
-    '/my-awards': { ssr: false },
-    '/my-awards/**': { ssr: false },
+    // noindex as a header too, not only a meta tag the client adds after
+    // hydration - an ssr:false page serves no meta a crawler can read (SEO audit)
+    '/create': { ssr: false, robots: false },
+    '/my-awards': { ssr: false, robots: false },
+    '/my-awards/**': { ssr: false, robots: false },
+    // static files that never change under their name
+    '/img/**': { headers: { 'Cache-Control': 'public, max-age=604800' } },
+    '/og/*.png': { headers: { 'Cache-Control': 'public, max-age=86400' } },
+    '/favicon.ico': { headers: { 'Cache-Control': 'public, max-age=604800' } },
     // Awards Maker runs under Streams Charts' legal pages (review 2026-09-24);
     // the old URLs point there instead of 404ing. Kept in step with app/data/sc.ts.
     '/terms': { redirect: { to: 'https://streamscharts.com/terms-of-use', statusCode: 301 } },
@@ -69,16 +85,11 @@ export default defineNuxtConfig({
     },
   },
 
-  // A project site on GitHub Pages lives under /<repo>/, and nothing served from a
-  // sub-path may own /robots.txt - the module refuses to build one. The demo does
-  // not need it; the real subdomain deploy has no base URL and keeps it.
-  robots: { robotsTxt: !process.env.NUXT_APP_BASE_URL || process.env.NUXT_APP_BASE_URL === '/' },
-
   // The host's own pages are noindex; a noindex URL in the sitemap is a mixed
   // signal, so they are kept out of it. Award pages come in through their own
   // source, which is the whole point of the catalog existing.
   sitemap: {
-    exclude: ['/my-awards', '/my-awards/**'],
+    exclude: ['/my-awards', '/my-awards/**', '/create'],
     sources: ['/api/__sitemap__/urls'],
   },
 
@@ -90,12 +101,40 @@ export default defineNuxtConfig({
   ogImage: { enabled: false },
 
   // Domain is still open (subdomain decision) - placeholder until it is fixed.
+  // In production NUXT_PUBLIC_SITE_URL overrides `url` and must be the public
+  // https host: canonicals, the sitemap, robots.txt and every og:image are built
+  // from it. /healthz fails when it is not (server/routes/healthz.get.ts).
+  // NUXT_SITE_ENV=staging on any other deploy keeps it out of search.
   site: {
     url: 'https://awards.streamscharts.com',
-    name: 'Awards Maker',
+    name: 'Streams Charts Awards',
     description:
-      'Run your own streamer awards: pick categories, nominate any channel, let chat vote or choose winners yourself. Free with a Twitch login.',
+      'Run your own streamer awards: pick the categories, nominate channels from Twitch, Kick and YouTube, and let your viewers vote. Free to start.',
     defaultLocale: 'en',
+  },
+
+  // The site's publisher is Streams Charts. Without an identity the first
+  // organizer on an awards page became WebSite.publisher (SEO audit).
+  schemaOrg: {
+    identity: {
+      type: 'Organization',
+      name: 'Streams Charts',
+      url: 'https://streamscharts.com',
+      logo: '/img/logos/streamscharts-light.svg',
+    },
+  },
+
+  // Canonicals carry no query string at all: ?state=, ?status=, ?ideas= and the
+  // design switcher's ?palette= are views of one page, not pages.
+  seo: { canonicalQueryWhitelist: [] },
+
+  // A project site on GitHub Pages lives under /<repo>/, and nothing served from a
+  // sub-path may own /robots.txt - the module refuses to build one. The demo does
+  // not need it; the real subdomain deploy has no base URL and keeps it.
+  robots: {
+    robotsTxt: !process.env.NUXT_APP_BASE_URL || process.env.NUXT_APP_BASE_URL === '/',
+    // the OAuth round trip; /api stays open, the builder needs it to render
+    disallow: ['/auth/'],
   },
 
   runtimeConfig: {
@@ -124,6 +163,8 @@ export default defineNuxtConfig({
       // player needs to be told what that host is rather than guess from the
       // address bar. Empty in dev, where localhost is correct anyway.
       siteHost: process.env.NUXT_PUBLIC_SITE_HOST || '',
+      // Search Console's HTML-tag verification, if the DNS route is not used
+      googleSiteVerification: process.env.NUXT_PUBLIC_GOOGLE_SITE_VERIFICATION || '',
     },
   },
 

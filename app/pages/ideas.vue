@@ -44,7 +44,7 @@ useSeoMeta({
 
 
 useSchemaOrg([
-  defineWebPage({ name: 'End of year awards category ideas' }),
+  defineWebPage({ '@type': ['WebPage', 'FAQPage'], name: 'End of year awards category ideas' }),
   defineBreadcrumb({
     itemListElement: [{ name: 'Awards Maker', item: '/' }, { name: 'Category ideas' }],
   }),

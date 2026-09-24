@@ -32,7 +32,7 @@ useSeoMeta({
 
 
 useSchemaOrg([
-  defineWebPage({ name: 'Awards Maker for Streamers: Run Your Own Awards Show' }),
+  defineWebPage({ '@type': ['WebPage', 'FAQPage'], name: 'Awards Maker for Streamers: Run Your Own Awards Show' }),
   ...faq.map((f) => defineQuestion({ name: f.q, acceptedAnswer: f.a })),
 ])
 </script>

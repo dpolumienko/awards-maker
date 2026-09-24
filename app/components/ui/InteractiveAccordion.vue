@@ -4,7 +4,7 @@
 // React + Framer Motion original ported to Vue + motion-v, which is the same
 // animation engine, so the spring values below are the author's, unchanged.
 import { ref } from 'vue'
-import { motion, AnimatePresence } from 'motion-v'
+import { motion } from 'motion-v'
 import { prefersReducedMotion } from '~/composables/useReveal'
 
 export interface AccordionItem { q: string; a: string }
@@ -100,32 +100,21 @@ const pad = (i: number) => String(i + 1).padStart(2, '0')
         />
       </button>
 
-      <AnimatePresence mode="wait">
-        <motion.div
-          v-if="active === i"
-          :id="`faq-panel-${i}`"
-          role="region"
-          :aria-labelledby="`faq-q-${i}`"
-          class="overflow-hidden"
-          :initial="{ height: 0, opacity: 0 }"
-          :animate="{
-            height: 'auto',
-            opacity: 1,
-            transition: { height: springSlow, opacity: prefersReducedMotion() ? still : { duration: 0.2, delay: 0.1 } },
-          }"
-          :exit="{ height: 0, opacity: 0, transition: { height: springSlow, opacity: { duration: 0.1 } } }"
-        >
-          <motion.p
-            class="max-w-[80ch] py-6 pl-0 pr-0 leading-relaxed text-ink-2 sm:pl-16 sm:pr-12"
-            :initial="{ y: -10 }"
-            :animate="{ y: 0 }"
-            :exit="{ y: -10 }"
-            :transition="prefersReducedMotion() ? still : { type: 'spring', stiffness: 300, damping: 25 }"
-          >
-            {{ item.a }}
-          </motion.p>
-        </motion.div>
-      </AnimatePresence>
+      <!-- The answer is always in the HTML and folds with a grid row, not a v-if:
+           a crawler reads the server render, and an answer that exists only
+           after a click was invisible to search (SEO audit, 2026-09-24). -->
+      <div
+        :id="`faq-panel-${i}`"
+        role="region"
+        :aria-labelledby="`faq-q-${i}`"
+        :aria-hidden="active !== i"
+        class="grid transition-[grid-template-rows,opacity] duration-500 ease-gala motion-reduce:transition-none"
+        :class="active === i ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'"
+      >
+        <div class="overflow-hidden" :inert="active !== i || undefined">
+          <p class="max-w-[80ch] py-6 pl-0 pr-0 leading-relaxed text-ink-2 sm:pl-16 sm:pr-12">{{ item.a }}</p>
+        </div>
+      </div>
     </div>
   </div>
 </template>

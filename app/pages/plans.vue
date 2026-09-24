@@ -49,7 +49,7 @@ useSeoMeta({
 
 
 useSchemaOrg([
-  defineWebPage({ name: 'Plans and pricing' }),
+  defineWebPage({ '@type': ['WebPage', 'FAQPage'], name: 'Plans and pricing' }),
   defineBreadcrumb({ itemListElement: [{ name: 'Awards Maker', item: '/' }, { name: 'Plans' }] }),
   ...faq.map((f) => defineQuestion({ name: f.q, acceptedAnswer: f.a })),
 ])
@@ -76,7 +76,7 @@ const cols = [
       Start free. Pay ${{ PAID.priceUsd }} once if the show needs more - no subscription.
     </p>
 
-    <PlanCards class="mt-10" />
+    <PlanCards class="mt-10" level="h2" />
 
     <section class="mt-16">
       <h2 class="heading">Side by side</h2>
