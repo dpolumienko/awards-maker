@@ -7,15 +7,14 @@
 // show in the UI, never imply a tie to one, and never use the phrase "Streamer
 // Awards" as a set name - our own naming rule keeps pages with it out of search.
 
+// Categories only: a preset does not touch the Look, which is paid (see
+// applyTemplate in pages/create.vue).
 export interface AwardTemplate {
   id: string
   name: string
   blurb: string
   icon: string
   nominations: string[]
-  /** A starting look, so a set changes the page and not only the form. Paid, like
-   *  every Look setting - it is marked as such at publish. */
-  look: { theme: string; accent: string; font: string }
 }
 
 export const TEMPLATES: AwardTemplate[] = [
@@ -25,8 +24,6 @@ export const TEMPLATES: AwardTemplate[] = [
     blurb: 'The headline streamer awards categories: Streamer of the Year, Rising Star, Best Variety.',
     icon: '/img/icons/cat-chatter.svg',
     nominations: ['Streamer of the Year', 'Rising Star', 'Best Variety Streamer', 'Best IRL Streamer', 'Best Just Chatting Streamer'],
-    // a stage, gold, and the condensed face: the ceremony register
-    look: { theme: 'stage', accent: '#D9A441', font: 'Anton' },
   },
   {
     id: 'chat',
@@ -34,8 +31,6 @@ export const TEMPLATES: AwardTemplate[] = [
     blurb: 'Chat awards for your own community: Chatter of the Year, Mod MVP, Best Emote.',
     icon: '/img/icons/cat-mod.svg',
     nominations: ['Chatter of the Year', 'Mod MVP', 'Best Emote', 'Lurker of the Year', 'Most Loyal Viewer'],
-    // the channel's own room: Twitch purple, a beam wash, a plainer face
-    look: { theme: 'spotlights', accent: '#9147FF', font: 'Space Grotesk' },
   },
   {
     id: 'funny',
@@ -43,8 +38,6 @@ export const TEMPLATES: AwardTemplate[] = [
     blurb: 'Funny end of year awards: Rage Quit of the Year, Best Fail, Most Chaotic Stream.',
     icon: '/img/icons/cat-rage-quit.svg',
     nominations: ['Rage Quit of the Year', 'Best Fail', 'Meme That Wouldn’t Die', 'Most Chaotic Stream', 'Technical Difficulties Award'],
-    // loud on purpose: on-air red, a glow wash and the display serif
-    look: { theme: 'glow', accent: '#FF4E45', font: 'Playfair Display' },
   },
 ]
 
