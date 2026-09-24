@@ -10,6 +10,7 @@ import { ref } from 'vue'
 import { fileToStoredImage } from '~/utils/image'
 import { accentReadable } from '~/utils/accent'
 import type { AwardLook } from '~/types/award'
+import UiMaskIcon from './UiMaskIcon.vue'
 
 const { look, signedIn = false, channel = '' } = defineProps<{
   look: AwardLook
@@ -85,7 +86,7 @@ function clearCover() {
           @click="set({ theme: t.id === 'plain' ? undefined : t.id })"
         >
           <span class="block h-14 w-full" :style="themeCss(t.id, accent())" />
-          <span class="block truncate bg-canvas px-2 py-1.5 text-[11px] uppercase tracking-micro text-ink-muted">
+          <span class="block bg-canvas px-2 py-1.5 text-[11px] uppercase leading-tight tracking-micro text-ink-muted">
             {{ t.name }}
           </span>
         </button>
@@ -181,7 +182,7 @@ function clearCover() {
         >
           <img v-if="look.coverUrl" :src="look.coverUrl" alt="" class="h-full w-full object-cover" />
           <span v-else class="flex items-center gap-2">
-            <img :src="asset('/img/icons/cat-clip.svg')" alt="" aria-hidden="true" class="h-4 w-4 opacity-70" />
+            <UiMaskIcon src="/img/icons/cat-clip.svg" class="h-4 w-4 text-gold opacity-70" />
             Upload a 21:9 cover
           </span>
           <input type="file" accept="image/*" class="sr-only" @change="pickCover" />

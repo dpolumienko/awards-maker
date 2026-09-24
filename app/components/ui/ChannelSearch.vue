@@ -6,6 +6,7 @@ import PlatformDot from './PlatformDot.vue'
 import LivePill from './LivePill.vue'
 import { searchChannels, fmtFollowers } from '~/data/channels.mock'
 import type { Channel } from '~/types/award'
+import UiMaskIcon from './UiMaskIcon.vue'
 
 const emit = defineEmits<{ pick: [Channel]; pickText: [string] }>()
 
@@ -77,7 +78,7 @@ function onKey(e: KeyboardEvent) {
       class="absolute z-20 mt-2 w-full list-none overflow-hidden rounded-card border border-hair bg-s2 p-1 shadow-modal"
     >
       <li class="flex items-center gap-2 px-3 pb-1 pt-2" aria-hidden="true">
-        <img :src="asset('/img/icons/cat-clip.svg')" alt="" class="h-3.5 w-3.5 opacity-70" />
+        <UiMaskIcon src="/img/icons/cat-clip.svg" class="h-3.5 w-3.5 text-gold opacity-70" />
         <span class="micro">Channels on</span>
         <PlatformDot platform="twitch" />
         <PlatformDot platform="kick" />

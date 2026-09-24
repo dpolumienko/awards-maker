@@ -44,7 +44,7 @@ const field =
         :aria-label="`${label}, date`"
         :aria-invalid="error ? true : undefined"
         :aria-describedby="error || helper ? `${id}-note` : undefined"
-        :class="[field, error ? 'border-danger' : 'border-hair hover:border-hair2']"
+        :class="[field, error ? 'border-danger' : 'border-hair2 hover:border-ink-muted']"
         @input="set(($event.target as HTMLInputElement).value, parts.time)"
       />
       <input
@@ -53,7 +53,7 @@ const field =
         :value="parts.time"
         :disabled="!parts.date"
         :aria-label="`${label}, time`"
-        :class="[field, 'disabled:opacity-40', error ? 'border-danger' : 'border-hair hover:border-hair2']"
+        :class="[field, 'disabled:opacity-40', error ? 'border-danger' : 'border-hair2 hover:border-ink-muted']"
         @input="set(parts.date, ($event.target as HTMLInputElement).value)"
       />
     </div>

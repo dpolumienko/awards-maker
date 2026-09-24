@@ -259,7 +259,8 @@ useSeoMeta({
       </button>
     </div>
 
-    <div class="mt-8 grid items-start gap-8 lg:grid-cols-[5fr_7fr]">
+    <!-- the form is where the work is; the preview is read-only and can be narrower -->
+    <div class="mt-8 grid items-start gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
       <!-- FORM -->
       <div :class="tab === 'preview' && 'hidden lg:block'" class="space-y-8">
         <TemplatePicker
@@ -294,7 +295,7 @@ useSeoMeta({
               <select
                 id="show-zone"
                 v-model="draft.timezone"
-                class="h-12 w-full rounded-btn border border-hair bg-s2 px-4 text-base text-ink transition-colors hover:border-hair2 focus:border-gold focus:shadow-focus focus:outline-none"
+                class="h-12 w-full rounded-btn border border-hair2 bg-s2 px-4 text-base text-ink transition-colors hover:border-ink-muted focus:border-gold focus:shadow-focus focus:outline-none"
                 aria-describedby="show-zone-help"
               >
                 <option v-for="z in zones" :key="z.id" :value="z.id">{{ z.label }}</option>

@@ -94,11 +94,11 @@ const cols = [
           any parent, display: grid and flow-root all left the scroll in place.
         -->
 
-        <table class="w-full min-w-[640px] border-collapse text-left text-sm">
+        <table class="w-full min-w-[560px] border-collapse text-left text-sm">
           <caption class="sr-only">What each plan includes</caption>
           <thead>
             <tr class="border-b border-hair bg-s1">
-              <th scope="col" class="w-2/5 px-5 py-4 font-semibold">Feature</th>
+              <th scope="col" class="sticky left-0 z-10 w-2/5 bg-s1 px-5 py-4 font-semibold">Feature</th>
               <th
                 v-for="c in cols"
                 :key="c.key"
@@ -113,11 +113,13 @@ const cols = [
           <tbody v-for="block in COMPARISON" :key="block.group">
             <tr class="bg-s2">
               <th scope="colgroup" colspan="4" class="px-5 py-2.5 text-[11px] font-semibold uppercase tracking-micro text-ink-muted">
-                {{ block.group }}
+                <!-- the label rides along while the row scrolls on a phone -->
+                <span class="sticky left-5">{{ block.group }}</span>
               </th>
             </tr>
             <tr v-for="row in block.rows" :key="row.label" class="border-t border-hair">
-              <th scope="row" class="px-5 py-3 font-normal text-ink-2">{{ row.label }}</th>
+              <!-- the feature name stays put while the plans scroll under it on a phone -->
+              <th scope="row" class="sticky left-0 z-10 bg-canvas px-5 py-3 font-normal text-ink-2">{{ row.label }}</th>
               <td
                 v-for="c in cols"
                 :key="c.key"
@@ -126,7 +128,7 @@ const cols = [
               >
                 <template v-if="typeof row[c.key] === 'string'">{{ row[c.key] }}</template>
                 <UiIcon v-else-if="row[c.key]" name="check" :size="15" class="inline text-live" />
-                <template v-else><span class="text-ink-disabled">-</span></template>
+                <template v-else><span class="text-ink-muted" aria-hidden="true">-</span></template>
                 <span class="sr-only">
                   {{ typeof row[c.key] === 'string' ? '' : row[c.key] ? 'included' : 'not included' }}
                 </span>
@@ -144,7 +146,8 @@ const cols = [
         vote and send a report after. Tell us the channel and the date, and we come back with a price.
       </p>
       <div class="mt-6 flex flex-wrap gap-3">
-        <UiButton to="mailto:sales@streamscharts.com">sales@streamscharts.com</UiButton>
+        <!-- one filled button per screen; the address is a plain link, not an upper-case button -->
+        <UiButton to="mailto:sales@streamscharts.com" variant="ghost">Talk to sales</UiButton>
         <UiButton to="/create" variant="ghost">Or start free yourself</UiButton>
       </div>
     </section>

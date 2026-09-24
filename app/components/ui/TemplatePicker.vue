@@ -13,6 +13,7 @@ const ideaChips = IDEA_GROUPS.map((g) => ({ ...g, items: g.items.slice(0, 6) }))
 import PaywallNote from './PaywallNote.vue'
 import UiIcon from './UiIcon.vue'
 import { FREE } from '~/types/award'
+import UiMaskIcon from './UiMaskIcon.vue'
 
 const { used, active } = defineProps<{ used: number; active?: string }>()
 const emit = defineEmits<{ apply: [AwardTemplate]; addIdea: [string] }>()
@@ -67,7 +68,7 @@ function apply(t: AwardTemplate) {
           class="grid h-9 w-9 flex-none place-items-center rounded-btn border bg-s2 transition-colors duration-300"
           :class="active === t.id ? 'border-ink bg-s3' : 'border-hair group-hover:border-hair2'"
         >
-          <img :src="asset(t.icon)" alt="" aria-hidden="true" class="h-4 w-4" loading="lazy" />
+          <UiMaskIcon :src="t.icon" class="h-4 w-4 text-gold" />
         </span>
         <!-- the tick has its own reserved column: appearing between the name and
              the text used to shove the whole card's copy sideways and down -->

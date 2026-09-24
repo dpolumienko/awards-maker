@@ -95,6 +95,25 @@
   background-color: rgb(255 255 255);
 }
 
+/* Disabled, in every treatment: a quiet grey plate, not the accent at 40%,
+   which read as a brown button rather than an unavailable one (design audit). */
+.btn-primary:disabled,
+.btn-primary[aria-disabled='true'] {
+  background-color: rgb(var(--s3));
+  background-image: none;
+  color: rgb(138 138 147);
+  box-shadow: none;
+  opacity: 1;
+}
+
+/* ---------------------------------------------------------------- native controls */
+
+/* the date/time picker glyph is tinted with a filter; this one lands on the SC blue */
+:root[data-palette='sc'] input[type='date']::-webkit-calendar-picker-indicator,
+:root[data-palette='sc'] input[type='time']::-webkit-calendar-picker-indicator {
+  filter: brightness(0) saturate(100%) invert(74%) sepia(35%) saturate(1200%) hue-rotate(175deg) brightness(102%) contrast(101%);
+}
+
 /* ---------------------------------------------------------------- glow */
 
 /* GlowText's filter is amber; the blue palette uses its cool twin (GlowFilterDefs.vue) */

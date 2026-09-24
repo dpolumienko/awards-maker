@@ -37,7 +37,7 @@ const catalogOpen = useCatalogOpen()
     <div class="shell relative z-10">
       <h1 class="font-extrabold uppercase tracking-display">
         <span class="block">
-          <span class="hero-rise mb-3 block text-[clamp(20px,3vw,34px)] font-bold leading-[1.1] tracking-heading text-gold-text">Awards Maker for streamers: </span>
+          <span class="hero-rise mb-3 block text-[clamp(20px,3vw,34px)] font-bold leading-[1.1] tracking-heading text-ink-2">Awards Maker for streamers: </span>
         </span>
         <span class="display-1 block">
           <span class="hero-rise block" style="--d: 80ms">Run your own </span>
@@ -45,15 +45,15 @@ const catalogOpen = useCatalogOpen()
         </span>
       </h1>
 
-      <p class="hero-rise mt-8 max-w-[60ch] text-xl text-ink-2" style="--d: 240ms">
+      <p class="hero-rise mt-8 max-w-[60ch] text-lg text-ink-2 sm:text-xl" style="--d: 240ms">
         Run your own streamer awards: pick the categories, nominate channels from Twitch, Kick and YouTube or your
         community's favorite meme, and let your viewers vote for every winner.
       </p>
 
       <div class="hero-rise mt-8 flex flex-wrap items-center gap-4" style="--d: 320ms">
-        <UiButton to="/create">Create your awards</UiButton>
-        <UiButton v-if="catalogOpen" to="/catalog" variant="ghost">Browse the catalog</UiButton>
-        <UiButton v-else to="/ideas" variant="ghost">Category ideas</UiButton>
+        <UiButton to="/create" class="w-full sm:w-auto">Create your awards</UiButton>
+        <UiButton v-if="catalogOpen" to="/catalog" variant="ghost" class="w-full sm:w-auto">Browse the catalog</UiButton>
+        <UiButton v-else to="/ideas" variant="ghost" class="w-full sm:w-auto">Category ideas</UiButton>
       </div>
       <p class="hero-rise mt-3 text-sm text-ink-muted" style="--d: 360ms">Free. You'll log in with Twitch to create awards.</p>
     </div>
@@ -65,7 +65,7 @@ const catalogOpen = useCatalogOpen()
 
       <!-- What is true on day one. Site-wide totals (shows published, votes
            counted) come back here once there are real ones worth showing. -->
-      <div class="hero-rise flex flex-wrap gap-12 pt-2" style="--d: 440ms">
+      <div class="hero-rise grid grid-cols-3 gap-4 pt-2 sm:flex sm:gap-12" style="--d: 440ms">
         <UiCounter :value="PLATFORMS" label="Platforms to nominate from" />
         <UiCounter :value="IDEA_TOTAL" label="Category ideas to start from" />
         <UiCounter :value="FREE.maxNominations" label="Categories free" />
