@@ -117,9 +117,6 @@ export default defineNuxtConfig({
   nitro: {
     preset: process.env.NITRO_PRESET || 'node-server',
     compressPublicAssets: true,
-    // The migration plugin reads these at boot, so they have to survive the
-    // bundle rather than stay behind in the source tree.
-    serverAssets: [{ baseName: 'migrations', dir: './server/db/migrations' }],
     // The prerender cache is written into node_modules/.cache, which sits inside a
     // OneDrive folder here: OneDrive grabs the file between write and rename and
     // the build dies with EPERM, at a different route every time. It goes to the

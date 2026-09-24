@@ -1,4 +1,6 @@
+import { MIGRATIONS } from '../db/migrations'
 import { getPool } from '../utils/db'
+import { splitStatements } from '../utils/sql'
 
 // Migrations run when the server boots.
 //
@@ -13,18 +15,24 @@ import { getPool } from '../utils/db'
 
 const LOCK = 'awards_maker_migrations'
 
-export default defineNitroPlugin(async () => {
+export default defineNitroPlugin(() => {
+  // Deliberately not awaited by the boot path, and never allowed to throw: a
+  // database that is briefly unreachable must not stop the process from coming
+  // up and answering /healthz, or the container restart-loops on top of an
+  // outage. What it does instead is say so, loudly, once.
+  migrate().catch((error) => {
+    console.error('[migrate] Schema not applied:', (error as Error).message)
+  })
+})
+
+async function migrate() {
   const config = useRuntimeConfig()
   if (!String(config.mysql.host).trim()) {
     console.warn('[migrate] No database configured - skipping')
     return
   }
 
-  // Read through Nitro's asset storage, not the filesystem: the built server is
-  // one bundle and the .sql files live inside it.
-  const store = useStorage('assets:migrations')
-  const files = (await store.getKeys()).filter((f) => f.endsWith('.sql')).sort()
-  if (!files.length) {
+  if (!MIGRATIONS.length) {
     console.warn('[migrate] No migrations bundled')
     return
   }
@@ -53,21 +61,18 @@ export default defineNitroPlugin(async () => {
       unknown,
     ]
     const applied = new Set(rows.map((r) => r.filename))
-    const pending = files.filter((f) => !applied.has(f))
+    const pending = MIGRATIONS.filter((m) => !applied.has(m.name))
     if (!pending.length) return
 
-    for (const file of pending) {
-      const sql = String(await store.getItem(file))
-      // one statement at a time: the pooled connection is not in
-      // multipleStatements mode, and splitting keeps a failure locatable
-      for (const statement of sql.split(/;\s*\n/).map((s) => s.trim()).filter(Boolean)) {
+    for (const migration of pending) {
+      for (const statement of splitStatements(migration.sql)) {
         await conn.query(statement)
       }
-      await conn.query(`INSERT INTO schema_migrations (filename) VALUES (?)`, [file])
-      console.log(`[migrate] applied ${file}`)
+      await conn.query(`INSERT INTO schema_migrations (filename) VALUES (?)`, [migration.name])
+      console.log(`[migrate] applied ${migration.name}`)
     }
   } finally {
     await conn.query(`SELECT RELEASE_LOCK(?)`, [LOCK]).catch(() => {})
     conn.release()
   }
-})
+}

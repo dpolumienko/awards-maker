@@ -1,19 +1,13 @@
 #!/usr/bin/env node
-// Applies server/db/migrations/*.sql in filename order, once each.
+// Applies pending migrations against the database in .env, without starting the
+// app. The app applies them itself on boot, so this is for a one-off check or
+// for running them against a database the app is not pointed at yet.
 //
-// No migration library. The whole mechanism is a table of filenames and a loop,
-// which is less code than configuring one and leaves the SQL readable as SQL.
-// Re-running is a no-op; every file is also written to be idempotent on its own,
-// so a half-applied file can be fixed and re-run.
-//
-//   node scripts/migrate.mjs            apply what is missing
-//   node scripts/migrate.mjs --status   list without applying
-import { readdir, readFile } from 'node:fs/promises'
-import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+//   npm run migrate            apply what is missing
+//   npm run migrate -- --status   list without applying
 import mysql from 'mysql2/promise'
-
-const DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'server', 'db', 'migrations')
+import { MIGRATIONS } from '../server/db/migrations/index.ts'
+import { splitStatements } from '../server/utils/sql.ts'
 
 const config = {
   host: process.env.MYSQL_HOST || process.env.NUXT_MYSQL_HOST || '',
@@ -25,15 +19,12 @@ const config = {
 
 const missing = ['host', 'user', 'database'].filter((k) => !String(config[k]).trim())
 if (missing.length) {
-  console.error(`Cannot migrate: missing ${missing.join(', ')}. Set MYSQL_HOST, MYSQL_USERNAME and MYSQL_DATABASE (see .env.example).`)
+  console.error(`Cannot migrate: missing ${missing.join(', ')}. See .env.example.`)
   process.exit(1)
 }
 
 const statusOnly = process.argv.includes('--status')
-
-// `multipleStatements` is what lets one file hold several CREATE TABLEs. It is
-// safe here because the only SQL this script ever runs is files in the repo.
-const conn = await mysql.createConnection({ ...config, multipleStatements: true })
+const conn = await mysql.createConnection(config)
 
 try {
   await conn.query(`
@@ -44,26 +35,24 @@ try {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `)
 
-  const files = (await readdir(DIR)).filter((f) => f.endsWith('.sql')).sort()
   const [rows] = await conn.query('SELECT filename FROM schema_migrations')
   const applied = new Set(rows.map((r) => r.filename))
 
-  const pending = files.filter((f) => !applied.has(f))
   if (statusOnly) {
-    for (const f of files) console.log(`${applied.has(f) ? 'applied' : 'PENDING'}  ${f}`)
+    for (const m of MIGRATIONS) console.log(`${applied.has(m.name) ? 'applied' : 'PENDING'}  ${m.name}`)
     process.exit(0)
   }
 
+  const pending = MIGRATIONS.filter((m) => !applied.has(m.name))
   if (!pending.length) {
-    console.log(`Nothing to do - ${files.length} migration(s) already applied.`)
+    console.log(`Nothing to do - ${MIGRATIONS.length} migration(s) already applied.`)
     process.exit(0)
   }
 
-  for (const file of pending) {
-    const sql = await readFile(join(DIR, file), 'utf8')
-    process.stdout.write(`applying ${file} ... `)
-    await conn.query(sql)
-    await conn.query('INSERT INTO schema_migrations (filename) VALUES (?)', [file])
+  for (const migration of pending) {
+    process.stdout.write(`applying ${migration.name} ... `)
+    for (const statement of splitStatements(migration.sql)) await conn.query(statement)
+    await conn.query('INSERT INTO schema_migrations (filename) VALUES (?)', [migration.name])
     console.log('ok')
   }
   console.log(`Applied ${pending.length} migration(s).`)

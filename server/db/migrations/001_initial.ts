@@ -1,8 +1,17 @@
--- Awards Maker, initial schema.
+// Awards Maker, initial schema.
+//
+// A .ts module holding SQL rather than a .sql file. Nitro's server bundle
+// resolves neither a `?raw` import nor `serverAssets` for this directory - the
+// first attempt produced an .output with no schema in it at all, which would
+// have meant a production boot finding nothing to apply and the app talking to
+// an empty database. An import cannot go missing that way: if it does, the
+// build fails instead of the deploy.
+
+export const sql = `-- Awards Maker, initial schema.
 --
 -- Re-running any migration must be safe, hence IF NOT EXISTS everywhere and no
 -- destructive statements. Applied by scripts/migrate.mjs, which records each
--- file in `schema_migrations` and never runs it twice.
+-- file in "schema_migrations" and never runs it twice.
 --
 -- The shape follows app/types/award.ts, with three deliberate differences:
 --   * a draft is an award row with status='draft' and a NULL slug, instead of a
@@ -27,7 +36,7 @@ CREATE TABLE IF NOT EXISTS users (
   KEY ix_users_login (login)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- The tokens Twitch handed us, and what they are good for. `scopes` matters:
+-- The tokens Twitch handed us, and what they are good for. "scopes" matters:
 -- a voter signs in with user:read:email alone, a host grants the full set, and
 -- the difference is what decides whether someone may create a show.
 CREATE TABLE IF NOT EXISTS social_accounts (
@@ -214,3 +223,4 @@ CREATE TABLE IF NOT EXISTS payment_events (
   KEY ix_payment_events_order (order_id),
   CONSTRAINT fk_payment_events_order FOREIGN KEY (order_id) REFERENCES orders (id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+`
