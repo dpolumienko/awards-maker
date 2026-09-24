@@ -60,7 +60,10 @@ Conversion to the paid tier is a release 2 measure, not a release 1 one.
 - **Search visitor:** finds an awards page or the catalog, and can start their own from either.
 - **Moderation:** complaints from the public page go to an `Awards` section in the Streams Charts
   admin `[? not approved yet]`.
-- No backend yet: drafts, ballots and tallies live in `localStorage` in the shape the API will use.
+- Drafts, ballots and tallies are rows in MySQL, tied to the account. Signing in is real Twitch
+  OAuth with two doors: voters get `user:read:email`, hosts grant the full set Streams Charts
+  asks for, and only a host sign-in may publish. Stripe is written and switched off until a key
+  exists; an admin account publishes paid shows without paying.
 
 ## Capabilities and Constraints
 
