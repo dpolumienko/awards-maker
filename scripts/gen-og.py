@@ -7,8 +7,8 @@ An og:image that 404s to a crawler is worse than none, so the cards are rendered
 once, committed, and served as plain files. That also covers the routes running
 with `ssr: false`, where nothing Nuxt adds to the head reaches a crawler at all.
 
-Per-awards cards (an image carrying the streamer's own name and colour) need
-rendering at request time - that is the sharing card, still to be built.
+Per-awards cards (an image carrying the streamer's own name and colour) are
+rendered at request time by server/routes/og/a/, with satori and resvg.
 
 Run:  python scripts/gen-og.py          (needs playwright: pip install playwright)
 """

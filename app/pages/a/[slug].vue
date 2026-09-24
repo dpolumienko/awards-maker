@@ -26,6 +26,7 @@ import { themeCss } from '~/data/themes'
 import { accentText } from '~/utils/accent'
 import { nomineeName } from '~/utils/nominee'
 import { FREE, PUBLISH } from '~/types/award'
+import { awardOgImage } from '~/utils/og'
 
 const route = useRoute()
 const slug = computed(() => String(route.params.slug))
@@ -253,6 +254,14 @@ const faq = computed(() => {
   ]
 })
 
+const siteUrl = String(useSiteConfig().url)
+// the phase without the ?state= preview override, so a host previewing the
+// results screen does not mint a card URL nobody else will ever request
+const ogImageUrl = computed(() =>
+  award.value
+    ? awardOgImage(siteUrl, award.value.slug, phaseOf(award.value, data.value?.voters ?? 0), award.value.publishedAt)
+    : undefined,
+)
 useSeoMeta({
   title: () => (award.value ? `${award.value.name}: Vote for the Winners` : 'Awards page'),
   description: () =>
@@ -261,6 +270,11 @@ useSeoMeta({
       : 'This awards page has not been published from this browser.',
   robots: () => (award.value && !thin.value ? 'index, follow' : 'noindex, follow'),
   ogType: 'website',
+  ogImage: () => ogImageUrl.value,
+  ogImageWidth: 1200,
+  ogImageHeight: 630,
+  ogImageAlt: () => (award.value ? `${award.value.name}, presented by ${award.value.host.name}` : undefined),
+  twitterCard: 'summary_large_image',
 })
 
 
