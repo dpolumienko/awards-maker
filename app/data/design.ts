@@ -6,6 +6,8 @@
 export const PALETTES = [
   { id: 'gold', label: 'Gold' },
   { id: 'sc', label: 'SC Blue' },
+  { id: 'neon', label: 'SC Neon' },
+  { id: 'platinum', label: 'Platinum' },
 ] as const
 
 export const BUTTONS = [
@@ -13,6 +15,7 @@ export const BUTTONS = [
   { id: 'warm', label: 'Warm' },
   { id: 'outline', label: 'Outline' },
   { id: 'ivory', label: 'Ivory' },
+  { id: 'gradient', label: 'Gradient' },
 ] as const
 
 export const DESIGN_KEYS = { palette: 'am-palette', button: 'am-button' } as const
@@ -24,5 +27,5 @@ export const DESIGN_KEYS = { palette: 'am-palette', button: 'am-button' } as con
  */
 export const DESIGN_BOOT = `(function(){try{var q=new URLSearchParams(location.search),d=document.documentElement,
 p=q.get('palette')||localStorage.getItem('${DESIGN_KEYS.palette}'),b=q.get('button')||localStorage.getItem('${DESIGN_KEYS.button}');
-if(p&&/^(gold|sc)$/.test(p)){d.dataset.palette=p;localStorage.setItem('${DESIGN_KEYS.palette}',p)}
-if(b&&/^(solid|warm|outline|ivory)$/.test(b)){d.dataset.button=b;localStorage.setItem('${DESIGN_KEYS.button}',b)}}catch(e){}})()`
+if(p&&/^(gold|sc|neon|platinum)$/.test(p)){d.dataset.palette=p;localStorage.setItem('${DESIGN_KEYS.palette}',p)}
+if(b&&/^(solid|warm|outline|ivory|gradient)$/.test(b)){d.dataset.button=b;localStorage.setItem('${DESIGN_KEYS.button}',b)}}catch(e){}})()`
