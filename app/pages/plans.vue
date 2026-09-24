@@ -135,10 +135,6 @@ const cols = [
           </tbody>
         </table>
       </div>
-      <p class="mt-4 max-w-copy text-sm text-ink-muted">
-        Every published show is listed in the community catalog on all three plans - that listing is how
-        the next streamer finds this.
-      </p>
     </section>
 
     <section id="done-for-you" class="mt-16 scroll-mt-24 border-t border-hair pt-12">

@@ -7,8 +7,11 @@
 //      it is part of SC and runs under SC's.
 import ScBrand from './ScBrand.vue'
 import { SC } from '~/data/sc'
+import { useCatalogOpen } from '~/composables/useAwards'
 
-const groups = [
+const catalogOpen = useCatalogOpen()
+
+const groups = computed(() => [
   {
     title: 'Run a show',
     links: [
@@ -21,7 +24,7 @@ const groups = [
     title: 'Learn',
     links: [
       { to: '/#how', label: 'How it works' },
-      { to: '/catalog', label: 'Community awards' },
+      ...(catalogOpen.value ? [{ to: '/catalog', label: 'Community awards' }] : []),
       { to: '/plans', label: 'Plans' },
     ],
   },
@@ -33,7 +36,7 @@ const groups = [
       { to: SC.contact, label: 'Contact' },
     ],
   },
-]
+])
 
 const legal = [
   { to: SC.terms, label: 'Terms of Use' },

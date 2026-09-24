@@ -14,7 +14,7 @@ import InteractiveAccordion from '~/components/ui/InteractiveAccordion.vue'
 import { useCatalog } from '~/composables/useAwards'
 import { phaseOf } from '~/composables/useVoting'
 import { useReveal } from '~/composables/useReveal'
-import { FREE, PAID, PUBLISH } from '~/types/award'
+import { CATALOG, FREE, PAID, PUBLISH } from '~/types/award'
 
 const route = useRoute()
 const router = useRouter()
@@ -23,6 +23,12 @@ const { data, error } = await useCatalog()
 // would index as "this site has no shows". A 503 is recoverable; that is not.
 if (error.value) {
   throw createError({ statusCode: 503, statusMessage: 'The catalog is briefly unavailable', fatal: true })
+}
+// Closed until there is something to browse (review 2026-09-24). A 302, not a
+// 301: the page comes back by itself at CATALOG.minAwards, and a permanent
+// redirect would be cached by browsers and crawlers long after that.
+if ((data.value?.awards.length ?? 0) < CATALOG.minAwards) {
+  await navigateTo('/', { redirectCode: 302 })
 }
 const root = ref<HTMLElement | null>(null)
 useReveal(root, { stagger: 0.05 })

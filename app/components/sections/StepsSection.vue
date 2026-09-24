@@ -14,7 +14,7 @@ const steps = [
   {
     art: '/img/illustrations/illu-step-share.svg',
     title: 'Publish and share the link',
-    body: 'Publishing gives your awards its own page and a spot in the community awards catalog. Copy the link into chat or post it to X.',
+    body: 'Publishing gives your awards its own page. Copy the link into chat or post it to X - the preview card comes with it.',
   },
   {
     art: '/img/illustrations/illu-step-reveal.svg',

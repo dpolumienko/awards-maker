@@ -11,11 +11,12 @@ import SectionShell from './SectionShell.vue'
 import UiButton from '../ui/UiButton.vue'
 import CatalogCard from '../ui/CatalogCard.vue'
 import SnapCarousel from '../ui/SnapCarousel.vue'
-import { useCatalog } from '~/composables/useAwards'
+import { useCatalog, useCatalogOpen } from '~/composables/useAwards'
 import { phaseOf } from '~/composables/useVoting'
 
 // tolerant: this row is one section of the landing, not the landing
 const { data } = await useCatalog({ tolerant: true })
+const catalogOpen = useCatalogOpen()
 
 // Newest first: a landing row is a window, not an archive.
 const rows = computed(() =>
@@ -30,7 +31,7 @@ const rows = computed(() =>
        frame is a hole in the page, and inventing shows to fill it is what the
        catalog already refuses to do. -->
   <SectionShell
-    v-if="rows.length"
+    v-if="catalogOpen && rows.length"
     id="catalog"
     heading="Community awards running right now"
     intro="Other streamers built these for their own communities. Drag the row, or open one to see the nominees, vote where chat decides, and check the winners once they're out."

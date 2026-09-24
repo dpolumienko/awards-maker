@@ -8,11 +8,13 @@ import GlowDivider from '../ui/GlowDivider.vue'
 import SparkleField from '../ui/SparkleField.vue'
 import { useGsap, prefersReducedMotion } from '~/composables/useReveal'
 import { FREE } from '~/types/award'
+import { useCatalogOpen } from '~/composables/useAwards'
 import { IDEA_TOTAL } from '~/data/ideas'
 import { PLATFORM_NAMES } from '~/data/platforms'
 
 // the platforms a channel nominee can come from, not everything SC tracks
 const PLATFORMS = Object.keys(PLATFORM_NAMES).length
+const catalogOpen = useCatalogOpen()
 
 const root = ref<HTMLElement | null>(null)
 
@@ -77,7 +79,8 @@ onMounted(() => {
 
       <div class="js-reveal mt-8 flex flex-wrap items-center gap-4">
         <UiButton to="/create">Create your awards</UiButton>
-        <UiButton to="/catalog" variant="ghost">Browse the catalog</UiButton>
+        <UiButton v-if="catalogOpen" to="/catalog" variant="ghost">Browse the catalog</UiButton>
+        <UiButton v-else to="/ideas" variant="ghost">Category ideas</UiButton>
       </div>
       <p class="js-reveal mt-3 text-sm text-ink-muted">Free. You'll log in with Twitch to create awards.</p>
     </div>

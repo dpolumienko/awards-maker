@@ -18,7 +18,7 @@ import ShareCards from '~/components/ui/ShareCards.vue'
 import PartnerChip from '~/components/ui/PartnerChip.vue'
 import CountdownRow from '~/components/ui/CountdownRow.vue'
 import InteractiveAccordion from '~/components/ui/InteractiveAccordion.vue'
-import { useAwardPage } from '~/composables/useAwards'
+import { useAwardPage, useCatalogOpen } from '~/composables/useAwards'
 import { emptyTally, phaseOf, resultsOf, useVoting, votesInOf } from '~/composables/useVoting'
 import { useReveal } from '~/composables/useReveal'
 import { playCue } from '~/composables/useCue'
@@ -34,6 +34,7 @@ const { castBallot, publishResults } = useVoting()
 const { signedIn, signIn } = useAccount()
 
 const { data, refresh, error } = await useAwardPage(() => slug.value)
+const catalogOpen = useCatalogOpen()
 // A show that does not exist is a 404, not a page saying nothing. Anything else
 // going wrong is ours, and says so with the right status.
 if (error.value) {
@@ -283,11 +284,12 @@ useSeoMeta({
 if (award.value) {
   useSchemaOrg([
     defineBreadcrumb({
-      itemListElement: [
+      // a getter: whether the catalog is open is only known once its fetch lands
+      itemListElement: computed(() => [
         { name: 'Awards Maker', item: '/' },
-        { name: 'Catalog', item: '/catalog' },
-        { name: award.value.name },
-      ],
+        ...(catalogOpen.value ? [{ name: 'Catalog', item: '/catalog' }] : []),
+        { name: award.value?.name ?? '' },
+      ]),
     }),
     defineEvent({
       name: award.value.name,
@@ -314,8 +316,10 @@ if (award.value) {
             <ol class="flex list-none flex-wrap items-center gap-2 p-0 text-[11px] font-semibold uppercase tracking-micro text-ink-muted">
               <li><NuxtLink to="/" class="inline-block py-1.5 no-underline hover:text-ink">Awards Maker</NuxtLink></li>
               <li aria-hidden="true">/</li>
-              <li><NuxtLink to="/catalog" class="inline-block py-1.5 no-underline hover:text-ink">Catalog</NuxtLink></li>
-              <li aria-hidden="true">/</li>
+              <template v-if="catalogOpen">
+                <li><NuxtLink to="/catalog" class="inline-block py-1.5 no-underline hover:text-ink">Catalog</NuxtLink></li>
+                <li aria-hidden="true">/</li>
+              </template>
               <li class="truncate text-ink-2" aria-current="page">{{ award.name }}</li>
             </ol>
           </nav>

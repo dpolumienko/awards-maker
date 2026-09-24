@@ -14,6 +14,15 @@ export const PAID = {
   priceUsd: 50,
 } as const
 
+/**
+ * The catalog stays out of sight until there is something to browse (review
+ * 2026-09-24, item 12: a catalog of two shows sells the product short). It
+ * opens on its own once this many shows are published - no flag to flip.
+ */
+export const CATALOG = {
+  minAwards: 10,
+} as const
+
 export const FIELD = {
   descriptionLimit: 200,
 } as const

@@ -92,7 +92,7 @@ export const COMPARISON: { group: string; rows: CompareRow[] }[] = [
   {
     group: 'The page',
     rows: [
-      { label: 'Public page and catalog listing', free: true, paid: true, done: true },
+      { label: 'Public awards page', free: true, paid: true, done: true },
       { label: 'Results stay online afterwards', free: true, paid: true, done: true },
       { label: 'Your cover, logo, colour and type', free: false, paid: true, done: true },
     ],

@@ -66,4 +66,4 @@ export interface Award {
  * Nothing here is a hard stop in the builder: paid features stay usable and get
  * marked, and the choice between upgrading and stripping them happens at publish.
  */
-export { FIELD, FREE, PAID, PUBLISH } from '#shared/limits'
+export { CATALOG, FIELD, FREE, PAID, PUBLISH } from '#shared/limits'

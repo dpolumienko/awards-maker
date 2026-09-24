@@ -18,7 +18,7 @@ const faq: FaqItem[] = [
   { q: 'What are good categories for end of year awards?', a: 'Mix one or two big ones, like Clip of the Year or Chatter of the Year, with something only your community gets, like Rage Quit of the Year. The 30 ideas above are a good place to start.' },
   { q: 'Can I nominate Kick or YouTube streamers, or only Twitch channels?', a: 'Any channel in the Streams Charts database can be a nominee, and it covers Twitch, YouTube, Kick and more. A nominee doesn\u2019t even have to be a channel: type in a name, a clip title or a meme as text.' },
   { q: 'How many nominations can one awards have?', a: 'Up to 5. If chat gives you more ideas than that, keep the ones they\u2019ll argue about hardest.' },
-  { q: 'Will my awards appear in the Streams Charts catalog?', a: 'Yes. Every published awards gets its own page and appears in the public community awards catalog.' },
+  { q: 'Does my awards get its own page?', a: 'Yes. Every published awards gets its own public page on Streams Charts, with a link you can paste in chat and a preview card for X and Discord.' },
   { q: 'Can I reveal the winners live on stream?', a: 'Yes, on your own stream. Close voting, announce each winner live, then publish the results so anyone who missed the broadcast finds the same list on the awards page.' },
   { q: 'Is Awards Maker part of The Streamer Awards?', a: 'No. Awards Maker lets any streamer run awards for their own community on Streams Charts. News, nominees and winners of The Streamer Awards live on our awards events page.' },
 ]
