@@ -27,7 +27,7 @@ const { award, url, closes = '', winners = {}, isHost = false, hasVoted = false 
 }>()
 
 const ROLES: { id: ShareRole; label: string; note: string }[] = [
-  { id: 'host', label: 'Host', note: 'You are running this. Post it where your chat is.' },
+  { id: 'host', label: 'Host', note: 'You are running this. Post it where your viewers are.' },
   { id: 'nominee', label: 'Nominee', note: 'You are on a ballot. Ask your own followers to vote.' },
   { id: 'voter', label: 'Voter', note: 'You voted. This is the one that brings the next voter.' },
 ]

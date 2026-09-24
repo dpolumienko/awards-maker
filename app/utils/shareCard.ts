@@ -286,7 +286,7 @@ export function cardCopy(
         headline: award.name,
         sub: opts.nomination
           ? `Vote in ${opts.nomination}${opts.closes ? ` · closes ${opts.closes}` : ''}`
-          : `${award.nominations.length} categories, voted by chat${opts.closes ? ` · closes ${opts.closes}` : ''}`,
+          : `${award.nominations.length} categories, voted by viewers${opts.closes ? ` · closes ${opts.closes}` : ''}`,
       }
     case 'nominee':
       return {

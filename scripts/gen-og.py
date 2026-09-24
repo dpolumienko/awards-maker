@@ -22,14 +22,14 @@ CARDS = {
     'home': dict(
         kicker='Awards Maker',
         title='Run your own streamer awards',
-        subtitle='Pick the categories, nominate any channel, let your chat vote.',
+        subtitle='Pick the categories, nominate any channel, let viewers vote.',
         facts=['Free with a Twitch login'],
     ),
     'ideas': dict(
         kicker='Awards Maker',
         title='End of year awards category ideas',
         subtitle='61 categories for a streamer awards show, grouped by what they are for.',
-        facts=['For your chat', 'Streams and collabs', 'Funny categories'],
+        facts=['For your community', 'Streams and collabs', 'Funny categories'],
     ),
     'plans': dict(
         kicker='Awards Maker plans',
@@ -46,7 +46,7 @@ CARDS = {
     'create': dict(
         kicker='Awards Maker',
         title='Create your own streamer awards',
-        subtitle='Ready-made categories, any channel as a nominee, a page your chat votes on.',
+        subtitle='Ready-made categories, any channel as a nominee, a page your viewers vote on.',
         facts=['Free with a Twitch login'],
     ),
 }

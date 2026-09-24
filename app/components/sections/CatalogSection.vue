@@ -34,7 +34,7 @@ const rows = computed(() =>
     v-if="catalogOpen && rows.length"
     id="catalog"
     heading="Community awards running right now"
-    intro="Other streamers built these for their own communities. Drag the row, or open one to see the nominees, vote where chat decides, and check the winners once they're out."
+    intro="Other streamers built these for their own communities. Drag the row, or open one to see the nominees, vote where viewers decide, and check the winners once they're out."
   >
     <div class="js-reveal mt-6">
       <SnapCarousel label="Community awards" :count="rows.length" :gap="20" :peek="28">

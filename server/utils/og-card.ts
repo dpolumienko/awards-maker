@@ -225,10 +225,10 @@ export function ogCopy(
     sub = award.ceremony_at ? `Voting closed · winners on ${fmt(award.ceremony_at, zone)}` : 'Voting closed · winners coming'
     cta = ''
   } else if (notOpen) {
-    sub = `${cats}, voted by chat · opens ${fmt(award.opens_at, zone)}`
+    sub = `${cats}, voted by viewers · opens ${fmt(award.opens_at, zone)}`
     cta = ''
   } else {
-    sub = `${cats}, voted by chat${closes ? ` · closes ${closes}` : ''}`
+    sub = `${cats}, voted by viewers${closes ? ` · closes ${closes}` : ''}`
     cta = 'Vote now'
   }
 
