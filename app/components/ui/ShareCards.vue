@@ -6,7 +6,7 @@
 //
 // Cards are drawn in the browser (utils/shareCard.ts) and downloaded as PNG. No
 // server, no waiting, and the card carries the show's own look.
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import UiButton from './UiButton.vue'
 import UiIcon from './UiIcon.vue'
 import SnapCarousel from './SnapCarousel.vue'
@@ -122,7 +122,9 @@ async function draw() {
   images.value = next
   drawing.value = false
 }
-watch(cards, draw, { immediate: true, deep: true })
+// Drawn after mount, not during setup: flipping `drawing` before hydration
+// made the client's first render disagree with the server's.
+onMounted(() => watch(cards, draw, { immediate: true, deep: true }))
 
 function download(key: string, title: string) {
   const href = images.value[key]

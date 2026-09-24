@@ -8,7 +8,7 @@ vi.mock('../server/utils/awards', () => ({
   saveAward: vi.fn(),
   slugify: (s: string) => s.toLowerCase().replace(/\W+/g, '-'),
 }))
-vi.mock('../server/utils/billing', () => ({ paidFeaturesOf: vi.fn(), tierFor: vi.fn() }))
+vi.mock('../server/utils/billing', () => ({ claimOrder: vi.fn(), paidFeaturesOf: vi.fn(), tierFor: vi.fn() }))
 vi.mock('../server/utils/db', () => ({ queryOne: vi.fn() }))
 vi.mock('../server/utils/users', () => ({ requireHost: vi.fn() }))
 
@@ -19,7 +19,7 @@ vi.stubGlobal('createError', (o: { statusCode: number; statusMessage?: string })
 )
 
 const { draftFor, freeSlug, hydrate, publishAward, saveAward } = await import('../server/utils/awards')
-const { paidFeaturesOf, tierFor } = await import('../server/utils/billing')
+const { claimOrder, paidFeaturesOf, tierFor } = await import('../server/utils/billing')
 const { queryOne } = await import('../server/utils/db')
 const { requireHost } = await import('../server/utils/users')
 const handler = (await import('../server/api/draft/publish.post')).default as (
@@ -56,6 +56,7 @@ describe('POST /api/draft/publish', () => {
     vi.mocked(hydrate).mockReset().mockResolvedValue({ slug: 'chat-awards-2026' } as never)
     vi.mocked(saveAward).mockReset()
     vi.mocked(publishAward).mockReset()
+    vi.mocked(claimOrder).mockReset().mockResolvedValue(true)
   })
 
   it('propagates the 403 for a session without the channel scopes', async () => {
@@ -97,6 +98,27 @@ describe('POST /api/draft/publish', () => {
     expect(publishAward).not.toHaveBeenCalled()
   })
 
+  it('spends one order on a paid show', async () => {
+    vi.mocked(tierFor).mockResolvedValue('paid')
+    await handler({})
+    expect(claimOrder).toHaveBeenCalledWith(7, 3)
+    expect(publishAward).toHaveBeenCalledWith(3, 'chat-awards-2026', 'paid')
+  })
+
+  it('answers 402 when the paid order has already been spent', async () => {
+    vi.mocked(tierFor).mockResolvedValue('paid')
+    vi.mocked(claimOrder).mockResolvedValue(false)
+    await expect(handler({})).rejects.toMatchObject({ statusCode: 402 })
+    expect(publishAward).not.toHaveBeenCalled()
+  })
+
+  it('does not spend an order for an admin', async () => {
+    vi.mocked(requireHost).mockResolvedValue({ id: 7, role: 'admin' } as never)
+    vi.mocked(tierFor).mockResolvedValue('paid')
+    await handler({})
+    expect(claimOrder).not.toHaveBeenCalled()
+  })
+
   it('answers 402 on the free plan when a show is already live', async () => {
     vi.mocked(queryOne).mockResolvedValue({ n: 1 } as never)
     await expect(handler({})).rejects.toMatchObject({ statusCode: 402 })
@@ -114,5 +136,51 @@ describe('POST /api/draft/publish', () => {
     expect(saveAward).toHaveBeenCalled()
     expect(publishAward).toHaveBeenCalledWith(3, 'chat-awards-2026', 'free')
     expect(out.tier).toBe('free')
+  })
+
+  it('does not count the same nominee twice in one category', async () => {
+    const dup = { title: 'Dup', nominees: [{ kind: 'text', text: 'A' }, { kind: 'text', text: ' a ' }] }
+    vi.mocked(readBody as never).mockResolvedValue({ ...body, nominations: [category(1), category(2), dup] })
+    await expect(handler({})).rejects.toMatchObject({ statusCode: 400 })
+  })
+
+  it('refuses a show that closes before it opens', async () => {
+    vi.mocked(readBody as never).mockResolvedValue({
+      ...body,
+      opensAt: '2026-12-10T18:00:00Z',
+      closesAt: '2026-12-01T18:00:00Z',
+    })
+    await expect(handler({})).rejects.toMatchObject({ statusCode: 400 })
+  })
+
+  it('refuses a ceremony before voting closes', async () => {
+    vi.mocked(readBody as never).mockResolvedValue({
+      ...body,
+      opensAt: '2026-12-01T18:00:00Z',
+      closesAt: '2026-12-10T18:00:00Z',
+      ceremonyAt: '2026-12-05T18:00:00Z',
+    })
+    await expect(handler({})).rejects.toMatchObject({ statusCode: 400 })
+    expect(publishAward).not.toHaveBeenCalled()
+  })
+})
+
+describe('link fields in the award schema', async () => {
+  const { awardInputSchema } = await import('../server/utils/schema')
+  const withPartner = (url: string) => ({ ...body, partners: [{ name: 'P', url }] })
+
+  it('refuses script and data URLs', () => {
+    expect(awardInputSchema.safeParse(withPartner('javascript:alert(1)')).success).toBe(false)
+    expect(awardInputSchema.safeParse(withPartner('data:text/html,hi')).success).toBe(false)
+  })
+
+  it('reads a bare domain as https', () => {
+    const r = awardInputSchema.safeParse(withPartner('loot.gg'))
+    expect(r.success && r.data.partners[0]!.url).toBe('https://loot.gg')
+  })
+
+  it('keeps an empty link empty', () => {
+    const r = awardInputSchema.safeParse(withPartner(''))
+    expect(r.success && r.data.partners[0]!.url).toBe('')
   })
 })

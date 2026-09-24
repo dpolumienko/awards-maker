@@ -1,5 +1,5 @@
 import { FREE } from '#shared/limits'
-import { insert, query, queryOne } from './db'
+import { getPool, insert, query, queryOne } from './db'
 import type { AwardInputPayload } from './schema'
 import type { SessionUser } from './users'
 
@@ -49,6 +49,22 @@ export async function tierFor(user: SessionUser, input: AwardInputPayload): Prom
     [user.id],
   )
   return paid ? 'paid' : 'free'
+}
+
+/**
+ * Spends one paid order on a show: $50 buys one awards, not an account-wide
+ * tier (QA P1 - one order used to unlock every show). One UPDATE, so two
+ * publishes racing each other cannot both spend the same order. Returns
+ * whether an order was there to spend.
+ */
+export async function claimOrder(userId: number, awardId: number): Promise<boolean> {
+  const [res] = await getPool().query(
+    `UPDATE orders SET award_id = ?
+      WHERE user_id = ? AND status = 'paid' AND award_id IS NULL
+      ORDER BY id LIMIT 1`,
+    [awardId, userId],
+  )
+  return Number((res as { affectedRows?: number }).affectedRows ?? 0) > 0
 }
 
 export function ordersFor(userId: number) {
@@ -117,7 +133,8 @@ export async function createCheckout(
         mode: 'payment',
         'line_items[0][price]': String(stripe.priceId),
         'line_items[0][quantity]': '1',
-        success_url: `${origin}/my-awards/billing?paid=1`,
+        // back to the builder: the draft is on the server, and publishing now spends this payment
+        success_url: `${origin}/create?paid=1`,
         cancel_url: `${origin}/plans?cancelled=1`,
         client_reference_id: String(orderId),
         'metadata[order_id]': String(orderId),

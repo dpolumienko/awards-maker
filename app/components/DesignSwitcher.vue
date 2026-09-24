@@ -59,18 +59,21 @@ const seg = (active: boolean) =>
     <!-- Floating, not in the flow: a strip above the header mounted after
          hydration and pushed every page down (CLS 0.1 in the SEO audit), and its
          words were the first text Google read on each page. -->
-    <!-- above the sticky submit bars on a phone, in the corner on a desktop -->
-    <div data-nosnippet class="fixed bottom-36 right-3 z-50 text-xs sm:bottom-3">
+    <!-- A round tab on the left edge, halfway down: every corner is taken by a
+         sticky bar or panel on some page (the ballot's submit bar, the side
+         column, the builder preview - QA P1). Opens upwards from there. -->
+    <div data-nosnippet class="fixed left-2 top-1/2 z-50 -translate-y-1/2 text-xs">
       <button
         v-if="!open"
         type="button"
-        class="flex min-h-11 items-center gap-2 rounded-pill border border-hair2 bg-s1/95 px-4 shadow-modal backdrop-blur"
+        class="grid h-11 w-11 place-items-center rounded-pill border border-hair2 bg-s1/95 text-base shadow-modal backdrop-blur"
         :aria-expanded="false"
         aria-controls="design-preview"
+        :aria-label="`Design preview: ${PALETTES.find((p) => p.id === palette)?.label}, ${BUTTONS.find((b) => b.id === button)?.label} button`"
+        :title="`Design: ${PALETTES.find((p) => p.id === palette)?.label} · ${BUTTONS.find((b) => b.id === button)?.label}`"
         @click="open = true"
       >
-        <span class="micro text-ink-muted">Design</span>
-        <span class="font-semibold text-ink">{{ PALETTES.find((p) => p.id === palette)?.label }} · {{ BUTTONS.find((b) => b.id === button)?.label }}</span>
+        <span aria-hidden="true">🎨</span>
       </button>
       <div
         v-else

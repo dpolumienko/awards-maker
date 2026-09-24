@@ -1,4 +1,4 @@
-import { fmtFollowers } from '~/data/channels.mock'
+import { PLATFORM_NAMES } from '~/data/platforms'
 import { clipSource } from '~/utils/clip'
 import type { Nominee } from '~/types/award'
 
@@ -6,9 +6,13 @@ import type { Nominee } from '~/types/award'
 // ballot can never drift apart.
 export const nomineeName = (n: Nominee) => (n.kind === 'channel' ? n.channel.name : n.text)
 
+// A channel reads as its platform, not a follower count: channel search still
+// runs on a demo list (data/channels.mock.ts), and its invented numbers were
+// being saved with the nominee and shown on public ballots (QA P1). Follower
+// counts come back when search reads Streams Charts.
 export const nomineeSub = (n: Nominee) =>
   n.kind === 'channel'
-    ? `${fmtFollowers(n.channel.followers)} followers`
+    ? `${PLATFORM_NAMES[n.channel.platform] ?? 'Twitch'} channel`
     : n.kind === 'media'
       ? n.image
         ? 'Image'

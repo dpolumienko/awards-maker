@@ -84,6 +84,17 @@ const voters = computed(() => data.value?.voters ?? 0)
 const done = ref<HTMLElement | null>(null)
 const voteError = ref('')
 
+onMounted(() => {
+  try {
+    const parked = sessionStorage.getItem(PARKED(slug.value))
+    if (!parked) return
+    sessionStorage.removeItem(PARKED(slug.value))
+    if (!voted.value) picks.value = JSON.parse(parked)
+  } catch {
+    /* nothing parked */
+  }
+})
+
 const mode = computed<'vote' | 'locked' | 'results'>(() => {
   if (phase.value === 'revealed') return 'results'
   if (phase.value === 'open' && !voted.value) return 'vote'
@@ -92,13 +103,21 @@ const mode = computed<'vote' | 'locked' | 'results'>(() => {
 
 /**
  * Twitch OAuth with the voter scope - an email address and nothing else. The
- * picks are held here while the round trip happens, and the cookie the sign-in
- * sets brings the voter straight back to this ballot.
+ * sign-in is a full-page round trip, so the picks are parked in sessionStorage
+ * and put back when the voter lands on this ballot again (QA P1: they used to
+ * come back to an empty ballot). They are not submitted for them - one submit
+ * per account, so the voter presses it.
  */
+const PARKED = (s: string) => `am-picks:${s}`
 async function submit() {
   if (!pickedCount.value) return
   voteError.value = ''
   if (!signedIn.value) {
+    try {
+      sessionStorage.setItem(PARKED(slug.value), JSON.stringify(picks.value))
+    } catch {
+      /* private mode: the voter picks again */
+    }
     signIn()
     return
   }
@@ -137,6 +156,8 @@ const reportOpen = ref(false)
 const reported = ref(false)
 const reportText = ref('')
 async function sendReport() {
+  // an empty report is not a report - the button is disabled, this is the Enter key
+  if (!reportText.value.trim()) return
   try {
     await $fetch('/api/reports', {
       method: 'POST',
@@ -554,8 +575,8 @@ if (award.value && !thin.value) {
             >
               <p class="font-semibold">Thanks - your ballot is counted.</p>
               <p class="mt-1 text-sm text-ink-2">
-                Winners are announced {{ fmtDate(award.ceremonyAt) }}. Send the page to the rest of the chat: every
-                vote after yours changes the result.
+                <template v-if="award.ceremonyAt">Winners are announced {{ fmtDate(award.ceremonyAt) }}.</template>
+                Send the page to other viewers: every vote after yours changes the result.
               </p>
             </div>
           </div>
@@ -646,7 +667,8 @@ if (award.value && !thin.value) {
                   <div class="mt-3 flex gap-3">
                     <button
                       type="submit"
-                      class="h-10 rounded-btn border border-hair px-4 text-sm font-bold uppercase tracking-button transition-colors hover:border-danger hover:text-danger"
+                      :disabled="!reportText.trim()"
+                      class="h-10 rounded-btn border border-hair px-4 text-sm font-bold uppercase tracking-button transition-colors hover:border-danger hover:text-danger disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-hair disabled:hover:text-ink"
                     >
                       Send report
                     </button>

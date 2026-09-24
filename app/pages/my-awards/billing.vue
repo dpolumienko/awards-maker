@@ -6,7 +6,7 @@ import { computed, onMounted } from 'vue'
 import UiButton from '~/components/ui/UiButton.vue'
 import { usePro } from '~/composables/usePro'
 
-const { billing, pro, load } = usePro()
+const { billing, pro, credits, load, checkout, checkoutError } = usePro()
 onMounted(() => load(true))
 
 const orders = computed(() => billing.value.orders)
@@ -28,17 +28,7 @@ const TONE: Record<string, string> = {
   refunded: 'text-ink-muted',
 }
 
-const checkoutError = ref('')
-async function upgrade() {
-  checkoutError.value = ''
-  try {
-    const { url } = await $fetch<{ url: string }>('/api/billing/checkout', { method: 'POST' })
-    window.location.href = url
-  } catch (error) {
-    checkoutError.value =
-      (error as { statusMessage?: string }).statusMessage || 'Could not start the checkout'
-  }
-}
+const upgrade = checkout
 
 useSeoMeta({ title: 'Payments', robots: 'noindex, nofollow' })
 </script>
@@ -49,14 +39,16 @@ useSeoMeta({ title: 'Payments', robots: 'noindex, nofollow' })
 
     <div class="mt-6 rounded-card border p-5" :class="pro ? 'border-gold-24 bg-gold/[0.04]' : 'border-hair bg-s1'">
       <p class="font-semibold">
-        {{ pro ? 'Your account has the paid tier.' : 'Your account is on the free plan.' }}
+        <template v-if="billing.comped">Paid shows publish free on this account.</template>
+        <template v-else-if="credits">{{ credits }} paid {{ credits === 1 ? 'show' : 'shows' }} ready to publish.</template>
+        <template v-else>No paid show waiting - $50 buys the next one.</template>
       </p>
       <p class="mt-1 text-sm text-ink-2">
         <template v-if="billing.comped">
           Comped - this is an admin account, so paid shows publish without a payment.
         </template>
         <template v-else-if="pro">
-          Unlimited categories, your own look, and clips or images as nominees.
+          The next show you publish gets unlimited categories, your own look, and clips or images as nominees.
         </template>
         <template v-else>
           Five categories, 200 voters, one show at a time.
@@ -64,7 +56,7 @@ useSeoMeta({ title: 'Payments', robots: 'noindex, nofollow' })
       </p>
 
       <div v-if="!pro" class="mt-4 flex flex-wrap items-center gap-3">
-        <UiButton size="sm" @click="upgrade">Upgrade this account</UiButton>
+        <UiButton size="sm" @click="upgrade">Pay $50 for one show</UiButton>
         <!-- says why rather than greying out a button with no explanation -->
         <p v-if="!billing.payments" class="text-sm text-ink-muted">
           Checkout is not switched on in this environment yet.

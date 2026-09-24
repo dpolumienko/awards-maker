@@ -311,7 +311,9 @@ export { slugify } from '#shared/slug'
 export async function freeSlug(base: string, ignoreId?: number): Promise<string> {
   const root = base || 'awards'
   for (let n = 1; n < 200; n++) {
-    const candidate = n === 1 ? root : `${root}-${n}`
+    // the suffix eats into the name, not past the 60-character cap slugify keeps
+    const suffix = n === 1 ? '' : `-${n}`
+    const candidate = root.slice(0, 60 - suffix.length).replace(/-+$/, '') + suffix
     const taken = await queryOne<{ id: number }>(
       `SELECT id FROM awards WHERE slug = ? AND id <> ? LIMIT 1`,
       [candidate, ignoreId ?? 0],

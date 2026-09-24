@@ -137,6 +137,11 @@ const onFullChange = () => (isFull.value = !!document.fullscreenElement)
 function onKey(e: KeyboardEvent) {
   const keys = [' ', 'ArrowRight', 'PageDown', 'ArrowLeft', 'PageUp', 'Home', 'End', 'f']
   if (!keys.includes(e.key)) return
+  // the setup dialog owns the keyboard while it is open, and Space on a focused
+  // control presses it rather than advancing the slide behind it (QA P2)
+  if (setupOpen.value) return
+  const t = e.target as HTMLElement | null
+  if (t?.closest('button, a, input, select, textarea, [role=radio], [role=dialog]') && e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return
   e.preventDefault()
   if ([' ', 'ArrowRight', 'PageDown'].includes(e.key)) next()
   else if (['ArrowLeft', 'PageUp'].includes(e.key)) back()
@@ -281,7 +286,7 @@ definePageMeta({ chrome: false })
             </h1>
             <p class="s-meta">
               {{ categories.length }} {{ categories.length === 1 ? 'category' : 'categories' }} ·
-              {{ voters }} {{ voters === 1 ? 'ballot' : 'ballots' }} · voted by the chat
+              {{ voters }} {{ voters === 1 ? 'ballot' : 'ballots' }} · voted by viewers
             </p>
           </template>
 
