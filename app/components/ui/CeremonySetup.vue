@@ -177,10 +177,10 @@ const sample = computed(() => [...(name.trim().split(/\s+/)[0] ?? 'Winner')])
               @click="emit('update', { reveal: r.id })"
             >
               <span class="grid grid-cols-[minmax(0,1fr)_14px] items-center gap-2 font-semibold">
-                <span class="min-w-0">{{ r.name }}</span>
+                <span class="min-w-0">{{ r.label }}</span>
                 <UiIcon v-show="settings.reveal === r.id" name="check" :size="14" />
               </span>
-              <span class="mt-1 text-sm text-ink-2">{{ r.blurb }}</span>
+              <span class="mt-1 text-sm text-ink-2">{{ r.note }}</span>
             </button>
           </div>
         </div>

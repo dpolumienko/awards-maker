@@ -12,7 +12,7 @@
     "postinstall": "nuxt prepare",
     "typecheck": "nuxt typecheck",
     "test": "vitest run",
-    "migrate": "node scripts/migrate.mjs"
+    "migrate": "node --env-file-if-exists=.env scripts/migrate.mjs"
   },
   "dependencies": {
     "gsap": "^3.15.0",

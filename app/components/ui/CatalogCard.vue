@@ -77,8 +77,6 @@ const line = computed(() => {
       </span>
 
       <span class="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-ink-muted">
-        <span class="tnum">{{ award.nominations.length }} categories</span>
-        <span aria-hidden="true">·</span>
         <span class="tnum">{{ nominees }} {{ nominees === 1 ? 'category' : 'categories' }}</span>
         <span aria-hidden="true">·</span>
         <span class="tnum">{{ voters }} {{ voters === 1 ? 'vote' : 'votes' }}</span>

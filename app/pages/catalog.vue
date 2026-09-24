@@ -179,7 +179,7 @@ const filterLink = (id: FilterId) => (id === 'all' ? '/catalog' : `/catalog?stat
     <div v-else-if="totals.awards" class="mt-8 rounded-card border border-dashed border-hair2 p-8 text-center">
       <p class="text-ink-2">
         Nothing here under this filter yet.
-        <NuxtLink to="/catalog" class="text-gold-text underline underline-offset-4">Show all {{ totals.all }}</NuxtLink>.
+        <NuxtLink to="/catalog" class="text-gold-text underline underline-offset-4">Show all {{ counts.all }}</NuxtLink>.
       </p>
     </div>
 
