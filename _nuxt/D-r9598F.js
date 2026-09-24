@@ -1,0 +1,1 @@
+const i={maxNominations:5,maxVoters:200,maxActiveAwards:1,nameLimit:29},s={priceUsd:50},n={minAwards:10},a={descriptionLimit:200},o={minNominations:3,minNomineesPerNomination:2};export{n as C,i as F,s as P,o as a,a as b};

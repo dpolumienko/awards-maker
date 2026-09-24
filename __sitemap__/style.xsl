@@ -292,7 +292,7 @@
         
         <div class="container">
           <div class="header">
-            <h1>Awards Maker</h1>
+            <h1>Streams Charts Awards</h1>
             <div class="header-meta">
               
               <xsl:if test="count(sitemap:sitemapindex/sitemap:sitemap) &gt; 0">
