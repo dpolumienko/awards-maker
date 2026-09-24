@@ -14,7 +14,7 @@ import InteractiveAccordion from '~/components/ui/InteractiveAccordion.vue'
 import { useCatalog } from '~/composables/useAwards'
 import { phaseOf } from '~/composables/useVoting'
 import { useReveal } from '~/composables/useReveal'
-import { FREE, PUBLISH } from '~/types/award'
+import { FREE, PAID, PUBLISH } from '~/types/award'
 
 const route = useRoute()
 const router = useRouter()
@@ -76,7 +76,7 @@ const faq = [
   },
   {
     q: 'What does it cost to run my own?',
-    a: `Nothing to start: the free plan covers ${FREE.maxNominations} categories and ${FREE.maxVoters} voters, which is a first season for most channels. Bigger shows are a one-off purchase per awards, and we also run them for brands and agencies.`,
+    a: `Nothing to start: the free plan covers ${FREE.maxNominations} categories and ${FREE.maxVoters} voters, which is a first season for most channels. Bigger shows are $${PAID.priceUsd} once per awards, and we also run them for brands and agencies.`,
   },
 ]
 

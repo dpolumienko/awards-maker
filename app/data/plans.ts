@@ -2,73 +2,64 @@
 // /plans page read the same array, and the comparison table on that page is
 // built from the same feature lists.
 //
-// No figure on the paid tier yet: the price is a range, not a decision. Nothing
-// here invents one.
+// Short on purpose (review 2026-09-24: "too many words, nobody reads it"): a
+// price, three or four lines, one button. The reasoning lives in the FAQ.
+import { FREE, PAID } from '#shared/limits'
 
 export interface Plan {
   id: string
   name: string
+  /** The big number. */
   price: string
-  blurb: string
+  /** What the number is for, under it. */
+  per: string
   features: string[]
   cta: { label: string; to: string; variant: 'primary' | 'ghost' }
-  note: string
   featured: boolean
-  badge: string
 }
 
 export const PLANS: Plan[] = [
-
   {
     id: 'free',
     name: 'Free',
-    price: 'Free, with a Twitch login',
-    blurb: 'Enough to run a real show for one community.',
+    price: '$0',
+    per: 'with a Twitch login',
     features: [
-      'Up to 5 nominations',
-      'One awards running at a time',
-      '200 unique voters',
-      'Nominate any channel we track, or plain text',
-      'Public page, catalog listing, results that stay up',
+      `Up to ${FREE.maxNominations} categories`,
+      `${FREE.maxVoters} voters`,
+      'One awards at a time',
+      'Any channel we track, or plain text',
     ],
     cta: { label: 'Start free', to: '/create', variant: 'ghost' },
-    note: 'Enough for a first season on a small channel.',
     featured: false,
-    badge: '',
   },
   {
     id: 'paid',
     name: 'One awards',
-    price: 'One-off purchase, no subscription',
-    blurb: 'Everything above, without the ceilings - and the page looks like your channel, not like us.',
+    price: `$${PAID.priceUsd}`,
+    per: 'per awards, paid once',
     features: [
-      'Unlimited nominations',
+      'Unlimited categories',
       'No cap on voters',
       'Your cover, logo, colour and type',
       'Images and clips as nominees',
-      'Minimum account age for voters',
     ],
-    cta: { label: 'Get early access', to: '/plans#early-access', variant: 'primary' },
-    note: 'Ships before December. Early access holds your price.',
+    cta: { label: 'Create your awards', to: '/create', variant: 'primary' },
     featured: true,
-    badge: 'Most shows end up here',
   },
   {
     id: 'enterprise',
     name: 'Done for you',
-    price: 'By contact',
-    blurb: 'You bring the audience, we run the production.',
+    price: 'Custom',
+    per: 'priced per show',
     features: [
-      'We set up the categories and nominees with you',
+      'Categories and nominees set up with you',
       'Branded page and share assets',
-      'Moderation and anti-fraud watched by our team',
-      'A run of show for the reveal stream',
-      'Results and audience report after the show',
+      'Moderation watched by our team',
+      'Results and audience report',
     ],
     cta: { label: 'Talk to us', to: 'mailto:sales@streamscharts.com', variant: 'ghost' },
-    note: 'For agencies, brands and large channels.',
     featured: false,
-    badge: '',
   },
 ]
 
@@ -111,7 +102,6 @@ export const COMPARISON: { group: string; rows: CompareRow[] }[] = [
     rows: [
       { label: 'Host dashboard with live counts', free: true, paid: true, done: true },
       { label: 'One ballot per Twitch account', free: true, paid: true, done: true },
-      { label: 'Minimum account age for voters', free: false, paid: true, done: true },
       { label: 'Moderation watched by our team', free: false, paid: false, done: true },
       { label: 'Categories and nominees set up with you', free: false, paid: false, done: true },
       { label: 'Results and audience report', free: false, paid: false, done: true },

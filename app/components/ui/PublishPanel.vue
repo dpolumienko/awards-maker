@@ -4,7 +4,7 @@
 import { ref } from 'vue'
 import UiButton from './UiButton.vue'
 import LimitMeter from './LimitMeter.vue'
-import { FREE } from '~/types/award'
+import { FREE, PAID } from '~/types/award'
 import UiIcon from './UiIcon.vue'
 
 const { checks, canPublish, nominationsUsed, paidFeatures, error = '' } = defineProps<{
@@ -58,7 +58,7 @@ const agreed = ref(false)
       </p>
       <template v-else>
         <p class="mt-3 text-sm text-ink-2">
-          Keep them and the awards go out on the paid tier - a one-off purchase, no subscription. Or drop them and
+          Keep them and the awards go out on the paid tier - ${{ PAID.priceUsd }} once, no subscription. Or drop them and
           publish free right now; everything else you set stays.
         </p>
         <div class="mt-4 flex flex-wrap items-center gap-3">

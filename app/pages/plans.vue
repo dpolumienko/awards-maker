@@ -3,8 +3,9 @@
 // questions somebody asks right before paying - what the ceilings mean, what
 // happens when a show hits them, and what the paid tier is not.
 //
-// No Offer in the structured data: the price is still a range, and marking up a
-// figure we have not decided would put a wrong one in search results.
+// No Offer in the structured data: Google's product rich results expect reviews
+// or ratings we do not have, and a half-filled Product earns a warning, not a
+// snippet.
 import { ref } from 'vue'
 import UiButton from '~/components/ui/UiButton.vue'
 import UiIcon from '~/components/ui/UiIcon.vue'
@@ -12,7 +13,7 @@ import PlanCards from '~/components/ui/PlanCards.vue'
 import InteractiveAccordion from '~/components/ui/InteractiveAccordion.vue'
 import { useReveal } from '~/composables/useReveal'
 import { COMPARISON } from '~/data/plans'
-import { FREE } from '~/types/award'
+import { FREE, PAID } from '~/types/award'
 
 const root = ref<HTMLElement | null>(null)
 useReveal(root, { stagger: 0.04 })
@@ -24,19 +25,15 @@ const faq = [
   },
   {
     q: 'Is the paid tier a subscription?',
-    a: 'No. It is a one-off purchase for one awards show. An awards show is an event, not a service you use every day, so charging monthly for it would be charging for the eleven months nothing is running.',
-  },
-  {
-    q: 'Can I upgrade an awards that is already open?',
-    a: 'That is the point of paying at the moment you hit a ceiling rather than before it. The categories, nominees and votes stay where they are - the limits come off the show you already built.',
+    a: `No. $${PAID.priceUsd} once, for one awards show. A show is an event, not something you use every month.`,
   },
   {
     q: 'What does the free plan cost me later?',
     a: `Nothing. ${FREE.maxNominations} categories, ${FREE.maxVoters} voters and one show at a time, with a public page that stays online after the winners are out. Most first seasons on a small channel never touch those numbers.`,
   },
   {
-    q: 'When can I buy it?',
-    a: 'The paid tier ships before December, in time for end-of-year shows. Early access holds your price; until then everything on the free plan works as described.',
+    q: 'When do I pay?',
+    a: `When you publish. If the show uses more than the free plan covers - more than ${FREE.maxNominations} categories, your own look, or images and clips as nominees - publishing asks for $${PAID.priceUsd} once, for that show.`,
   },
   {
     q: 'What is "done for you"?',
@@ -46,7 +43,7 @@ const faq = [
 
 useSeoMeta({
   title: 'Plans and Pricing for Streamer Awards',
-  description: `Free with a Twitch login for ${FREE.maxNominations} categories and ${FREE.maxVoters} voters, a one-off purchase for a show without ceilings, or we run the production for you.`,
+  description: `Free for ${FREE.maxNominations} categories and ${FREE.maxVoters} voters. $${PAID.priceUsd} once for an awards show without limits and with your own look. Or we run the production for you.`,
   ogImage: ogCard('plans'),
 })
 
@@ -76,8 +73,7 @@ const cols = [
 
     <h1 class="heading max-w-[20ch]">Free, paid, or we run it for you</h1>
     <p class="mt-4 max-w-copy text-lg text-ink-2">
-      Start free and pay only when a show outgrows the ceilings. The paid tier is a one-off purchase for
-      one awards, not a subscription - nothing you set up is lost in between.
+      Start free. Pay ${{ PAID.priceUsd }} once if the show needs more - no subscription.
     </p>
 
     <PlanCards class="mt-10" />
@@ -145,45 +141,11 @@ const cols = [
       </p>
     </section>
 
-    <!-- the two CTAs above land here: no checkout exists yet, and the page says so -->
-    <section id="early-access" class="mt-16 scroll-mt-24 border-t border-hair pt-12">
-      <h2 class="heading">Early access</h2>
-      <p class="mt-4 max-w-copy text-lg text-ink-2">
-        The paid tier is not on sale yet. It ships before December, in time for end-of-year shows, and
-        early access holds the launch price for the first season.
-      </p>
-      <ul class="mt-6 list-none space-y-2.5 p-0 text-ink-2">
-        <li class="flex gap-2.5">
-          <UiIcon name="check" :size="14" class="mt-1.5 flex-none text-live" />
-          Everything you build on the free plan carries over. The upgrade lifts the ceilings off the show
-          you already have - categories, nominees and votes stay where they are.
-        </li>
-        <li class="flex gap-2.5">
-          <UiIcon name="check" :size="14" class="mt-1.5 flex-none text-live" />
-          One payment per awards show. No subscription, nothing recurring.
-        </li>
-        <li class="flex gap-2.5">
-          <UiIcon name="check" :size="14" class="mt-1.5 flex-none text-live" />
-          Until it ships, the free plan runs a full season: {{ FREE.maxNominations }} categories,
-          {{ FREE.maxVoters }} voters, a public page and a dashboard.
-        </li>
-      </ul>
-      <div class="mt-6 flex flex-wrap gap-3">
-        <UiButton to="/create">Start free now</UiButton>
-        <UiButton to="/ideas" variant="ghost">Category ideas</UiButton>
-      </div>
-    </section>
-
     <section id="done-for-you" class="mt-16 scroll-mt-24 border-t border-hair pt-12">
       <h2 class="heading">We run it for you</h2>
       <p class="mt-4 max-w-copy text-lg text-ink-2">
-        For agencies, brands and channels big enough that the show needs a producer. We work out the
-        categories and nominees with you, brand the page, watch moderation and anti-fraud through the
-        vote, write the run of show for the reveal stream and send a results and audience report after.
-      </p>
-      <p class="mt-4 max-w-copy text-ink-2">
-        Priced per show, because no two are the same size. Tell us the channel, the date and roughly how
-        many people you expect, and we come back with a plan and a price.
+        For agencies, brands and big channels. We set up the show with you, run moderation through the
+        vote and send a report after. Tell us the channel and the date, and we come back with a price.
       </p>
       <div class="mt-6 flex flex-wrap gap-3">
         <UiButton to="mailto:sales@streamscharts.com">sales@streamscharts.com</UiButton>
@@ -201,8 +163,7 @@ const cols = [
     <div class="mt-12 rounded-card border border-gold-24 bg-gold/[0.06] p-6 sm:p-8">
       <h2 class="text-2xl font-bold">Start on the free plan</h2>
       <p class="mt-3 max-w-copy text-ink-2">
-        {{ FREE.maxNominations }} categories, {{ FREE.maxVoters }} voters, a public page and a dashboard
-        that shows you how the vote is going. Pay only if the show outgrows it.
+        {{ FREE.maxNominations }} categories, {{ FREE.maxVoters }} voters and a public page. Pay only if the show outgrows it.
       </p>
       <div class="mt-6 flex flex-wrap gap-3">
         <UiButton to="/create">Create your awards</UiButton>

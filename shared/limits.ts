@@ -9,6 +9,11 @@ export const FREE = {
   nameLimit: 29,
 } as const
 
+/** One awards on the paid tier, paid once. Stripe's price (STRIPE_PRICE_ID) has to match. */
+export const PAID = {
+  priceUsd: 50,
+} as const
+
 export const FIELD = {
   descriptionLimit: 200,
 } as const

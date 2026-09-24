@@ -4,8 +4,8 @@
 //
 // The highlighted card is the paid tier, not the free one: highlighting free was
 // pointing every reader at the cheapest option. Free stays first and stays honest
-// about what it covers; the paid card carries the accent, the badge and the only
-// gold button in the group.
+// about what it covers; the paid card carries the accent and the only gold
+// button in the group.
 import UiButton from './UiButton.vue'
 import UiIcon from './UiIcon.vue'
 import { PLANS } from '~/data/plans'
@@ -24,17 +24,13 @@ import { PLANS } from '~/data/plans'
         aria-hidden="true"
         class="absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,#D9A441,transparent)]"
       />
-      <span
-        v-if="p.badge"
-        class="mb-3 inline-flex w-fit rounded-pill border border-gold-24 px-3 py-1 text-[11px] font-bold uppercase tracking-micro text-gold-text"
-      >
-        {{ p.badge }}
-      </span>
       <h3 class="text-xl font-semibold">{{ p.name }}</h3>
-      <p class="mt-1 text-sm" :class="p.featured ? 'text-gold-text' : 'text-ink-muted'">{{ p.price }}</p>
-      <p class="mt-3 text-sm text-ink-2">{{ p.blurb }}</p>
+      <p class="mt-4 flex items-baseline gap-2">
+        <span class="tnum text-[44px] font-extrabold leading-none tracking-heading" :class="p.featured && 'text-gold-text'">{{ p.price }}</span>
+        <span class="text-sm text-ink-muted">{{ p.per }}</span>
+      </p>
 
-      <ul class="mt-5 list-none space-y-2.5 p-0">
+      <ul class="mt-6 list-none space-y-2.5 p-0">
         <li v-for="f in p.features" :key="f" class="flex items-start gap-3 text-sm text-ink-2">
           <span
             aria-hidden="true"
@@ -47,7 +43,6 @@ import { PLANS } from '~/data/plans'
 
       <div class="mt-6 pt-2">
         <UiButton :to="p.cta.to" :variant="p.cta.variant" size="sm">{{ p.cta.label }}</UiButton>
-        <p v-if="p.note" class="mt-3 text-sm text-ink-muted">{{ p.note }}</p>
       </div>
     </div>
   </div>
