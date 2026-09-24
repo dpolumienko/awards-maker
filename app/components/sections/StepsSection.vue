@@ -37,8 +37,8 @@ onMounted(() => {
       // background stays opaque: a translucent fill let the connector line
       // show straight through the digits
       gsap.to(step.querySelector('.js-num'), {
-        borderColor: '#D9A441',
-        color: '#D9A441',
+        borderColor: 'rgb(var(--gold))',
+        color: 'rgb(var(--gold))',
         backgroundColor: '#17171A',
         duration: 0.4,
         scrollTrigger: { trigger: step, start: 'top 75%', once: true },

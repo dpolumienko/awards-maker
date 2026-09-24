@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import GlowFilterDefs from '~/components/ui/GlowFilterDefs.vue'
 import PublishCurtain from '~/components/ui/PublishCurtain.vue'
 import { usePublishCurtain } from '~/composables/usePublishCurtain'
+import { DESIGN_BOOT } from '~/data/design'
 
 // A page can ask for the shell to step aside - `definePageMeta({ chrome: false })`.
 // The ceremony screen is captured by OBS, and a site header in the shot is a site
@@ -23,6 +24,8 @@ const stage = computed(
   () => route.path === '/' || route.path.startsWith('/a/') || route.meta.chrome === false,
 )
 useHead({ bodyAttrs: { 'data-stage': () => (stage.value ? '1' : '0') } })
+// the design switcher's choice, applied before first paint (data/design.ts)
+useHead({ script: [{ innerHTML: DESIGN_BOOT, tagPriority: 'critical' }] })
 </script>
 
 <template>
@@ -31,11 +34,13 @@ useHead({ bodyAttrs: { 'data-stage': () => (stage.value ? '1' : '0') } })
     <a
       v-if="chrome"
       href="#main"
-      class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-btn focus:bg-gold focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-canvas"
+      class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-btn focus:bg-gold focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-on-gold"
     >Skip to content</a>
     <!-- the room's light. Not on the ceremony screen: that one is its own stage,
          and in OBS mode the background has to stay exactly what the host chose. -->
     <div v-if="chrome" aria-hidden="true" class="rig pointer-events-none fixed inset-0 -z-10" />
+    <!-- temporary: palette and button comparison, review 2026-09-24 -->
+    <DesignSwitcher v-if="chrome" />
     <SiteHeader v-if="chrome" />
     <main id="main">
       <NuxtPage />

@@ -35,10 +35,10 @@ const rules = [
   >
     <div class="js-reveal mt-6 overflow-hidden rounded-card border border-hair bg-canvas">
       <!-- the page head: host, phase, title, the numbers row -->
-      <div class="relative border-b border-hair bg-[linear-gradient(180deg,rgba(217,164,65,.08),transparent)] px-6 pb-6 pt-7 sm:px-8">
+      <div class="relative border-b border-hair bg-[linear-gradient(180deg,rgb(var(--gold)/.08),transparent)] px-6 pb-6 pt-7 sm:px-8">
         <div class="flex items-center justify-between gap-3">
           <span class="flex items-center gap-2.5">
-            <span class="grid h-9 w-9 place-items-center rounded-pill bg-gold text-[12px] font-bold text-canvas">NO</span>
+            <span class="grid h-9 w-9 place-items-center rounded-pill bg-gold text-[12px] font-bold text-on-gold">NO</span>
             <span class="font-semibold">nightowl_tv</span>
             <PlatformDot platform="twitch" />
           </span>
@@ -92,7 +92,7 @@ const rules = [
                 <span
                   aria-hidden="true"
                   :class="[
-                    'ml-auto grid h-5 w-5 place-items-center rounded-btn bg-gold text-canvas transition-transform duration-300 ease-gala',
+                    'ml-auto grid h-5 w-5 place-items-center rounded-btn bg-gold text-on-gold transition-transform duration-300 ease-gala',
                     picked === i ? 'scale-100' : 'scale-0',
                   ]"
                 ><UiIcon name="check" :size="12" /></span>

@@ -16,7 +16,7 @@ useReveal(root)
       <!-- same stage treatment as the hero: beams, sparkles, a lit line -->
       <div class="js-reveal relative overflow-hidden rounded-card border border-hair bg-s1 px-6 py-14 text-center sm:px-12 sm:py-20">
         <StageLights />
-        <span aria-hidden="true" class="absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,#D9A441,transparent)]" />
+        <span aria-hidden="true" class="absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgb(var(--gold)),transparent)]" />
         <SparkleField class="pointer-events-none absolute inset-x-0 bottom-0 h-32 opacity-70" :density="90" />
 
         <div class="relative">

@@ -56,7 +56,7 @@ const channels = [
 
         <div class="mt-5 space-y-2">
           <div v-for="n in ['Best moment', 'Mod MVP', 'Best emote']" :key="n" class="flex items-center gap-3 rounded-btn border border-hair bg-canvas px-3 py-2.5 text-sm">
-            <span aria-hidden="true" class="grid h-5 w-5 place-items-center rounded-btn bg-gold text-canvas"><UiIcon name="check" :size="12" /></span>
+            <span aria-hidden="true" class="grid h-5 w-5 place-items-center rounded-btn bg-gold text-on-gold"><UiIcon name="check" :size="12" /></span>
             {{ n }}
             <span class="tnum ml-auto text-xs text-ink-muted">1 / 1</span>
           </div>

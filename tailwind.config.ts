@@ -25,12 +25,22 @@ export default <Config>{
         // lifted canvas, because that is a tool somebody works in for an hour.
         // Channels rather than a hex so bg-canvas/90 still works.
         canvas: 'rgb(var(--canvas) / <alpha-value>)',
-        s1: '#15151A',
-        s2: '#1E1E24',
-        s3: '#292930',
-        hair: '#32323A',
-        hair2: '#484851',
-        gold: { DEFAULT: '#D9A441', pressed: '#B9862E', text: '#EFC97A', 24: 'rgba(217,164,65,0.24)' },
+        // Surfaces and the accent are CSS variables so a palette can be swapped
+        // at runtime (assets/css/palettes.css). "gold" is the accent's name in
+        // the code whatever colour the palette makes it.
+        s1: 'rgb(var(--s1) / <alpha-value>)',
+        s2: 'rgb(var(--s2) / <alpha-value>)',
+        s3: 'rgb(var(--s3) / <alpha-value>)',
+        hair: 'rgb(var(--hair) / <alpha-value>)',
+        hair2: 'rgb(var(--hair2) / <alpha-value>)',
+        gold: {
+          DEFAULT: 'rgb(var(--gold) / <alpha-value>)',
+          pressed: 'rgb(var(--gold-pressed) / <alpha-value>)',
+          text: 'rgb(var(--gold-text) / <alpha-value>)',
+          24: 'rgb(var(--gold) / 0.24)',
+        },
+        // what sits on a filled accent: text on the primary button, a tick in a box
+        'on-gold': 'rgb(var(--on-gold) / <alpha-value>)',
         silver: '#C9CCD1',
         bronze: '#B87333',
         ink: { DEFAULT: '#FFFFFF', 2: '#A5A5AC', muted: '#8A8A93', disabled: '#6E6E76' },
@@ -54,7 +64,7 @@ export default <Config>{
         gala: 'cubic-bezier(.16,1,.3,1)',
       },
       boxShadow: {
-        focus: '0 0 0 3px rgba(217,164,65,0.24)',
+        focus: '0 0 0 3px rgb(var(--gold) / 0.24)',
         modal: '0 24px 80px rgba(0,0,0,0.9)',
       },
       borderRadius: {

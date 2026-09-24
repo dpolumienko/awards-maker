@@ -16,7 +16,8 @@ const base =
   'relative inline-flex items-center justify-center gap-2.5 overflow-hidden rounded-btn font-bold uppercase tracking-button transition-[background-color,border-color,color,transform] duration-200 active:translate-y-px disabled:pointer-events-none disabled:opacity-40'
 const sizes = { md: 'h-12 px-6 text-[15px]', sm: 'h-11 px-4 text-[13px]' }
 const variants = {
-  primary: 'bg-gold text-canvas hover:bg-gold-pressed',
+  // colours in assets/css/palettes.css, which has the treatments under review
+  primary: 'btn-primary',
   ghost: 'border border-white/50 text-ink hover:border-white hover:bg-white/[0.06]',
   text: 'px-1 text-gold-text underline underline-offset-4 hover:text-ink',
 }

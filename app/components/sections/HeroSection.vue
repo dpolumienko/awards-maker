@@ -56,7 +56,7 @@ onMounted(() => {
     <span
       aria-hidden="true"
       class="js-spot pointer-events-none absolute -top-[340px] left-1/2 h-[700px] w-[1100px] -translate-x-1/2 opacity-0 blur-[10px]"
-      style="background: radial-gradient(ellipse at center, rgba(217,164,65,.16) 0%, rgba(217,164,65,.05) 38%, transparent 70%)"
+      style="background: radial-gradient(ellipse at center, rgb(var(--gold) / .16) 0%, rgb(var(--gold) / .05) 38%, transparent 70%)"
     />
 
     <div class="shell relative z-10">

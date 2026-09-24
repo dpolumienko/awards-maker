@@ -46,7 +46,7 @@ const agreed = ref(false)
 
     <!-- what is in the draft that free does not cover -->
     <div v-if="paidFeatures.length" class="mt-6 overflow-hidden rounded-card border border-gold-24 bg-gold/[0.06] p-5">
-      <span aria-hidden="true" class="mb-3 block h-px w-full bg-[linear-gradient(90deg,transparent,#D9A441,transparent)]" />
+      <span aria-hidden="true" class="mb-3 block h-px w-full bg-[linear-gradient(90deg,transparent,rgb(var(--gold)),transparent)]" />
       <p class="micro text-gold-text">Paid features in this draft</p>
       <ul class="mt-3 list-none space-y-2 p-0">
         <li v-for="f in paidFeatures" :key="f.id" class="text-sm">

@@ -19,7 +19,7 @@ const emit = defineEmits<{ dismiss: [] }>()
 
 <template>
   <div class="relative overflow-hidden rounded-card border border-gold-24 bg-gold/[0.06]" :class="compact ? 'p-4' : 'p-5'">
-    <span aria-hidden="true" class="absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,#D9A441,transparent)]" />
+    <span aria-hidden="true" class="absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgb(var(--gold)),transparent)]" />
 
     <p class="micro text-gold-text">Paid version</p>
     <p class="mt-2 font-semibold" :class="!compact && 'text-lg'">{{ headline[reason] }}</p>
