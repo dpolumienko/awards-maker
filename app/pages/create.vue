@@ -9,7 +9,6 @@ import UiButton from '~/components/ui/UiButton.vue'
 import NominationCard from '~/components/ui/NominationCard.vue'
 import AwardPreview from '~/components/ui/AwardPreview.vue'
 import PublishPanel from '~/components/ui/PublishPanel.vue'
-import PublishCurtain from '~/components/ui/PublishCurtain.vue'
 import TemplatePicker from '~/components/ui/TemplatePicker.vue'
 import PaywallNote from '~/components/ui/PaywallNote.vue'
 import LookSection from '~/components/ui/LookSection.vue'
@@ -19,7 +18,7 @@ import InteractiveAccordion from '~/components/ui/InteractiveAccordion.vue'
 import type { AwardTemplate } from '~/data/templates'
 import { ideaGroup } from '~/data/ideas'
 import { useAwardDraft } from '~/composables/useAwardDraft'
-import { FIELD, FREE, type AwardLook } from '~/types/award'
+import { FIELD, FREE } from '~/types/award'
 
 const {
   draft,
@@ -110,16 +109,16 @@ function addIdea(title: string) {
   paywallOpen.value = draft.value.nominations.length > FREE.maxNominations
 }
 
-// Publishing is the one moment in the builder worth marking: the burst plays, and
-// the page it produced opens when it finishes.
+// Publishing is the one moment in the builder worth marking. The curtain itself
+// lives in app.vue so it outlives this page - see usePublishCurtain.
 // publish() empties the draft, so the curtain is handed the published award's own
 // look - reading draft.look here would paint a blank stage.
-const published = ref<{ slug: string; name: string; url: string; look: AwardLook } | null>(null)
+const curtain = usePublishCurtain()
 function onPublish() {
   const award = publish()
   if (!award) return
   const host = import.meta.client ? location.host : 'awards.streamscharts.com'
-  published.value = { slug: award.slug, name: award.name, url: `${host}/a/${award.slug}`, look: award.look }
+  curtain.open({ slug: award.slug, name: award.name, url: `${host}/a/${award.slug}`, look: award.look })
 }
 
 // The builder is a tool page, like the other tools that rank: the tool sits on
@@ -322,14 +321,12 @@ useSchemaOrg([
               <div class="min-w-[200px] flex-[2]">
                 <UiField v-model="p.url" label="Link" placeholder="https://" />
               </div>
-              <button
-                type="button"
-                class="mb-9 h-11 rounded-btn border border-hair px-3 text-sm text-ink-muted transition-colors hover:border-danger hover:text-danger"
+              <UiConfirmButton
+                class="mb-9"
                 :aria-label="'Remove partner ' + (p.name || 'row')"
-                @click="removePartner(p.id)"
-              >
-                Remove
-              </button>
+                :confirm-aria-label="'Confirm removing partner ' + (p.name || 'row')"
+                @confirm="removePartner(p.id)"
+              />
             </div>
           </div>
 
@@ -381,11 +378,4 @@ useSchemaOrg([
     </section>
   </div>
 
-  <PublishCurtain
-    :open="!!published"
-    :name="published?.name ?? ''"
-    :url="published?.url ?? ''"
-    :look="published?.look"
-    @done="published && navigateTo(`/a/${published.slug}`)"
-  />
 </template>

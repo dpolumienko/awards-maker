@@ -57,6 +57,12 @@ async function play(playlist: string) {
   const { default: Hls } = await import('hls.js')
   if (Hls.isSupported()) {
     const instance = new Hls({ enableWorker: true })
+    // Without this the player was a permanent black rectangle: a manifest that
+    // 404s or fails CORS never reaches the <video>, `failed` was only ever set on
+    // the Kick-API path, and an <video> with no source paints the canvas colour.
+    instance.on(Hls.Events.ERROR, (_e, data) => {
+      if (data.fatal) failed.value = true
+    })
     instance.loadSource(playlist)
     instance.attachMedia(el)
     hls = instance

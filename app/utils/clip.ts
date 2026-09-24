@@ -47,6 +47,24 @@ const kickFromShard = (shard: string, id: string, href: string): ClipSource => (
   label: HOST_LABEL.kick,
 })
 
+/**
+ * Twitch checks `parent` against the page that frames the player and rejects
+ * anything else - including `127.0.0.1`, which it does not treat as localhost.
+ * Reading it off the address bar therefore gave a black player on every preview
+ * that was not served from the exact production host, so the site's own host is
+ * the answer and the address bar is only the fallback.
+ */
+function embedParent(explicit?: string): string {
+  if (explicit) return explicit
+  try {
+    const configured = useRuntimeConfig().public.siteHost
+    if (configured) return String(configured)
+  } catch {
+    // called outside a Nuxt request context; the address bar is all there is
+  }
+  return import.meta.client ? window.location.hostname : ''
+}
+
 export function clipSource(rawUrl: string, parentHost?: string): ClipSource | null {
   const raw = rawUrl?.trim()
   if (!raw) return null
@@ -58,7 +76,7 @@ export function clipSource(rawUrl: string, parentHost?: string): ClipSource | nu
   }
   const host = url.hostname.replace(/^www\./, '')
   const parts = url.pathname.split('/').filter(Boolean)
-  const parent = parentHost || (import.meta.client ? window.location.hostname : '')
+  const parent = embedParent(parentHost)
 
   const twitchEmbed = (slug: string): ClipSource => ({
     platform: 'twitch',

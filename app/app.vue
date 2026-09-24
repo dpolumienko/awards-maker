@@ -1,11 +1,16 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import GlowFilterDefs from '~/components/ui/GlowFilterDefs.vue'
+import PublishCurtain from '~/components/ui/PublishCurtain.vue'
+import { usePublishCurtain } from '~/composables/usePublishCurtain'
 
 // A page can ask for the shell to step aside - `definePageMeta({ chrome: false })`.
 // The ceremony screen is captured by OBS, and a site header in the shot is a site
 // header on stream.
 const route = useRoute()
+// The publish moment is mounted here, not on the builder, so the wipe can finish
+// over the page it produced instead of over the form that made it.
+const curtain = usePublishCurtain()
 const chrome = computed(() => route.meta.chrome !== false)
 // @nuxtjs/seo appends site.name by default; the approved title carries the brand
 // suffix "Streams Charts" instead, so the template is set explicitly here.
@@ -36,5 +41,13 @@ useHead({ bodyAttrs: { 'data-stage': () => (stage.value ? '1' : '0') } })
       <NuxtPage />
     </main>
     <SiteFooter v-if="chrome" />
+    <PublishCurtain
+      :open="!!curtain.show.value"
+      :name="curtain.show.value?.name ?? ''"
+      :url="curtain.show.value?.url ?? ''"
+      :look="curtain.show.value?.look"
+      @reveal="curtain.show.value && navigateTo(`/a/${curtain.show.value.slug}`)"
+      @done="curtain.close()"
+    />
   </div>
 </template>

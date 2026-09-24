@@ -28,7 +28,10 @@ export function nomineeImage(n: Nominee): string {
   if (n.kind !== 'media') return ''
   if (n.image) return n.image
   if (!n.url) return ''
+  // clipSource returns null for anything it cannot parse, and a nominee whose
+  // link is a typo used to throw right here and take the page with it.
   const clip = clipSource(n.url)
+  if (!clip) return ''
   if (clip.poster) return clip.poster
   // YouTube publishes a thumbnail for every video id at a fixed address
   const yt = /youtube\.com\/embed\/([\w-]+)/.exec(clip.embed ?? '')

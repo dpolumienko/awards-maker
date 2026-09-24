@@ -26,19 +26,6 @@ const emit = defineEmits<{
 
 // Image and clip nominees are a paid nominee type. They can be added freely and
 // carry a Paid mark; what to do about it is decided at publish.
-// Removing a nomination takes its nominees with it, so it asks once. Two states
-// on one button instead of a dialog: quicker, and nothing to trap focus in.
-const confirming = ref(false)
-let confirmTimer: ReturnType<typeof setTimeout> | undefined
-function onRemove() {
-  if (confirming.value) {
-    clearTimeout(confirmTimer)
-    emit('remove')
-    return
-  }
-  confirming.value = true
-  confirmTimer = setTimeout(() => (confirming.value = false), 4000)
-}
 
 // An image and a clip are the same nominee with different sources: a clip lives
 // behind a link, an image lives on the streamer's disk. One block, one name for
@@ -129,17 +116,11 @@ const shortMeta = (n: Nomination['nominees'][number]) =>
         class="h-11 w-full rounded-btn border border-hair bg-s2 px-3 text-base font-semibold text-ink placeholder:font-normal placeholder:text-ink-disabled hover:border-hair2 focus:border-gold focus:shadow-focus focus:outline-none"
         @input="emit('update:title', ($event.target as HTMLInputElement).value)"
       />
-      <button
-        type="button"
-        class="h-11 flex-none rounded-btn border px-3 text-sm transition-colors"
-        :class="confirming ? 'border-danger bg-danger/10 text-danger' : 'border-hair text-ink-muted hover:border-danger hover:text-danger'"
-        :aria-label="confirming
-          ? 'Confirm removing nomination ' + (index + 1) + ' and its nominees'
-          : 'Remove nomination ' + (index + 1)"
-        @click="onRemove"
-      >
-        {{ confirming ? 'Remove?' : 'Remove' }}
-      </button>
+      <UiConfirmButton
+        :aria-label="'Remove nomination ' + (index + 1)"
+        :confirm-aria-label="'Confirm removing nomination ' + (index + 1) + ' and its nominees'"
+        @confirm="emit('remove')"
+      />
     </div>
 
     <ul v-if="nomination.nominees.length" class="mt-4 list-none space-y-2 p-0">

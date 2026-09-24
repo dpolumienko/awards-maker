@@ -24,7 +24,10 @@ const { open, name, url, look = {} } = defineProps<{
   url: string
   look?: AwardLook
 }>()
-const emit = defineEmits<{ done: [] }>()
+// `reveal` fires as the wipe starts, `done` when there is nothing left to see.
+// Navigating on `done` is what made the screen flash: the wipe spent 0.7s
+// uncovering the page underneath, which was still the builder.
+const emit = defineEmits<{ reveal: []; done: [] }>()
 
 const root = ref<HTMLElement | null>(null)
 const accent = computed(() => look.accent || '#D9A441')
@@ -46,7 +49,11 @@ function play() {
     )
     .fromTo(q('.js-beam'), { xPercent: -140 }, { xPercent: 240, duration: 1.1, ease: 'power2.inOut' }, 0.45)
     .fromTo(q('.js-where'), { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.6, ease: 'expo.out' }, 0.75)
-    .to(root.value, { clipPath: 'inset(0 0 100% 0)', duration: 0.7, ease: 'expo.inOut' }, '+=0.55')
+    .to(
+      root.value,
+      { clipPath: 'inset(0 0 100% 0)', duration: 0.7, ease: 'expo.inOut', onStart: () => emit('reveal') },
+      '+=0.55',
+    )
 }
 
 watch(
@@ -56,6 +63,7 @@ watch(
     await nextTick()
     if (!root.value) return
     if (prefersReducedMotion()) {
+      emit('reveal')
       setTimeout(() => emit('done'), 1400)
       return
     }

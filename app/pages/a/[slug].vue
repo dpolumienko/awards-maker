@@ -101,15 +101,11 @@ function submit() {
 // carries the news, rather than in a dialog over it.
 
 const hostPanel = ref<HTMLElement | null>(null)
-const armPublish = ref(false)
+const { isArmed: publishArmed, arm: armPublish } = useArm()
 function onPublishResults() {
-  if (!armPublish.value) {
-    armPublish.value = true
-    setTimeout(() => (armPublish.value = false), 4000)
-    return
-  }
+  if (!armPublish()) return
   publishResults(slug.value)
-  armPublish.value = false
+
   nextTick(() => playCue(hostPanel.value, accent.value))
 }
 
@@ -500,7 +496,7 @@ if (award.value) {
                 >
                   <span class="grid">
                     <span aria-hidden="true" class="col-start-1 row-start-1 invisible">Publish the winners</span>
-                    <span class="col-start-1 row-start-1">{{ armPublish ? 'Publish - sure?' : 'Publish the winners' }}</span>
+                    <span class="col-start-1 row-start-1">{{ publishArmed() ? 'Publish - sure?' : 'Publish the winners' }}</span>
                   </span>
                 </UiButton>
                 <!-- announcing before the vote is closed would announce a number

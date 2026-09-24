@@ -4,7 +4,7 @@
 // ceiling, and whether it is waiting on them - which it is, every time voting
 // has closed and the winners are still unannounced. A row opens that awards'
 // dashboard; the public page is one click further, from there.
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import UiButton from '~/components/ui/UiButton.vue'
 import UiBadge from '~/components/ui/UiBadge.vue'
 import UiIcon from '~/components/ui/UiIcon.vue'
@@ -14,13 +14,6 @@ import { FREE, type Award } from '~/types/award'
 
 const { published, draft, unpublish } = useAwardDraft()
 
-// Taking a show down cannot be undone, so it asks twice - same as publishing the
-// winners does.
-const armed = ref<string | null>(null)
-function arm(slug: string) {
-  armed.value = slug
-  setTimeout(() => (armed.value = null), 4000)
-}
 const { phaseOf, votersFor } = useVoting()
 
 const badges = {
@@ -100,16 +93,12 @@ useSeoMeta({ title: 'Your awards', robots: 'noindex, follow' })
         </span>
       </NuxtLink>
       <!-- publishing used to be one-way: there was no way to take a test show down -->
-      <button
-        type="button"
-        class="absolute right-5 top-1/2 -translate-y-1/2 text-sm text-ink-muted underline underline-offset-4 transition-colors hover:text-danger"
-        @click="armed === a.slug ? unpublish(a.slug) : arm(a.slug)"
-      >
-        <span class="grid">
-          <span aria-hidden="true" class="col-start-1 row-start-1 invisible">Remove - sure?</span>
-          <span class="col-start-1 row-start-1">{{ armed === a.slug ? 'Remove - sure?' : 'Remove' }}</span>
-        </span>
-      </button>
+      <UiConfirmButton
+        variant="quiet"
+        class="absolute right-5 top-1/2 -translate-y-1/2"
+        :aria-label="'Remove ' + a.name"
+        @confirm="unpublish(a.slug)"
+      />
       </div>
     </div>
 
