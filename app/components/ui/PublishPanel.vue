@@ -5,6 +5,7 @@ import { ref } from 'vue'
 import UiButton from './UiButton.vue'
 import LimitMeter from './LimitMeter.vue'
 import { FREE, PAID } from '~/types/award'
+import { SC } from '~/data/sc'
 import UiIcon from './UiIcon.vue'
 
 const { checks, canPublish, nominationsUsed, paidFeatures, error = '' } = defineProps<{
@@ -90,7 +91,11 @@ const agreed = ref(false)
         type="checkbox"
         class="mt-0.5 h-5 w-5 flex-none rounded-btn border border-hair2 bg-s2 accent-gold focus:shadow-focus focus:outline-none"
       />
-      <span>I have read the rules and the nominees are not impersonating anyone.</span>
+      <span>
+        I have read the
+        <a :href="SC.terms" target="_blank" rel="noopener" class="text-ink underline underline-offset-4">rules</a>
+        and the nominees are not impersonating anyone.
+      </span>
     </label>
 
     <div class="mt-5">

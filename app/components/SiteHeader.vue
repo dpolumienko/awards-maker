@@ -13,6 +13,7 @@ import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import UiButton from './ui/UiButton.vue'
 import UiIcon from './ui/UiIcon.vue'
 import PlatformDot from './ui/PlatformDot.vue'
+import ScBrand from './ScBrand.vue'
 import { useMyAwards } from '~/composables/useAwards'
 import { useAccount } from '~/composables/useAccount'
 
@@ -74,9 +75,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
     ]"
   >
     <div class="shell flex min-h-[72px] flex-wrap items-center gap-x-4 gap-y-2 py-4 lg:gap-8">
-      <NuxtLink to="/" class="text-[clamp(1rem,4.5vw,1.25rem)] font-extrabold uppercase tracking-display no-underline">
-        Awards<span class="text-gold">.</span>Maker
-      </NuxtLink>
+      <ScBrand />
 
       <nav class="ml-auto hidden gap-7 lg:flex" aria-label="Main">
         <NuxtLink

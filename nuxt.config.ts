@@ -54,6 +54,10 @@ export default defineNuxtConfig({
     '/create': { ssr: false },
     '/my-awards': { ssr: false },
     '/my-awards/**': { ssr: false },
+    // Awards Maker runs under Streams Charts' legal pages (review 2026-09-24);
+    // the old URLs point there instead of 404ing. Kept in step with app/data/sc.ts.
+    '/terms': { redirect: { to: 'https://streamscharts.com/terms-of-use', statusCode: 301 } },
+    '/privacy': { redirect: { to: 'https://streamscharts.com/privacy-policy', statusCode: 301 } },
     '/api/**': { headers: { 'Cache-Control': 'no-store' } },
     '/auth/**': { headers: { 'Cache-Control': 'no-store' } },
     '/**': {

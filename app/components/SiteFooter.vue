@@ -1,8 +1,13 @@
 <script setup lang="ts">
-// The second navigation, and the only one on a page somebody opened straight from
-// a streamer's chat. One flat row of nine links read as a leftover, so the links
-// are grouped the way a visitor thinks: what they can make, what they can look
-// at, and the paperwork.
+// Two levels, the way streamscharts.com/api does it (review 2026-09-24, item 8):
+//
+//   1. This product - what you can make here and where to read about it.
+//   2. Streams Charts - the company line, the not-affiliated statement and SC's
+//      own legal pages. Awards Maker has no terms or privacy policy of its own;
+//      it is part of SC and runs under SC's.
+import ScBrand from './ScBrand.vue'
+import { SC } from '~/data/sc'
+
 const groups = [
   {
     title: 'Run a show',
@@ -13,36 +18,41 @@ const groups = [
     ],
   },
   {
-    title: 'Browse',
+    title: 'Learn',
     links: [
+      { to: '/#how', label: 'How it works' },
       { to: '/catalog', label: 'Community awards' },
-      { to: '/', label: 'How it works' },
       { to: '/plans', label: 'Plans' },
     ],
   },
   {
-    title: 'Legal',
+    title: 'Streams Charts',
     links: [
-      { to: '/privacy', label: 'Privacy' },
-      { to: '/terms', label: 'Terms' },
+      { to: SC.home, label: 'Streams Charts' },
+      { to: SC.api, label: 'API' },
+      { to: SC.contact, label: 'Contact' },
     ],
   },
+]
+
+const legal = [
+  { to: SC.terms, label: 'Terms of Use' },
+  { to: SC.privacy, label: 'Privacy Policy' },
+  { to: SC.cookies, label: 'Cookie Policy' },
 ]
 
 const year = new Date().getFullYear()
 </script>
 
 <template>
-  <footer class="mt-24 border-t border-hair py-14">
+  <footer class="mt-24 border-t border-hair pb-10 pt-14">
     <div class="shell">
+      <!-- 1. the product -->
       <div class="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(3,minmax(0,1fr))]">
         <div class="min-w-0">
-          <NuxtLink to="/" class="text-xl font-extrabold uppercase tracking-display no-underline">
-            Awards<span class="text-gold">.</span>Maker
-          </NuxtLink>
-          <p class="mt-3 max-w-[34ch] text-sm text-ink-2">
-            Your own awards show, built in ten minutes: pick the categories, nominate any channel, let
-            your chat vote.
+          <ScBrand />
+          <p class="mt-4 max-w-[34ch] text-sm text-ink-2">
+            Your own awards show: pick the categories, nominate any channel, let your viewers vote.
           </p>
         </div>
 
@@ -52,6 +62,7 @@ const year = new Date().getFullYear()
             <li v-for="l in g.links" :key="l.label">
               <NuxtLink
                 :to="l.to"
+                :external="l.to.startsWith('http')"
                 class="text-sm text-ink-2 no-underline transition-colors hover:text-ink"
               >
                 {{ l.label }}
@@ -61,13 +72,32 @@ const year = new Date().getFullYear()
         </nav>
       </div>
 
-      <div class="mt-12 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-hair pt-6 text-sm text-ink-muted">
-        <p class="m-0">© {{ year }} STREAMS CHARTS PO</p>
-        <a
-          href="https://streamscharts.com"
-          class="text-ink-2 underline underline-offset-4 transition-colors hover:text-ink"
-        >Streams Charts</a>
-        <p class="m-0 sm:ml-auto">Developed in Ukraine</p>
+      <!-- 2. the company, as on streamscharts.com -->
+      <div class="mt-12 border-t border-hair pt-6">
+        <p class="m-0 max-w-[80ch] text-xs leading-relaxed text-ink-muted">
+          Streams Charts is not affiliated with, endorsed by, or sponsored by any platform it covers, or by the
+          streamers nominated on this site. Twitch, Kick and YouTube are trademarks of their respective owners.
+          Every awards is created and run by its host; Streams Charts hosts the page and counts the votes.
+        </p>
+
+        <div class="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-ink-muted">
+          <p class="m-0">© {{ year }}, STREAMS CHARTS PO. All rights reserved.</p>
+          <nav aria-label="Legal" class="flex flex-wrap gap-x-5 gap-y-2 sm:ml-auto">
+            <a
+              v-for="l in legal"
+              :key="l.label"
+              :href="l.to"
+              class="text-ink-2 no-underline transition-colors hover:text-ink"
+            >{{ l.label }}</a>
+          </nav>
+          <p class="m-0 flex items-center gap-2 font-semibold text-ink-2">
+            <svg aria-hidden="true" width="20" height="14" viewBox="0 0 24 16" class="rounded-[2px]">
+              <rect width="24" height="8" fill="#005BBB" />
+              <rect width="24" height="8" y="8" fill="#FFD500" />
+            </svg>
+            Developed in Ukraine
+          </p>
+        </div>
       </div>
     </div>
   </footer>
