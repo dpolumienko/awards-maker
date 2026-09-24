@@ -1,5 +1,6 @@
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
@@ -20,7 +21,8 @@ export default defineNuxtConfig({
         // running with `ssr: false` this is the only one a crawler ever sees,
         // because nothing the app adds to the head is in the served HTML.
         { property: 'og:image', content: 'https://awards.streamscharts.com/og/home.png' },
-        { name: 'twitter:image', content: 'https://awards.streamscharts.com/og/home.png' },
+        // No twitter:image: X falls back to og:image, and a global one here
+        // outranked every page's own card - /plans unfurled on X as the landing.
       ],
       link: [
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
@@ -76,6 +78,13 @@ export default defineNuxtConfig({
     sources: ['/api/__sitemap__/urls'],
   },
 
+  // nuxt-og-image comes with @nuxtjs/seo and answers every image URL with 400
+  // on this stack (scripts/gen-og.py). Left on, it still rewrites every
+  // og:image that is not https - dropping the ?v= the awards page puts on its
+  // card - so it is switched off, and cards come from public/og/ and
+  // server/routes/og/a/ instead.
+  ogImage: { enabled: false },
+
   // Domain is still open (subdomain decision) - placeholder until it is fixed.
   site: {
     url: 'https://awards.streamscharts.com',
@@ -116,6 +125,10 @@ export default defineNuxtConfig({
 
   nitro: {
     preset: process.env.NITRO_PRESET || 'node-server',
+    // satori shapes text with harfbuzzjs, which reads hb.wasm off disk next to
+    // itself at runtime. The tracer follows imports, not readFileSync, so
+    // without this the built server answered every /og/a/ card with a 500.
+    externals: { traceInclude: [fileURLToPath(new URL('./node_modules/harfbuzzjs/hb.wasm', import.meta.url))] },
     compressPublicAssets: true,
     // The prerender cache is written into node_modules/.cache, which sits inside a
     // OneDrive folder here: OneDrive grabs the file between write and rename and
