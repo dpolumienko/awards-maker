@@ -14,7 +14,7 @@ import UiButton from './ui/UiButton.vue'
 import UiIcon from './ui/UiIcon.vue'
 import PlatformDot from './ui/PlatformDot.vue'
 import ScBrand from './ScBrand.vue'
-import { useMyAwards } from '~/composables/useAwards'
+import { useCatalogOpen, useMyAwards } from '~/composables/useAwards'
 import { useAccount } from '~/composables/useAccount'
 
 const route = useRoute()
@@ -29,10 +29,12 @@ onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
 const onLanding = computed(() => route.path === '/')
 // Same four labels everywhere. Renaming the first one per page made the bar look
 // like it was rearranging itself; only where it points changes.
+// Catalog only once there are enough shows to browse (CATALOG.minAwards).
+const catalogOpen = useCatalogOpen()
 const links = computed(() => [
   { to: onLanding.value ? '#how' : '/#how', label: 'How it works' },
   { to: '/ideas', label: 'Ideas' },
-  { to: '/catalog', label: 'Catalog' },
+  ...(catalogOpen.value ? [{ to: '/catalog', label: 'Catalog' }] : []),
   { to: '/plans', label: 'Plans' },
 ])
 
@@ -144,6 +146,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
               class="block rounded-btn px-3 py-2 text-sm text-ink-2 no-underline transition-colors hover:bg-s2 hover:text-ink"
             >Create your awards</NuxtLink>
             <NuxtLink
+              v-if="catalogOpen"
               to="/catalog"
               class="block rounded-btn px-3 py-2 text-sm text-ink-2 no-underline transition-colors hover:bg-s2 hover:text-ink"
             >Browse the catalog</NuxtLink>

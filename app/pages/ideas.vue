@@ -9,6 +9,9 @@ import { ref } from 'vue'
 import UiButton from '~/components/ui/UiButton.vue'
 import InteractiveAccordion from '~/components/ui/InteractiveAccordion.vue'
 import { useReveal } from '~/composables/useReveal'
+import { useCatalogOpen } from '~/composables/useAwards'
+
+const catalogOpen = useCatalogOpen()
 import { IDEA_GROUPS, IDEA_TOTAL, ideaEmoji } from '~/data/ideas'
 
 const root = ref<HTMLElement | null>(null)
@@ -75,7 +78,7 @@ useSchemaOrg([
 
     <div class="mt-6 flex flex-wrap gap-3">
       <UiButton to="/create">Start your awards</UiButton>
-      <UiButton to="/catalog" variant="ghost">See shows running now</UiButton>
+      <UiButton v-if="catalogOpen" to="/catalog" variant="ghost">See shows running now</UiButton>
     </div>
 
     <!-- jump list: four groups is more than fits on one screen -->

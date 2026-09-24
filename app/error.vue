@@ -25,17 +25,14 @@ useSeoMeta({
       <h1 class="heading mt-3">{{ notFound ? 'That page is not here' : 'Something went wrong' }}</h1>
       <p class="mx-auto mt-4 max-w-copy text-lg text-ink-2">
         <template v-if="notFound">
-          The address may be mistyped, or the awards it pointed at was never published. Every published
-          show is in the catalog.
+          The address may be mistyped, or the awards it pointed at was never published or has been taken down.
         </template>
         <template v-else>
-          The page failed to load. Trying again usually works; if it does not, the catalog and the
-          builder are both still up.
+          The page failed to load. Trying again usually works.
         </template>
       </p>
       <div class="mt-8 flex flex-wrap justify-center gap-3">
-        <UiButton to="/catalog">Browse the catalog</UiButton>
-        <UiButton to="/create" variant="ghost">Create your awards</UiButton>
+        <UiButton to="/create">Create your awards</UiButton>
         <UiButton to="/" variant="ghost">Back to the start</UiButton>
       </div>
     </main>

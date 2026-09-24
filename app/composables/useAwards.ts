@@ -38,6 +38,27 @@ export interface AwardPage {
 }
 
 /**
+ * Whether the catalog is open (CATALOG.minAwards published shows). Every link
+ * to /catalog hangs off this. Shares one request across the page by key, and
+ * answers "closed" if the check itself fails - a missing link is harmless, a
+ * link to a page that redirects home is not.
+ */
+export function useCatalogOpen() {
+  const { data } = useFetch<{ open: boolean; count: number }>('/api/catalog-status', {
+    key: 'catalog-status',
+    default: () => ({ open: false, count: 0 }),
+    $fetch: (async (...args: Parameters<typeof $fetch>) => {
+      try {
+        return await $fetch(...args)
+      } catch {
+        return { open: false, count: 0 }
+      }
+    }) as typeof $fetch,
+  })
+  return computed(() => Boolean(data.value?.open))
+}
+
+/**
  * The public catalog. Rendered on the server - it is the page that ranks.
  *
  * `tolerant` is for the landing's showcase strip, which is one section of a page
