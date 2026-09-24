@@ -11,8 +11,8 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import UiButton from '~/components/ui/UiButton.vue'
 import UiIcon from '~/components/ui/UiIcon.vue'
-import { useAwardDraft } from '~/composables/useAwardDraft'
-import { useVoting } from '~/composables/useVoting'
+import { useAwardPage } from '~/composables/useAwards'
+import { emptyTally, phaseOf, resultsOf, useVoting, votesInOf } from '~/composables/useVoting'
 import { prefersReducedMotion, useGsap } from '~/composables/useReveal'
 import { nomineeImage, nomineeInitials, nomineeName } from '~/utils/nominee'
 import CeremonySetup from '~/components/ui/CeremonySetup.vue'
@@ -22,10 +22,13 @@ import { accentText } from '~/utils/accent'
 
 const route = useRoute()
 const slug = computed(() => String(route.params.slug))
-const { published } = useAwardDraft()
-const { phaseOf, resultsOf, votesInOf, votersFor, publishResults } = useVoting()
+const { publishResults } = useVoting()
 
-const award = computed(() => published.value.find((a) => a.slug === slug.value) ?? null)
+// Everything the show needs is fetched once, up front: a slideshow that awaited
+// a request per slide would stall on air.
+const { data, refresh } = await useAwardPage(() => slug.value)
+const award = computed(() => data.value?.award ?? null)
+const tally = computed(() => data.value?.tally ?? emptyTally())
 const accent = computed(() => award.value?.look?.accent || '#D9A441')
 const ink = computed(() => accentText(accent.value))
 // The ceremony has its own stage, face and reveal - set once, kept per awards.
@@ -33,8 +36,8 @@ const { settings, update, configured } = useCeremony(() => slug.value, () => awa
 const setupOpen = ref(false)
 /** Starting the show is a decision too: it saves the settings, so the setup does
  *  not greet the host again every time they open the ceremony. */
-function onStart() {
-  update({})
+async function onStart() {
+  await update({})
   setupOpen.value = false
   step.value = 0
 }
@@ -54,13 +57,13 @@ const categories = computed(() =>
   (award.value?.nominations ?? [])
     .filter((n) => n.nominees.length)
     .map((nomination) => {
-      const rows = resultsOf(slug.value, nomination)
+      const rows = resultsOf(tally.value, nomination)
       const lead = rows[0]?.votes ?? 0
       const tied = rows.filter((r) => r.votes === lead && r.votes > 0)
       return {
         nomination,
         rows,
-        votes: votesInOf(slug.value, nomination),
+        votes: votesInOf(tally.value, nomination),
         winners: lead > 0 ? tied : [],
         tied: tied.length > 1,
       }
@@ -114,8 +117,8 @@ const atEnd = computed(() => step.value >= slides.value.length - 1)
 const next = () => (step.value = Math.min(step.value + 1, slides.value.length - 1))
 const back = () => (step.value = Math.max(step.value - 1, 0))
 
-const phase = computed(() => (award.value ? phaseOf(award.value) : 'open'))
-const voters = computed(() => votersFor(slug.value))
+const phase = computed(() => (award.value ? phaseOf(award.value, data.value?.voters ?? 0) : 'open'))
+const voters = computed(() => data.value?.voters ?? 0)
 const stage = ref<HTMLElement | null>(null)
 
 // Fullscreen is the whole point on a second monitor; OBS captures the browser
@@ -217,15 +220,11 @@ async function copyObs() {
   }
 }
 
-const armPublish = ref(false)
-function onPublish() {
-  if (!armPublish.value) {
-    armPublish.value = true
-    setTimeout(() => (armPublish.value = false), 4000)
-    return
-  }
-  publishResults(slug.value)
-  armPublish.value = false
+const { isArmed: publishArmed, arm: armPublish } = useArm()
+async function onPublish() {
+  if (!armPublish()) return
+  await publishResults(slug.value)
+  await refresh()
 }
 
 /** What the caption under the stage says out of shot, for the host only. */
@@ -466,7 +465,7 @@ definePageMeta({ chrome: false })
           >
             <span class="grid">
               <span aria-hidden="true" class="col-start-1 row-start-1 invisible">Publish the winners</span>
-              <span class="col-start-1 row-start-1">{{ armPublish ? 'Publish - sure?' : 'Publish the winners' }}</span>
+              <span class="col-start-1 row-start-1">{{ publishArmed() ? 'Publish - sure?' : 'Publish the winners' }}</span>
             </span>
           </UiButton>
           <UiButton :to="`/my-awards/${slug}`" variant="ghost" size="sm" :class="phase === 'counting' || phase === 'capped' ? '' : 'ml-auto'">

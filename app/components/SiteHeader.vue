@@ -13,7 +13,7 @@ import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import UiButton from './ui/UiButton.vue'
 import UiIcon from './ui/UiIcon.vue'
 import PlatformDot from './ui/PlatformDot.vue'
-import { useAwardDraft } from '~/composables/useAwardDraft'
+import { useMyAwards } from '~/composables/useAwards'
 import { useAccount } from '~/composables/useAccount'
 
 const route = useRoute()
@@ -38,9 +38,10 @@ const links = computed(() => [
 // What the account chip holds: everything that only exists once you have a show
 // of your own. The count is real, so the chip says whether there is anything in
 // there before it is opened.
-const { published } = useAwardDraft()
 const { signedIn, channel, signIn, signOut } = useAccount()
-const mine = computed(() => published.value.length)
+// Only fetched for somebody who has an account to count shows in.
+const { data: myAwards } = useMyAwards()
+const mine = computed(() => (myAwards.value?.awards ?? []).filter((a) => a.status === 'published').length)
 const menuOpen = ref(false)
 const accountBtn = ref<HTMLButtonElement | null>(null)
 const host = computed(() => channel.value.name)

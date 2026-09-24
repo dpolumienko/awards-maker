@@ -7,17 +7,20 @@ import LimitMeter from './LimitMeter.vue'
 import { FREE } from '~/types/award'
 import UiIcon from './UiIcon.vue'
 
-const { checks, canPublish, nominationsUsed, paidFeatures } = defineProps<{
+const { checks, canPublish, nominationsUsed, paidFeatures, error = '' } = defineProps<{
   checks: { id: string; label: string; ok: boolean }[]
   canPublish: boolean
   nominationsUsed: number
   paidFeatures: { id: string; label: string; detail: string }[]
+  /** What the server said when it refused - the paywall and the scope check. */
+  error?: string
 }>()
 const emit = defineEmits<{ publish: []; upgrade: []; downgrade: [] }>()
 
-// Pre-release: with the tier unlocked, paid features publish as they are instead
-// of forcing the choice between stripping them and a checkout that does not exist.
-const { pro, setPro } = usePro()
+// `pro` is an account fact now - comped for an admin, earned by a paid order -
+// not a switch in this browser. The panel still only explains the limit; the
+// refusal happens on the server at publish.
+const { pro } = usePro()
 
 const agreed = ref(false)
 </script>
@@ -106,20 +109,20 @@ const agreed = ref(false)
       Publishing free drops the paid features listed above. Nothing else changes.
     </p>
 
-    <!-- pre-release only: goes away with the checkout -->
     <p class="mt-6 border-t border-hair pt-4 text-sm text-ink-muted">
       <template v-if="pro">
-        Paid tier unlocked for testing.
-        <button type="button" class="underline underline-offset-4 hover:text-ink" @click="setPro(false)">
-          Lock it again
-        </button>
+        Your account has the paid tier.
+        <NuxtLink to="/my-awards/billing" class="underline underline-offset-4 hover:text-ink">
+          See your payments
+        </NuxtLink>
       </template>
       <template v-else>
-        Testing before release?
-        <button type="button" class="underline underline-offset-4 hover:text-ink" @click="setPro(true)">
-          Unlock the paid tier in this browser
-        </button>
+        Need more than the free plan?
+        <NuxtLink to="/plans" class="underline underline-offset-4 hover:text-ink">
+          What the paid tier covers
+        </NuxtLink>
       </template>
     </p>
+    <p v-if="error" class="mt-3 text-sm text-danger" role="alert">{{ error }}</p>
   </div>
 </template>

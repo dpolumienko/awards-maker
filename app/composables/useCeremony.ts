@@ -1,75 +1,62 @@
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { Award } from '~/types/award'
 
-/**
- * How one host wants their ceremony to look and move. Separate from the awards'
- * Look on purpose: the page is for voters, the ceremony is for a stream, and a
- * stage that reads well in a browser tab is not always the one that reads on a
- * 1080p capture behind a webcam.
- *
- * Defaults come from the awards itself, so a host who never opens the setup gets
- * their own colours anyway.
- */
-export interface CeremonySettings {
-  /**
-   * Background treatment: a theme id from data/themes, or `cover` for the image
-   * the host uploaded. A cover used to win over any choice, so picking a stage in
-   * the setup did nothing on a show that had one.
-   */
-  stage: string
-  /** Display face for the names. */
-  font: string
-  /** How a winner arrives. */
-  reveal: RevealStyle
-}
+// How a ceremony is dressed. Stored against the show now instead of against the
+// browser, so a host can set it up on a laptop and run it from the studio machine.
+
 export type RevealStyle = 'cut' | 'spotlight' | 'flip'
 
-export const REVEALS: { id: RevealStyle; name: string; blurb: string }[] = [
-  { id: 'cut', name: 'Cut', blurb: 'The name climbs into place letter by letter.' },
-  { id: 'spotlight', name: 'Spotlight', blurb: 'The room dims, one light finds the winner.' },
-  { id: 'flip', name: 'Flip', blurb: 'The board turns over, the way a scoreboard does.' },
-]
-
-export const CEREMONY_FONTS = ['Anton', 'Archivo', 'Playfair Display', 'Space Grotesk']
-
-/** The stage id that means "keep the uploaded cover". */
-export const COVER = 'cover'
-
-const KEY = 'awards-maker:ceremony'
-const all = ref<Record<string, CeremonySettings>>({})
-let hydrated = false
-
-function save() {
-  try {
-    localStorage.setItem(KEY, JSON.stringify(all.value))
-  } catch {
-    /* private window - the settings last for this session */
-  }
+export interface CeremonySettings {
+  stage: string
+  font: string
+  reveal: RevealStyle
 }
 
+export const REVEALS: { id: RevealStyle; label: string; note: string }[] = [
+  { id: 'cut', label: 'Cut', note: 'The name lands in one frame. Reads best on a busy stream.' },
+  { id: 'spotlight', label: 'Spotlight', note: 'A light finds the winner, then the name.' },
+  { id: 'flip', label: 'Flip', note: 'The plate turns over, like a board at an airport.' },
+]
+
+export const CEREMONY_FONTS = ['Archivo', 'Anton', 'Playfair Display', 'Space Grotesk']
+
+/** The stage that is the host's own cover rather than one of ours. */
+export const COVER = 'cover'
+
 export function useCeremony(slug: () => string, award: () => Award | null) {
-  if (import.meta.client && !hydrated) {
-    hydrated = true
+  const stored = ref<CeremonySettings | null>(null)
+  const configured = computed(() => stored.value !== null)
+
+  /** Falls back to the show's own Look, so an unconfigured ceremony still fits. */
+  const settings = computed<CeremonySettings>(() => ({
+    stage: stored.value?.stage ?? (award()?.look?.coverUrl ? COVER : (award()?.look?.theme ?? 'stage')),
+    font: stored.value?.font ?? award()?.look?.font ?? 'Anton',
+    reveal: stored.value?.reveal ?? 'cut',
+  }))
+
+  async function load() {
+    if (!slug()) return
     try {
-      all.value = JSON.parse(localStorage.getItem(KEY) || '{}')
+      const res = await $fetch<{ ceremony: CeremonySettings | null }>(
+        `/api/awards/${encodeURIComponent(slug())}/ceremony`,
+      )
+      stored.value = res.ceremony
     } catch {
-      all.value = {}
+      stored.value = null
     }
   }
 
-  const settings = computed<CeremonySettings>(() => ({
-    stage: all.value[slug()]?.stage ?? (award()?.look?.coverUrl ? COVER : award()?.look?.theme ?? 'stage'),
-    font: all.value[slug()]?.font ?? award()?.look?.font ?? 'Anton',
-    reveal: all.value[slug()]?.reveal ?? 'cut',
-  }))
-
-  /** Has this awards been through the setup, or are these still the defaults? */
-  const configured = computed(() => !!all.value[slug()])
-
-  function update(patch: Partial<CeremonySettings>) {
-    all.value = { ...all.value, [slug()]: { ...settings.value, ...patch } }
-    save()
+  async function update(patch: Partial<CeremonySettings>) {
+    const next: CeremonySettings = { ...settings.value, ...patch }
+    stored.value = next
+    try {
+      await $fetch(`/api/awards/${encodeURIComponent(slug())}/ceremony`, { method: 'PUT', body: next })
+    } catch {
+      // the screen keeps the setting for this run either way; the host is mid-show
+    }
   }
 
-  return { settings, update, configured }
+  watch(slug, load, { immediate: import.meta.client })
+
+  return { settings, update, configured, load }
 }

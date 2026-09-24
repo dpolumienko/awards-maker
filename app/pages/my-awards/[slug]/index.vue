@@ -16,8 +16,8 @@ import PlatformDot from '~/components/ui/PlatformDot.vue'
 import PaywallNote from '~/components/ui/PaywallNote.vue'
 import TrendArea from '~/components/ui/TrendArea.vue'
 import RankBars from '~/components/ui/RankBars.vue'
-import { useAwardDraft } from '~/composables/useAwardDraft'
-import { useVoting } from '~/composables/useVoting'
+import { useAwardPage } from '~/composables/useAwards'
+import { dailyOf, emptyTally, phaseOf, resultsOf, useVoting, votesInOf } from '~/composables/useVoting'
 import { useReveal } from '~/composables/useReveal'
 import { playCue } from '~/composables/useCue'
 import { accentText } from '~/utils/accent'
@@ -26,19 +26,22 @@ import { FREE, type Nomination } from '~/types/award'
 
 const route = useRoute()
 const slug = computed(() => String(route.params.slug))
-const { published } = useAwardDraft()
-const { tallyFor, votersFor, phaseOf, resultsOf, votesInOf, dailyOf, closeVoting, publishResults } = useVoting()
+const { closeVoting, publishResults } = useVoting()
+const { data, refresh } = await useAwardPage(() => slug.value)
 
 const root = ref<HTMLElement | null>(null)
 useReveal(root, { stagger: 0.05 })
 
-const award = computed(() => published.value.find((a) => a.slug === slug.value) ?? null)
-const phase = computed(() => (award.value ? phaseOf(award.value) : 'open'))
+const award = computed(() => data.value?.award ?? null)
+const tally = computed(() => data.value?.tally ?? emptyTally())
+const phase = computed(() => (award.value ? phaseOf(award.value, data.value?.voters ?? 0) : 'open'))
 const accent = computed(() => award.value?.look?.accent || '#D9A441')
 const ink = computed(() => accentText(accent.value))
 
-const voters = computed(() => votersFor(slug.value))
-const trend = computed(() => (award.value ? dailyOf(slug.value, award.value.opensAt, award.value.closesAt) : []))
+const voters = computed(() => data.value?.voters ?? 0)
+const trend = computed(() =>
+  award.value ? dailyOf(tally.value, award.value.opensAt, award.value.closesAt) : [],
+)
 
 
 /**
@@ -48,8 +51,8 @@ const trend = computed(() => (award.value ? dailyOf(slug.value, award.value.open
  */
 const races = computed(() =>
   (award.value?.nominations ?? []).map((nomination: Nomination) => {
-    const rows = resultsOf(slug.value, nomination)
-    const votes = votesInOf(slug.value, nomination)
+    const rows = resultsOf(tally.value, nomination)
+    const votes = votesInOf(tally.value, nomination)
     const lead = rows[0]?.votes ?? 0
     const runnerUp = rows[1]?.votes ?? 0
     const tied = lead > 0 && rows.filter((r) => r.votes === lead).length > 1
@@ -108,15 +111,11 @@ const badges = {
 // Both host actions are one-way, so both ask twice. What changed afterwards is
 // marked on the panel itself, not announced over the page.
 const movePanel = ref<HTMLElement | null>(null)
-const armed = ref<'close' | 'publish' | null>(null)
-function arm(action: 'close' | 'publish', run: () => void) {
-  if (armed.value !== action) {
-    armed.value = action
-    setTimeout(() => (armed.value = null), 4000)
-    return
-  }
-  run()
-  armed.value = null
+const { isArmed, arm: armAction } = useArm()
+async function arm(action: 'close' | 'publish', run: () => Promise<unknown>) {
+  if (!armAction(action)) return
+  await run()
+  await refresh()
   nextTick(() => playCue(movePanel.value, accent.value))
 }
 
@@ -289,7 +288,7 @@ useSeoMeta({
             >
               <span class="grid">
                 <span aria-hidden="true" class="col-start-1 row-start-1 invisible">Close voting - sure?</span>
-                <span class="col-start-1 row-start-1">{{ armed === 'close' ? 'Close voting - sure?' : 'Close voting now' }}</span>
+                <span class="col-start-1 row-start-1">{{ isArmed('close') ? 'Close voting - sure?' : 'Close voting now' }}</span>
               </span>
             </UiButton>
             <UiButton
@@ -299,7 +298,7 @@ useSeoMeta({
             >
               <span class="grid">
                 <span aria-hidden="true" class="col-start-1 row-start-1 invisible">Publish the winners</span>
-                <span class="col-start-1 row-start-1">{{ armed === 'publish' ? 'Publish - sure?' : 'Publish the winners' }}</span>
+                <span class="col-start-1 row-start-1">{{ isArmed('publish') ? 'Publish - sure?' : 'Publish the winners' }}</span>
               </span>
             </UiButton>
             <UiButton :to="`/my-awards/${award.slug}/reveal`" variant="ghost" size="sm">Run the ceremony</UiButton>

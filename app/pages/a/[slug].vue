@@ -3,9 +3,9 @@
 // builder set up is here for real - theme, accent, logo, partners - plus the one
 // job this page has that the preview does not: taking a vote.
 //
-// No backend yet. The ballot and the tally live in localStorage (see
-// useVoting), so the whole flow - open, vote, locked, closed, winners - can be
-// walked end to end. `?state=` forces a phase for demos and screenshots.
+// Server-rendered from /api/awards/<slug>: this is the page the product is
+// betting on for search, and until the backend landed a crawler got an empty
+// shell. `?state=` still forces a phase for demos and screenshots.
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import UiButton from '~/components/ui/UiButton.vue'
 import UiBadge from '~/components/ui/UiBadge.vue'
@@ -18,33 +18,33 @@ import ShareCards from '~/components/ui/ShareCards.vue'
 import PartnerChip from '~/components/ui/PartnerChip.vue'
 import CountdownRow from '~/components/ui/CountdownRow.vue'
 import InteractiveAccordion from '~/components/ui/InteractiveAccordion.vue'
-import { useAwardDraft } from '~/composables/useAwardDraft'
-import { useVoting } from '~/composables/useVoting'
+import { useAwardPage } from '~/composables/useAwards'
+import { emptyTally, phaseOf, resultsOf, useVoting, votesInOf } from '~/composables/useVoting'
 import { useReveal } from '~/composables/useReveal'
 import { playCue } from '~/composables/useCue'
 import { themeCss } from '~/data/themes'
 import { accentText } from '~/utils/accent'
-import { decodeAward, encodeAward } from '~/utils/awardLink'
 import { nomineeName } from '~/utils/nominee'
 import { FREE, PUBLISH } from '~/types/award'
 
 const route = useRoute()
 const slug = computed(() => String(route.params.slug))
-const { published } = useAwardDraft()
-const { ballotFor, votersFor, castBallot, publishResults, phaseOf, resultsOf, votesInOf } = useVoting()
+const { castBallot, publishResults } = useVoting()
+const { signedIn, signIn } = useAccount()
 
-/**
- * The show, from this browser's storage - or, when it was published somewhere else,
- * from the link itself (`?s=`). Without a backend that is the only way a shared
- * address opens anything at all; see utils/awardLink.ts.
- */
-const fromLink = computed(() => {
-  const payload = route.query.s
-  return typeof payload === 'string' ? decodeAward(payload) : null
-})
-const award = computed(() => published.value.find((a) => a.slug === slug.value) ?? fromLink.value ?? undefined)
-/** True when the page is reading the link, not storage: votes here stay local. */
-const guestCopy = computed(() => !!fromLink.value && !published.value.some((a) => a.slug === slug.value))
+const { data, refresh, error } = await useAwardPage(() => slug.value)
+// A show that does not exist is a 404, not a page saying nothing. Anything else
+// going wrong is ours, and says so with the right status.
+if (error.value) {
+  const status = error.value.statusCode === 404 ? 404 : 503
+  throw createError({
+    statusCode: status,
+    statusMessage: status === 404 ? 'No such awards' : 'Briefly unavailable',
+    fatal: true,
+  })
+}
+const award = computed(() => data.value?.award)
+const tally = computed(() => data.value?.tally ?? emptyTally())
 const root = ref<HTMLElement | null>(null)
 useReveal(root, { stagger: 0.06 })
 
@@ -55,7 +55,11 @@ let tick: ReturnType<typeof setInterval> | undefined
 onMounted(() => (tick = setInterval(() => (now.value = Date.now()), 60_000)))
 onBeforeUnmount(() => clearInterval(tick))
 
-const phase = computed(() => (award.value ? phaseOf(award.value, now.value, route.query.state as string) : 'open'))
+const phase = computed(() =>
+  award.value
+    ? phaseOf(award.value, data.value?.voters ?? 0, now.value, route.query.state as string)
+    : 'open',
+)
 const accent = computed(() => award.value?.look?.accent || '#D9A441')
 // Fills keep the colour the streamer picked; type takes the readable version.
 const ink = computed(() => accentText(accent.value))
@@ -64,14 +68,14 @@ const headlineFont = computed(() =>
 )
 
 // Voting, and the one submit each voter gets.
-const signedIn = ref(false)
 const picks = ref<Record<string, string>>({})
-const ballot = computed(() => ballotFor(slug.value))
+const ballot = computed(() => data.value?.ballot ?? null)
 const voted = computed(() => !!ballot.value)
 const shown = computed(() => ballot.value?.picks ?? picks.value)
 const pickedCount = computed(() => Object.keys(shown.value).length)
-const voters = computed(() => votersFor(slug.value))
+const voters = computed(() => data.value?.voters ?? 0)
 const done = ref<HTMLElement | null>(null)
+const voteError = ref('')
 
 const mode = computed<'vote' | 'locked' | 'results'>(() => {
   if (phase.value === 'revealed') return 'results'
@@ -80,18 +84,29 @@ const mode = computed<'vote' | 'locked' | 'results'>(() => {
 })
 
 /**
- * Real flow: this is where Twitch OAuth runs, with the voter scope only - email
- * and nothing else - and the ballot is submitted on the way back. Mocked here
- * as one step so the page can be walked without an auth server.
+ * Twitch OAuth with the voter scope - an email address and nothing else. The
+ * picks are held here while the round trip happens, and the cookie the sign-in
+ * sets brings the voter straight back to this ballot.
  */
-function submit() {
+async function submit() {
   if (!pickedCount.value) return
-  signedIn.value = true
-  if (castBallot(slug.value, { ...picks.value })) {
+  voteError.value = ''
+  if (!signedIn.value) {
+    signIn()
+    return
+  }
+  try {
+    await castBallot(slug.value, { ...picks.value })
+    await refresh()
     nextTick(() => {
       done.value?.focus()
       playCue(done.value, accent.value)
     })
+  } catch (error) {
+    // 409 is "already voted" or "voting closed" - both are things to say out
+    // loud rather than swallow, because the ballot on screen looks fine
+    voteError.value = (error as { statusMessage?: string }).statusMessage || 'Could not save your vote'
+    await refresh()
   }
 }
 
@@ -102,26 +117,27 @@ function submit() {
 
 const hostPanel = ref<HTMLElement | null>(null)
 const { isArmed: publishArmed, arm: armPublish } = useArm()
-function onPublishResults() {
+async function onPublishResults() {
   if (!armPublish()) return
-  publishResults(slug.value)
-
+  await publishResults(slug.value)
+  await refresh()
   nextTick(() => playCue(hostPanel.value, accent.value))
 }
 
-// Report goes to the moderation queue in the admin - which does not exist yet,
-// so it is queued locally like the votes are, and says so.
+// A report does not need an account: somebody who has just been impersonated
+// should not have to sign in to say so. The endpoint checks the origin instead.
 const reportOpen = ref(false)
 const reported = ref(false)
 const reportText = ref('')
-function sendReport() {
+async function sendReport() {
   try {
-    const key = 'awards-maker:reports'
-    const all = JSON.parse(localStorage.getItem(key) || '[]')
-    all.push({ slug: slug.value, reason: reportText.value, at: new Date().toISOString() })
-    localStorage.setItem(key, JSON.stringify(all))
+    await $fetch('/api/reports', {
+      method: 'POST',
+      body: { slug: slug.value, reason: reportText.value },
+    })
   } catch {
-    /* nothing to do without storage */
+    // saying "sent" either way: a failed report is not the reporter's problem to
+    // solve, and the alternative is an error dialog over an accusation
   }
   reported.value = true
   reportOpen.value = false
@@ -132,13 +148,13 @@ const winnerNames = computed<Record<string, string>>(() => {
   if (!award.value || phase.value !== 'revealed') return {}
   const out: Record<string, string> = {}
   for (const nomination of award.value.nominations) {
-    const top = resultsOf(award.value.slug, nomination).find((r) => r.top)
+    const top = resultsOf(tally.value, nomination).find((r) => r.top)
     if (top) out[nomination.id] = nomineeName(top.nominee)
   }
   return out
 })
 
-const isHost = computed(() => !!award.value && published.value.some((a) => a.slug === award.value!.slug))
+const isHost = computed(() => Boolean(data.value?.isHost))
 
 const fmtDate = (d?: string) =>
   d ? new Date(`${d}T00:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
@@ -185,12 +201,12 @@ const partners = computed(() => (award.value?.partners ?? []).filter((p) => p.na
 const nomineeTotal = computed(() =>
   (award.value?.nominations ?? []).reduce((sum, n) => sum + n.nominees.length, 0),
 )
-// The link a host hands out carries the show with it, so it opens for somebody
-// who has never been here. Long, and honest about why: there is no server yet.
-const shareUrl = computed(() => {
-  const base = import.meta.client ? `${location.origin}${location.pathname}` : `/a/${slug.value}`
-  return award.value ? `${base}?s=${encodeAward(award.value)}` : base
-})
+// Just the address now. It used to carry the whole show base64'd into a query
+// string, because without a server that was the only way a shared link opened
+// anything at all - see the deleted utils/awardLink.ts.
+const shareUrl = computed(() =>
+  import.meta.client ? `${location.origin}/a/${slug.value}` : `/a/${slug.value}`,
+)
 
 // SEO. The page is the reason the catalog exists, so it carries its own title,
 // description, FAQ and Event markup. The indexing thresholds are the publishing
@@ -417,8 +433,8 @@ if (award.value) {
                 :accent="accent"
                 :mode="mode"
                 :picked="shown[n.id] ?? null"
-                :results="mode === 'results' ? resultsOf(award.slug, n) : []"
-                :votes-in="votesInOf(award.slug, n)"
+                :results="mode === 'results' ? resultsOf(tally, n) : []"
+                :votes-in="votesInOf(tally, n)"
                 @pick="picks[n.id] = $event"
               />
             </div>
@@ -449,6 +465,9 @@ if (award.value) {
                   Submit {{ pickedCount }} {{ pickedCount === 1 ? 'vote' : 'votes' }}
                 </UiButton>
               </div>
+              <!-- already voted, voting closed, ceiling reached: all things the
+                   ballot on screen still looks fine after, so they get said -->
+              <p v-if="voteError" class="mt-3 text-sm text-danger" role="alert">{{ voteError }}</p>
             </div>
 
             <!-- the confirmation the submit scrolls into: focusable, so a screen
@@ -471,14 +490,6 @@ if (award.value) {
 
           <!-- SIDE -->
           <aside class="space-y-6 lg:sticky lg:top-24">
-            <div v-if="guestCopy" class="rounded-card border border-hair bg-s1 p-5">
-              <p class="label">Opened from a link</p>
-              <p class="mt-2 text-sm text-ink-2">
-                This show was published in someone else's browser and travelled here inside the address. You can
-                read it and vote; your ballot is counted on this device until the service has a backend.
-              </p>
-            </div>
-
             <div v-if="isHost" ref="hostPanel" class="relative rounded-card border border-gold-24 bg-gold/[0.06] p-5">
               <p class="micro text-gold-text">You host this awards</p>
               <LimitMeter

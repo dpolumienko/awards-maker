@@ -1,51 +1,56 @@
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 /**
- * Pre-release switch that unlocks the paid tier for testing.
+ * Whether this account may publish a paid show.
  *
- * There is no checkout yet, and the publish panel only offers "publish the free
- * version" - which strips images, clips and the Look. That makes the paid half
- * of the product impossible to walk through end to end, so this flips it on.
+ * This used to be a switch in localStorage, default on, flipped with `?pro=1` -
+ * a stand-in from before there was anything to buy. It is an account fact now:
+ * an admin is comped, everyone else has it once an order is paid.
  *
- * Turn on with `/create?pro=1`, off with `?pro=0`. It lives in this browser only.
- * **Delete this composable when payments ship** - after that the tier has to come
- * from the account, not from a query string.
+ * The builder still only *warns* about paid features. The refusal happens at
+ * publish, on the server, because that is the only copy of the rule a POST
+ * cannot walk past.
  */
-const KEY = 'awards-maker:pro'
+export interface Order {
+  id: number
+  slug: string | null
+  name: string | null
+  tier: string
+  amount_cents: number
+  currency: string
+  status: 'pending' | 'paid' | 'failed' | 'refunded'
+  provider: string
+  receipt_url: string | null
+  created_at: string
+}
 
-/**
- * Default ON while there is no checkout. Nothing is being given away - the tier
- * does not exist yet - and leaving it off made the paid half of the product
- * impossible to try. Turning it off is how you look at the free-plan behaviour.
- */
-const pro = ref(true)
-let hydrated = false
+interface Billing {
+  orders: Order[]
+  /** False when Stripe has no key yet, so the page can say why, not just grey out. */
+  payments: boolean
+  comped: boolean
+}
+
+const billing = ref<Billing>({ orders: [], payments: false, comped: false })
+const loaded = ref(false)
 
 export function usePro() {
-  if (import.meta.client && !hydrated) {
-    hydrated = true
+  const { isAdmin } = useAccount()
+
+  /** One fetch per page load, whoever asks first. */
+  async function load(force = false) {
+    if (loaded.value && !force) return
+    loaded.value = true
     try {
-      const saved = localStorage.getItem(KEY)
-      if (saved !== null) pro.value = saved === '1'
+      billing.value = await $fetch<Billing>('/api/billing/orders')
     } catch {
-      /* private window: stays on */
+      // signed out, or the API is down: no orders is the safe reading
+      billing.value = { orders: [], payments: false, comped: false }
     }
   }
 
-  function setPro(on: boolean) {
-    pro.value = on
-    try {
-      localStorage.setItem(KEY, on ? '1' : '0')
-    } catch {
-      /* nothing to persist to */
-    }
-  }
+  const paid = computed(() => billing.value.orders.some((o) => o.status === 'paid'))
+  const pro = computed(() => isAdmin.value || billing.value.comped || paid.value)
 
-  /** Reads `?pro=1` / `?pro=0` once, on a page that cares. */
-  function readProQuery(value: unknown) {
-    if (value === undefined) return
-    setPro(String(value) !== '0')
-  }
-
-  return { pro, setPro, readProQuery }
+  return { pro, paid, billing, load }
 }

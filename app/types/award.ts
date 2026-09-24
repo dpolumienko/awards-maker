@@ -59,24 +59,11 @@ export interface Award {
 }
 
 /**
- * Free plan, release 1. Numbers come from knowledge/streamer_awards.md.
+ * Free plan, release 1. Numbers come from knowledge/streamer_awards.md and live
+ * in shared/ because the API enforces the same ones - a limit that only the
+ * builder knows about is a limit a POST walks straight past.
+ *
  * Nothing here is a hard stop in the builder: paid features stay usable and get
  * marked, and the choice between upgrading and stripping them happens at publish.
  */
-export const FREE = {
-  maxNominations: 5,
-  maxVoters: 200,
-  maxActiveAwards: 1,
-  nameLimit: 29,
-} as const
-
-/** Field limits: how much text a control takes, not what a plan allows. */
-export const FIELD = {
-  descriptionLimit: 200,
-} as const
-
-/** Publishing thresholds double as the indexing thresholds - same numbers on purpose. */
-export const PUBLISH = {
-  minNominations: 3,
-  minNomineesPerNomination: 2,
-} as const
+export { FIELD, FREE, PUBLISH } from '#shared/limits'

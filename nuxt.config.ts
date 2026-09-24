@@ -37,20 +37,30 @@ export default defineNuxtConfig({
 
   css: ['~/assets/css/main.css'],
 
-  modules: ['@nuxtjs/tailwindcss', '@nuxtjs/seo'],
+  modules: ['@nuxtjs/tailwindcss', '@nuxtjs/seo', 'nuxt-auth-utils'],
 
   tailwindcss: { configPath: './tailwind.config.ts' },
 
-  // Builder-side pages read the draft out of localStorage, so there is nothing
-  // for the server to render and SSR only produced hydration mismatches.
-  // The published awards page will move back to SSR once it has a real API -
-  // it needs to be indexable.
+  // The published awards page and the catalog render on the server now that
+  // there is an API behind them - they are the two pages the whole SEO case
+  // rests on, and until the backend landed a crawler saw an empty shell.
+  //
+  // The host's own pages stay client-rendered: they are one person's private
+  // workspace, they are noindex anyway, and rendering them on the server buys
+  // a signed-in user nothing.
   routeRules: {
     '/create': { ssr: false },
     '/my-awards': { ssr: false },
     '/my-awards/**': { ssr: false },
-    '/catalog': { ssr: false },
-    '/a/**': { ssr: false },
+    '/api/**': { headers: { 'Cache-Control': 'no-store' } },
+    '/auth/**': { headers: { 'Cache-Control': 'no-store' } },
+    '/**': {
+      headers: {
+        'X-Frame-Options': 'DENY',
+        'X-Content-Type-Options': 'nosniff',
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
+      },
+    },
   },
 
   // A project site on GitHub Pages lives under /<repo>/, and nothing served from a
@@ -59,9 +69,12 @@ export default defineNuxtConfig({
   robots: { robotsTxt: !process.env.NUXT_APP_BASE_URL || process.env.NUXT_APP_BASE_URL === '/' },
 
   // The host's own pages are noindex; a noindex URL in the sitemap is a mixed
-  // signal, so they are kept out of it. Award pages are dynamic and get in
-  // through their own source once there is an API.
-  sitemap: { exclude: ['/my-awards', '/my-awards/**'] },
+  // signal, so they are kept out of it. Award pages come in through their own
+  // source, which is the whole point of the catalog existing.
+  sitemap: {
+    exclude: ['/my-awards', '/my-awards/**'],
+    sources: ['/api/__sitemap__/urls'],
+  },
 
   // Domain is still open (subdomain decision) - placeholder until it is fixed.
   site: {
@@ -72,7 +85,41 @@ export default defineNuxtConfig({
     defaultLocale: 'en',
   },
 
+  runtimeConfig: {
+    // Empty on purpose. mysql2 fills its own blanks - localhost, the OS user -
+    // and then fails deep in the driver; server/utils/db.ts refuses instead.
+    // These resolve at BUILD time, so a built server is corrected only with the
+    // NUXT_ spellings (NUXT_MYSQL_USER, not NUXT_MYSQL_USERNAME).
+    mysql: {
+      host: process.env.MYSQL_HOST || '',
+      port: parseInt(process.env.MYSQL_PORT || '3306'),
+      user: process.env.MYSQL_USERNAME || '',
+      password: process.env.MYSQL_PASSWORD || '',
+      database: process.env.MYSQL_DATABASE || '',
+    },
+    // Twitch logins that are admins the moment they sign in. An admin creates
+    // paid shows without paying, which is how the paid tier gets tested.
+    adminTwitchLogins: process.env.ADMIN_TWITCH_LOGINS || 'streams_user2',
+    uploadsDir: process.env.UPLOADS_DIR || './.uploads',
+    stripe: {
+      secretKey: process.env.STRIPE_SECRET_KEY || '',
+      webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
+      priceId: process.env.STRIPE_PRICE_ID || '',
+    },
+    public: {
+      // Twitch checks an embed's `parent` against the framing host, so the
+      // player needs to be told what that host is rather than guess from the
+      // address bar. Empty in dev, where localhost is correct anyway.
+      siteHost: process.env.NUXT_PUBLIC_SITE_HOST || '',
+    },
+  },
+
   nitro: {
+    preset: process.env.NITRO_PRESET || 'node-server',
+    compressPublicAssets: true,
+    // The migration plugin reads these at boot, so they have to survive the
+    // bundle rather than stay behind in the source tree.
+    serverAssets: [{ baseName: 'migrations', dir: './server/db/migrations' }],
     // The prerender cache is written into node_modules/.cache, which sits inside a
     // OneDrive folder here: OneDrive grabs the file between write and rename and
     // the build dies with EPERM, at a different route every time. It goes to the

@@ -10,23 +10,31 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "typecheck": "nuxt typecheck"
+    "typecheck": "nuxt typecheck",
+    "test": "vitest run",
+    "migrate": "node scripts/migrate.mjs"
   },
   "dependencies": {
     "gsap": "^3.15.0",
     "hls.js": "^1.7.3",
     "lenis": "^1.3.26",
     "motion-v": "^2.4.2",
+    "mysql2": "^3.24.4",
     "nuxt": "^3.17.7",
+    "nuxt-auth-utils": "^0.5.30",
     "vue": "^3.5.16",
-    "vue-router": "^4.5.1"
+    "vue-router": "^4.5.1",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@nuxt/test-utils": "^3.23.0",
     "@nuxtjs/seo": "^3.4.0",
     "@nuxtjs/tailwindcss": "^6.14.0",
     "autoprefixer": "^10.4.27",
+    "happy-dom": "^20.14.5",
     "postcss": "^8.5.3",
     "tailwindcss": "^3.4.19",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.7"
   }
 }

@@ -9,12 +9,23 @@ import UiButton from '~/components/ui/UiButton.vue'
 import UiBadge from '~/components/ui/UiBadge.vue'
 import UiIcon from '~/components/ui/UiIcon.vue'
 import { useAwardDraft } from '~/composables/useAwardDraft'
-import { useVoting } from '~/composables/useVoting'
-import { FREE, type Award } from '~/types/award'
+import { useMyAwards, type AwardSummary } from '~/composables/useAwards'
+import { phaseOf } from '~/composables/useVoting'
+import { FREE } from '~/types/award'
 
-const { published, draft, unpublish } = useAwardDraft()
+const { draft, load, unpublish } = useAwardDraft()
+const { data, refresh } = await useMyAwards()
 
-const { phaseOf, votersFor } = useVoting()
+// drafts live in the same table, so the list filters them out and the draft row
+// below is built from the one the builder is holding
+const published = computed(() => (data.value?.awards ?? []).filter((a) => a.status === 'published'))
+
+onMounted(load)
+
+async function removeAward(slug: string) {
+  await unpublish(slug)
+  await refresh()
+}
 
 const badges = {
   soon: { tone: 'ended' as const, text: 'Not open yet' },
@@ -28,8 +39,8 @@ const fmt = (d?: string) =>
   d ? new Date(`${d}T00:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''
 
 /** What happens next, in the host's words. */
-function next(a: Award) {
-  switch (phaseOf(a)) {
+function next(a: AwardSummary) {
+  switch (phaseOf(a as never, a.voters)) {
     case 'soon':
       return `Opens ${fmt(a.opensAt)}`
     case 'open':
@@ -41,7 +52,7 @@ function next(a: Award) {
       return `Announced ${fmt(a.ceremonyAt)}`
   }
 }
-const waiting = (a: Award) => ['counting', 'capped'].includes(phaseOf(a))
+const waiting = (a: AwardSummary) => ['counting', 'capped'].includes(phaseOf(a as never, a.voters))
 
 // A draft is not an awards yet, but it is the thing most likely to be abandoned,
 // so it gets a row instead of hiding inside a button label.
@@ -80,11 +91,11 @@ useSeoMeta({ title: 'Your awards', robots: 'noindex, follow' })
         class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-card border bg-s1 p-5 no-underline transition-colors"
         :class="waiting(a) ? 'border-gold-24 hover:border-gold' : 'border-hair hover:border-gold'"
       >
-        <UiBadge :tone="badges[phaseOf(a)].tone">{{ badges[phaseOf(a)].text }}</UiBadge>
+        <UiBadge :tone="badges[phaseOf(a as never, a.voters)].tone">{{ badges[phaseOf(a as never, a.voters)].text }}</UiBadge>
         <span class="text-lg font-semibold">{{ a.name }}</span>
         <span class="tnum text-sm text-ink-muted">{{ a.nominations.length }} nominations</span>
-        <span class="tnum text-sm" :class="votersFor(a.slug) / FREE.maxVoters >= 0.8 ? 'text-warn' : 'text-ink-muted'">
-          {{ votersFor(a.slug) }} / {{ FREE.maxVoters }} voters
+        <span class="tnum text-sm" :class="a.voters / FREE.maxVoters >= 0.8 ? 'text-warn' : 'text-ink-muted'">
+          {{ a.voters }} / {{ FREE.maxVoters }} voters
         </span>
         <span class="text-sm" :class="waiting(a) ? 'text-gold-text' : 'text-ink-muted'">{{ next(a) }}</span>
         <span class="ml-auto flex items-center gap-1.5 pr-24 text-sm text-gold-text">
@@ -97,7 +108,7 @@ useSeoMeta({ title: 'Your awards', robots: 'noindex, follow' })
         variant="quiet"
         class="absolute right-5 top-1/2 -translate-y-1/2"
         :aria-label="'Remove ' + a.name"
-        @confirm="unpublish(a.slug)"
+        @confirm="removeAward(a.slug)"
       />
       </div>
     </div>

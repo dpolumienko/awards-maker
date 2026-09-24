@@ -1,0 +1,66 @@
+# The app and its database. Unlike the streamawards stack, which joins a network
+# owned by a live Laravel app, this one owns its MySQL: the schema is ours and
+# nothing else reads it.
+services:
+  app:
+    build: { context: . }
+    image: awards-maker
+    container_name: awards-maker
+    restart: unless-stopped
+    depends_on:
+      db: { condition: service_healthy }
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      NITRO_HOST: 0.0.0.0
+      NITRO_PORT: 3000
+      # ⚠️ A new runtimeConfig-backed secret needs a line here too, not just in
+      # .env - a built server reads only the NUXT_ spellings.
+      NUXT_MYSQL_HOST: db
+      NUXT_MYSQL_PORT: 3306
+      # runtimeConfig calls this `mysql.user`, the env file `MYSQL_USERNAME`.
+      NUXT_MYSQL_USER: ${MYSQL_USERNAME:-awards}
+      NUXT_MYSQL_PASSWORD: ${MYSQL_PASSWORD:-}
+      NUXT_MYSQL_DATABASE: ${MYSQL_DATABASE:-awards_maker}
+      NUXT_SESSION_PASSWORD: ${NUXT_SESSION_PASSWORD:-}
+      NUXT_OAUTH_TWITCH_CLIENT_ID: ${NUXT_OAUTH_TWITCH_CLIENT_ID:-}
+      NUXT_OAUTH_TWITCH_CLIENT_SECRET: ${NUXT_OAUTH_TWITCH_CLIENT_SECRET:-}
+      NUXT_ADMIN_TWITCH_LOGINS: ${ADMIN_TWITCH_LOGINS:-streams_user2}
+      NUXT_UPLOADS_DIR: /data/uploads
+      NUXT_PUBLIC_SITE_URL: ${NUXT_PUBLIC_SITE_URL:-}
+      NUXT_PUBLIC_SITE_HOST: ${NUXT_PUBLIC_SITE_HOST:-}
+      NUXT_STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      NUXT_STRIPE_PRICE_ID: ${STRIPE_PRICE_ID:-}
+      NUXT_STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+    volumes:
+      - uploads:/data/uploads
+    ports:
+      # Localhost only: nginx is in front, and the deploy healthcheck reads this.
+      - '127.0.0.1:3300:3000'
+    logging: { driver: json-file, options: { max-size: 10m, max-file: '3' } }
+
+  db:
+    image: mysql:8
+    container_name: awards-maker-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root-dev}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-awards_maker}
+      MYSQL_USER: ${MYSQL_USERNAME:-awards}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-}
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      # the app waits for this: a Nitro process that starts before MySQL answers
+      # spends its first minute serving 500s
+      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-p${MYSQL_PASSWORD:-}']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - db:/var/lib/mysql
+    ports:
+      - '127.0.0.1:3307:3306'
+
+volumes:
+  db:
+  uploads:

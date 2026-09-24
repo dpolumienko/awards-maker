@@ -1,8 +1,15 @@
 import { computed, ref, watch } from 'vue'
 import { FREE, PUBLISH, type Award, type Nomination, type Nominee, type Partner } from '~/types/award'
 
-const DRAFT_KEY = 'awards-maker:draft'
-const PUBLISHED_KEY = 'awards-maker:published'
+// The draft a host is building. It is still edited locally and reactively - a
+// builder that awaited the network on every keystroke would feel broken - but it
+// is loaded from and saved to the account rather than to this browser. What
+// changed with the backend:
+//
+//   * hydration is GET /api/draft, so the same draft follows a host to a second
+//     machine instead of being stranded in one browser's localStorage;
+//   * saving is a debounced PUT rather than a write per keystroke;
+//   * publish() is a POST and is the only place the rules are actually enforced.
 
 const uid = () => Math.random().toString(36).slice(2, 9)
 
@@ -21,65 +28,106 @@ const emptyDraft = (): Award => ({
   nominations: [emptyNomination()],
   partners: [],
   look: {},
-  host: { name: 'ishowspeed', platform: 'youtube' },
+  host: { name: '', platform: 'twitch' },
 })
 
-/**
-  * A draft saved before the demo channel changed carries the old host, and the
-  * page then shows a name nobody recognises. Anything stored under the previous
-  * default is moved onto the current account when it is read back.
-  */
-const LEGACY_HOSTS = ['stintik']
-
-// One draft per browser until there is a backend; the shape is the future API shape.
 const draft = ref<Award>(emptyDraft())
-const published = ref<Award[]>([])
-let hydrated = false
-
-function read<T>(key: string, fallback: T): T {
-  try {
-    const raw = localStorage.getItem(key)
-    return raw ? (JSON.parse(raw) as T) : fallback
-  } catch {
-    return fallback
-  }
-}
+const loaded = ref(false)
+const saving = ref(false)
+let watching = false
 
 /**
- * Drafts saved before a field existed come back without it - a draft stored
- * before `look` was added crashed the builder on read. Anything loaded from
- * storage is filled in against the current shape.
+ * Fills in anything the server left out, so a draft saved before a field existed
+ * cannot crash the builder on read.
  */
 function normalize(a: Partial<Award> | undefined): Award {
   const base = emptyDraft()
   if (!a) return base
-  const host = { ...base.host, ...(a.host ?? {}) }
-  if (LEGACY_HOSTS.includes(host.name)) Object.assign(host, base.host)
   return {
     ...base,
     ...a,
-    host,
+    host: { ...base.host, ...(a.host ?? {}) },
     look: { ...base.look, ...(a.look ?? {}) },
     partners: Array.isArray(a.partners) ? a.partners : [],
     nominations:
       Array.isArray(a.nominations) && a.nominations.length
-        ? a.nominations.map((n) => ({ ...emptyNomination(), ...n, nominees: Array.isArray(n?.nominees) ? n.nominees : [] }))
+        ? a.nominations.map((n) => ({
+            ...emptyNomination(),
+            ...n,
+            nominees: Array.isArray(n?.nominees) ? n.nominees : [],
+          }))
         : [emptyNomination()],
   }
 }
 
+/** What the API takes: the same thing without the client-side ids. */
+function toPayload(a: Award) {
+  return {
+    name: a.name,
+    description: a.description,
+    templateId: a.templateId ?? null,
+    opensAt: a.opensAt || null,
+    closesAt: a.closesAt || null,
+    ceremonyAt: a.ceremonyAt || null,
+    look: a.look ?? {},
+    host: a.host,
+    partners: a.partners.filter((p) => p.name.trim() || p.url.trim()).map((p) => ({ name: p.name, url: p.url })),
+    nominations: a.nominations.map((n) => ({
+      title: n.title,
+      nominees: n.nominees.map((x) =>
+        x.kind === 'channel'
+          ? { kind: 'channel' as const, channel: { name: x.channel.name, platform: x.channel.platform, followers: x.channel.followers } }
+          : x.kind === 'media'
+            ? { kind: 'media' as const, text: x.text, url: x.url, image: x.image }
+            : { kind: 'text' as const, text: x.text },
+      ),
+    })),
+  }
+}
+
 export function useAwardDraft() {
-  if (import.meta.client && !hydrated) {
-    hydrated = true
-    draft.value = normalize(read<Partial<Award> | undefined>(DRAFT_KEY, undefined))
-    published.value = read<Partial<Award>[]>(PUBLISHED_KEY, []).map(normalize)
-    watch(draft, (v) => {
-      try {
-        localStorage.setItem(DRAFT_KEY, JSON.stringify(v))
-      } catch {
-        /* private window, nothing to do */
-      }
-    }, { deep: true })
+  const { signedIn, channel } = useAccount()
+
+  /** Pulls the account's draft. Idempotent - the builder calls it on mount. */
+  async function load() {
+    if (loaded.value || !import.meta.client || !signedIn.value) return
+    loaded.value = true
+    try {
+      const res = await $fetch<{ draft: Partial<Award> }>('/api/draft')
+      draft.value = normalize(res.draft)
+      if (!draft.value.host.name) draft.value.host = { ...channel.value }
+    } catch {
+      draft.value = emptyDraft()
+    }
+    startAutosave()
+  }
+
+  /**
+   * Autosave, debounced. The prototype wrote to localStorage on every keystroke,
+   * which is free; the same watcher against an API is one request per character.
+   */
+  function startAutosave() {
+    if (watching || !import.meta.client) return
+    watching = true
+    let timer: ReturnType<typeof setTimeout> | undefined
+    watch(
+      draft,
+      () => {
+        if (!signedIn.value) return
+        clearTimeout(timer)
+        timer = setTimeout(async () => {
+          saving.value = true
+          try {
+            await $fetch('/api/draft', { method: 'PUT', body: toPayload(draft.value) })
+          } catch {
+            // a failed autosave is not worth an alert: the next keystroke retries
+          } finally {
+            saving.value = false
+          }
+        }, 900)
+      },
+      { deep: true },
+    )
   }
 
   const nominationsUsed = computed(() => draft.value.nominations.length)
@@ -141,7 +189,7 @@ export function useAwardDraft() {
     d.look = {}
   }
 
-  /** Publishing rules are the indexing thresholds - see DESIGN of the feature. */
+  /** Publishing rules are the indexing thresholds - same numbers on purpose. */
   const checks = computed(() => {
     const d = draft.value
     const filled = d.nominations.filter((n) => n.title.trim() && n.nominees.length)
@@ -170,41 +218,34 @@ export function useAwardDraft() {
       : '',
   )
 
-  function publish() {
+  const publishError = ref('')
+
+  /**
+   * Hands the draft to the server, which decides the tier and the slug. Returns
+   * the published show, or null with `publishError` set - a 402 here is the
+   * paywall and a 403 means this session never granted the channel scopes.
+   */
+  async function publish(): Promise<Award | null> {
+    publishError.value = ''
     if (!canPublish.value) return null
-    const clean: Award = JSON.parse(JSON.stringify(draft.value))
-    // empty rows are scaffolding, not content: they never reach the published page
-    clean.nominations = clean.nominations.filter((n) => n.title.trim() && n.nominees.length)
-    clean.partners = clean.partners.filter((x) => x.name.trim())
-    const award: Award = {
-      ...clean,
-      slug: slugify(draft.value.name),
-      publishedAt: new Date().toISOString(),
-    }
-    published.value = [award, ...published.value.filter((a) => a.slug !== award.slug)]
     try {
-      localStorage.setItem(PUBLISHED_KEY, JSON.stringify(published.value))
-      localStorage.removeItem(DRAFT_KEY)
-    } catch {
-      /* ignore */
+      const res = await $fetch<{ award: Award }>('/api/draft/publish', {
+        method: 'POST',
+        body: toPayload(draft.value),
+      })
+      draft.value = emptyDraft()
+      loaded.value = false
+      return res.award
+    } catch (error) {
+      publishError.value =
+        (error as { statusMessage?: string }).statusMessage || 'Could not publish - try again'
+      return null
     }
-    draft.value = emptyDraft()
-    return award
   }
 
-  /** Takes a published awards down. There was no way to undo publishing at all. */
-  function unpublish(slug: string) {
-    published.value = published.value.filter((a) => a.slug !== slug)
-    try {
-      localStorage.setItem(PUBLISHED_KEY, JSON.stringify(published.value))
-      for (const key of ['awards-maker:votes', 'awards-maker:tally', 'awards-maker:ceremony']) {
-        const all = JSON.parse(localStorage.getItem(key) || '{}')
-        delete all[slug]
-        localStorage.setItem(key, JSON.stringify(all))
-      }
-    } catch {
-      /* nothing to write to */
-    }
+  /** Takes a published show down, with its ballots. */
+  async function unpublish(slug: string) {
+    await $fetch(`/api/awards/${encodeURIComponent(slug)}`, { method: 'DELETE' })
   }
 
   function reset() {
@@ -213,7 +254,8 @@ export function useAwardDraft() {
 
   return {
     draft,
-    published,
+    load,
+    saving,
     nominationsUsed,
     atNominationLimit,
     paidFeatures,
@@ -229,6 +271,7 @@ export function useAwardDraft() {
     canPublish,
     nameWarning,
     publish,
+    publishError,
     unpublish,
     reset,
   }

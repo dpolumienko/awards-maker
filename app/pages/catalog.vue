@@ -3,21 +3,27 @@
 // product bets on - the first success measure is organic traffic to awards pages,
 // and this is what links to them.
 //
-// No backend yet, so it lists what this browser published. Nothing is seeded:
-// an empty catalog says it is empty rather than showing invented shows.
+// Server-rendered off /api/awards. It used to list what this browser had
+// published, which meant a crawler - the visitor this page exists for - saw an
+// empty shell. Nothing is seeded: an empty catalog says so rather than inventing
+// shows.
 import { computed, ref } from 'vue'
 import UiButton from '~/components/ui/UiButton.vue'
 import CatalogCard from '~/components/ui/CatalogCard.vue'
 import InteractiveAccordion from '~/components/ui/InteractiveAccordion.vue'
-import { useAwardDraft } from '~/composables/useAwardDraft'
-import { useVoting } from '~/composables/useVoting'
+import { useCatalog } from '~/composables/useAwards'
+import { phaseOf } from '~/composables/useVoting'
 import { useReveal } from '~/composables/useReveal'
 import { FREE, PUBLISH } from '~/types/award'
 
 const route = useRoute()
 const router = useRouter()
-const { published } = useAwardDraft()
-const { phaseOf, votersFor } = useVoting()
+const { data, error } = await useCatalog()
+// An empty catalog answering 200 during a database outage is a page a crawler
+// would index as "this site has no shows". A 503 is recoverable; that is not.
+if (error.value) {
+  throw createError({ statusCode: 503, statusMessage: 'The catalog is briefly unavailable', fatal: true })
+}
 const root = ref<HTMLElement | null>(null)
 useReveal(root, { stagger: 0.05 })
 
@@ -34,7 +40,11 @@ const active = computed<FilterId>(() => {
 })
 
 const rows = computed(() =>
-  published.value.map((award) => ({ award, phase: phaseOf(award), voters: votersFor(award.slug) })),
+  (data.value?.awards ?? []).map((award) => ({
+    award,
+    phase: phaseOf(award as never, award.voters),
+    voters: award.voters,
+  })),
 )
 const counts = computed(() => ({
   all: rows.value.length,
@@ -50,10 +60,9 @@ const shown = computed(() => {
 const totals = computed(() => ({
   awards: rows.value.length,
   votes: rows.value.reduce((sum, r) => sum + r.voters, 0),
-  nominees: rows.value.reduce(
-    (sum, r) => sum + r.award.nominations.reduce((n, nom) => n + nom.nominees.length, 0),
-    0,
-  ),
+  // the summary carries a category count, not the whole tree - the catalog does
+  // not need every nominee to say how big the site is
+  nominees: rows.value.reduce((sum, r) => sum + r.award.categories, 0),
 }))
 
 const faq = [
@@ -89,16 +98,17 @@ useSchemaOrg([
   }),
   ...faq.map((f) => defineQuestion({ name: f.q, acceptedAnswer: f.a })),
 ])
-// The list itself is the page's content, so it is described as one.
-if (published.value.length) {
+// The list itself is the page's content, so it is described as one. Server-side
+// now, which means the markup carries real entries rather than an empty list.
+if (rows.value.length) {
   useSchemaOrg([
     defineItemList({
       name: 'Community awards',
-      itemListElement: published.value.map((a, i) => ({
+      itemListElement: rows.value.map((r, i) => ({
         '@type': 'ListItem',
         position: i + 1,
-        name: a.name,
-        url: `/a/${a.slug}`,
+        name: r.award.name,
+        url: `/a/${r.award.slug}`,
       })),
     }),
   ])
@@ -131,7 +141,7 @@ const filterLink = (id: FilterId) => (id === 'all' ? '/catalog' : `/catalog?stat
         <dd class="tnum mt-1 text-lg font-semibold">{{ totals.awards }}</dd>
       </div>
       <div>
-        <dt class="label">Nominees</dt>
+        <dt class="label">Categories</dt>
         <dd class="tnum mt-1 text-lg font-semibold">{{ totals.nominees }}</dd>
       </div>
       <div>

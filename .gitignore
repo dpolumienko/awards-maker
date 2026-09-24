@@ -12,3 +12,7 @@ node_modules/
 !.env.example
 *.log
 .DS_Store
+
+# uploaded covers and nominee images
+.uploads/
+.env

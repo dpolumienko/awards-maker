@@ -37,10 +37,18 @@ const {
   usesPaid,
   downgradeToFree,
   publish,
+  publishError,
+  load,
+  saving,
 } = useAwardDraft()
 
-// Auth is not wired yet; this mirrors the two states the page will really have.
-const signedIn = ref(false)
+// A draft belongs to an account now, so the builder loads it once there is one.
+const { signedIn, isHost, signInAsHost } = useAccount()
+const { load: loadBilling } = usePro()
+onMounted(() => {
+  load()
+  loadBilling()
+})
 const tab = ref<'form' | 'preview'>('form')
 const cards = ref<InstanceType<typeof NominationCard>[]>([])
 const paywallOpen = ref(false)
@@ -58,9 +66,9 @@ async function onAddNomination() {
 }
 
 /** Free publish: strip the paid bits first, then go. */
-function onPublishFree() {
+async function onPublishFree() {
   downgradeToFree()
-  onPublish()
+  await onPublish()
 }
 
 /** A template fills the empty rows first, then appends up to the Free limit. */
@@ -88,9 +96,7 @@ function applyTemplate(t: AwardTemplate) {
  * empty rows and stops at the free ceiling; an existing draft is never overwritten.
  */
 const route = useRoute()
-const { readProQuery } = usePro()
 onMounted(() => {
-  readProQuery(route.query.pro)
   const group = ideaGroup(String(route.query.ideas ?? ''))
   if (!group) return
   // the whole set, not the free slice: a set that runs past the ceiling is how the
@@ -114,8 +120,15 @@ function addIdea(title: string) {
 // publish() empties the draft, so the curtain is handed the published award's own
 // look - reading draft.look here would paint a blank stage.
 const curtain = usePublishCurtain()
-function onPublish() {
-  const award = publish()
+async function onPublish() {
+  // Running a show needs the channel scopes, which the voter sign-in does not
+  // grant. Sending them through the wider consent here beats a 403 after they
+  // have filled in the whole form.
+  if (!signedIn.value || !isHost.value) {
+    signInAsHost()
+    return
+  }
+  const award = await publish()
   if (!award) return
   const host = import.meta.client ? location.host : 'awards.streamscharts.com'
   curtain.open({ slug: award.slug, name: award.name, url: `${host}/a/${award.slug}`, look: award.look })
@@ -184,7 +197,7 @@ useSchemaOrg([
       <button
         type="button"
         class="ml-auto flex h-11 items-center gap-2 rounded-btn bg-twitch px-4 text-sm font-bold uppercase tracking-button text-white transition-opacity hover:opacity-90"
-        @click="signedIn = true"
+        @click="signInAsHost"
       >
         Sign in with Twitch
       </button>
@@ -259,7 +272,7 @@ useSchemaOrg([
           :signed-in="signedIn"
           :channel="draft.host.name"
           @update:look="draft.look = $event"
-          @sign-in="signedIn = true"
+          @sign-in="signInAsHost"
         />
 
         <section id="nominations">
@@ -340,6 +353,7 @@ useSchemaOrg([
           :can-publish="canPublish"
           :nominations-used="nominationsUsed"
           :paid-features="paidFeatures"
+          :error="publishError"
           @publish="onPublish"
           @upgrade="paywallOpen = true"
           @downgrade="onPublishFree"

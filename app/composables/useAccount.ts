@@ -1,62 +1,55 @@
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import type { Platform } from '~/types/award'
 
 /**
- * Who is signed in.
+ * Who is signed in - now a real Twitch session rather than a name in
+ * localStorage.
  *
- * Until now there was no such thing: the header read the host name out of the
- * draft, so an old draft kept showing an old name and there was nothing to sign
- * out of. The account is its own state now - the draft takes its host from here,
- * not the other way round.
- *
- * The real flow is Twitch OAuth with the voter scope; this stands in for it and
- * returns the demo channel. When the API lands, `signIn` becomes the redirect and
- * `channel` comes back from the token.
+ * Two doors into the same provider. Voting asks for an identity and nothing
+ * else; running a show asks for the channel's subscribers and followers, which
+ * is a ten-permission consent screen and not something to put in front of
+ * someone who only wants to click one radio button. `host` says which door this
+ * session came through.
  */
 export interface Account {
   name: string
   platform: Platform
 }
 
-const KEY = 'awards-maker:account'
-const DEMO: Account = { name: 'ishowspeed', platform: 'youtube' }
-
-const account = ref<Account | null>(null)
-let hydrated = false
-
 export function useAccount() {
-  if (import.meta.client && !hydrated) {
-    hydrated = true
-    try {
-      const raw = localStorage.getItem(KEY)
-      // Signed in by default: a prototype nobody can sign into shows nothing.
-      account.value = raw ? (JSON.parse(raw) as Account) : DEMO
-      if (!raw) localStorage.setItem(KEY, JSON.stringify(DEMO))
-    } catch {
-      account.value = DEMO
-    }
-  }
+  const { loggedIn, user, clear } = useUserSession()
 
-  const signedIn = computed(() => !!account.value)
-  const channel = computed<Account>(() => account.value ?? DEMO)
+  const signedIn = computed(() => loggedIn.value)
+  const isHost = computed(() => Boolean(user.value?.host))
+  const isAdmin = computed(() => user.value?.role === 'admin')
+
+  // Every channel we sign in is a Twitch channel: that is the only provider the
+  // login speaks. A host can still nominate channels on Kick and YouTube.
+  const channel = computed<Account>(() => ({
+    name: user.value?.name ?? user.value?.login ?? '',
+    platform: 'twitch',
+  }))
+
+  /** Comes back here afterwards - the callback reads this cookie, not a query. */
+  function rememberReturn() {
+    if (!import.meta.client) return
+    document.cookie = `am-return=${encodeURIComponent(useRoute().fullPath)}; path=/; max-age=600; samesite=lax`
+  }
 
   function signIn() {
-    account.value = DEMO
-    try {
-      localStorage.setItem(KEY, JSON.stringify(DEMO))
-    } catch {
-      /* private window - the session lasts this tab */
-    }
+    rememberReturn()
+    if (import.meta.client) window.location.href = '/auth/twitch'
   }
 
-  function signOut() {
-    account.value = null
-    try {
-      localStorage.setItem(KEY, 'null')
-    } catch {
-      /* nothing to persist to */
-    }
+  /** The wider consent, for someone who is about to run a show. */
+  function signInAsHost() {
+    if (import.meta.client) window.location.href = '/auth/twitch-host'
   }
 
-  return { account, signedIn, channel, signIn, signOut }
+  async function signOut() {
+    await clear()
+    if (import.meta.client) window.location.href = '/auth/logout'
+  }
+
+  return { account: user, signedIn, isHost, isAdmin, channel, signIn, signInAsHost, signOut }
 }

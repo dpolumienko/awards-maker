@@ -9,18 +9,22 @@ import PlatformDot from './PlatformDot.vue'
 import UiIcon from './UiIcon.vue'
 import { themeCss } from '~/data/themes'
 import { accentText } from '~/utils/accent'
-import { FREE, type Award } from '~/types/award'
+import { FREE } from '~/types/award'
+import type { AwardSummary } from '~/composables/useAwards'
 import type { Phase } from '~/composables/useVoting'
 
+// A summary, not the whole show: the catalog needs a name, a look and two
+// numbers, and shipping every nominee of every card down the wire to render a
+// grid is how a list page gets slow.
 const { award, phase, voters } = defineProps<{
-  award: Award
+  award: AwardSummary
   phase: Phase
   voters: number
 }>()
 
 const accent = computed(() => award.look?.accent || '#D9A441')
 const ink = computed(() => accentText(accent.value))
-const nominees = computed(() => award.nominations.reduce((sum, n) => sum + n.nominees.length, 0))
+const nominees = computed(() => award.categories)
 
 const STATE: Record<Phase, { tone: 'live' | 'results' | 'ended'; text: string }> = {
   soon: { tone: 'ended', text: 'Opens soon' },
@@ -75,7 +79,7 @@ const line = computed(() => {
       <span class="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-ink-muted">
         <span class="tnum">{{ award.nominations.length }} categories</span>
         <span aria-hidden="true">·</span>
-        <span class="tnum">{{ nominees }} nominees</span>
+        <span class="tnum">{{ nominees }} {{ nominees === 1 ? 'category' : 'categories' }}</span>
         <span aria-hidden="true">·</span>
         <span class="tnum">{{ voters }} {{ voters === 1 ? 'vote' : 'votes' }}</span>
       </span>
