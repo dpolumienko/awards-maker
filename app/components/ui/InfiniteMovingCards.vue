@@ -84,9 +84,11 @@ watch(() => items.length, () => requestAnimationFrame(measure))
         class="flex w-max py-1 will-change-transform"
         :style="{ transform: `translate3d(${x}px,0,0)`, gap: `${gap}px` }"
       >
-        <!-- The rail is decorative motion: its links repeat content that also exists
-             in a static section, so nothing here takes keyboard focus. -->
-        <div v-for="(item, i) in rendered" :key="i" class="shrink-0" :aria-hidden="i >= items.length" :inert="i >= items.length || undefined">
+        <!-- The copies that close the loop are hidden from screen readers. Not
+             `inert`: that also switches off pointer events, so a copy - most of
+             what a reversed row shows - never lit up on hover. Keep the slot
+             free of focusable elements instead. -->
+        <div v-for="(item, i) in rendered" :key="i" class="shrink-0" :aria-hidden="i >= items.length">
           <slot :item="item" :index="i" />
         </div>
       </div>

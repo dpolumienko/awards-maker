@@ -18,8 +18,9 @@ const channels = [
     intro="You bring the categories and the community. Everything else is here."
   >
     <div class="mt-6 grid gap-6 lg:grid-cols-3">
-      <!-- wide: nominee search -->
-      <SpotlightCard class="js-reveal lg:col-span-2">
+      <!-- three across: the old 2+1 over a full-width third stretched the page -->
+      <!-- nominee search -->
+      <SpotlightCard class="js-reveal">
         <template #mark>
           <span class="tnum text-sm font-semibold tracking-micro text-gold-text">01</span>
         </template>
@@ -45,7 +46,7 @@ const channels = [
         </div>
       </SpotlightCard>
 
-      <!-- tall: one vote -->
+      <!-- one vote -->
       <SpotlightCard class="js-reveal">
         <template #mark>
           <span class="tnum text-sm font-semibold tracking-micro text-gold-text">02</span>
@@ -64,26 +65,24 @@ const channels = [
       </SpotlightCard>
 
       <!-- share card -->
-      <SpotlightCard class="js-reveal lg:col-span-3">
+      <SpotlightCard class="js-reveal">
         <template #mark>
           <span class="tnum text-sm font-semibold tracking-micro text-gold-text">03</span>
         </template>
-        <div class="grid items-center gap-8 lg:grid-cols-[1fr_auto]">
-          <div>
-            <h3 class="text-xl font-semibold">Share nominees and winners with your community</h3>
-            <p class="m-0 mt-1 max-w-copy text-sm leading-relaxed text-ink-2">
-              Every awards page carries its own preview image, so a link in chat or on X shows the show, not a bare URL.
-            </p>
-          </div>
-          <div class="flex gap-4">
-            <div class="w-48 rounded-card bg-canvas p-4">
+        <h3 class="text-xl font-semibold">Share nominees and winners with your community</h3>
+        <p class="m-0 max-w-[60ch] text-sm leading-relaxed text-ink-2">
+          Every awards page carries its own preview image, so a link in chat or on X shows the show, not a bare URL.
+        </p>
+        <div class="mt-5">
+          <div class="flex gap-3">
+            <div class="min-w-0 flex-1 rounded-card bg-canvas p-4">
               <p class="micro text-gold-text">Nominated</p>
               <p class="mt-2 text-lg font-bold leading-tight">maryana</p>
               <p class="mt-1 text-sm text-ink-2">Best moment of the year</p>
               <span class="mt-4 block h-px w-full bg-gradient-to-r from-gold to-transparent" />
               <p class="micro mt-3">Chat Awards 2026</p>
             </div>
-            <div class="hidden w-48 rounded-card bg-gold/[0.06] p-4 sm:block">
+            <div class="min-w-0 flex-1 rounded-card bg-gold/[0.06] p-4">
               <p class="micro text-gold-text">Winner</p>
               <p class="mt-2 text-lg font-bold leading-tight text-gold-text">ishowspeed</p>
               <p class="mt-1 text-sm text-ink-2">612 of 1 284 votes</p>
