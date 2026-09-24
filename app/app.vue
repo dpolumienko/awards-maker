@@ -24,6 +24,9 @@ const stage = computed(
   () => route.path === '/' || route.path.startsWith('/a/') || route.meta.chrome === false,
 )
 useHead({ bodyAttrs: { 'data-stage': () => (stage.value ? '1' : '0') } })
+// Search Console HTML-tag verification, when NUXT_PUBLIC_GOOGLE_SITE_VERIFICATION is set
+const gsc = String(useRuntimeConfig().public.googleSiteVerification || '')
+if (gsc) useHead({ meta: [{ name: 'google-site-verification', content: gsc }] })
 // the design switcher's choice, applied before first paint (data/design.ts)
 useHead({ script: [{ innerHTML: DESIGN_BOOT, tagPriority: 'critical' }] })
 </script>
@@ -39,13 +42,13 @@ useHead({ script: [{ innerHTML: DESIGN_BOOT, tagPriority: 'critical' }] })
     <!-- the room's light. Not on the ceremony screen: that one is its own stage,
          and in OBS mode the background has to stay exactly what the host chose. -->
     <div v-if="chrome" aria-hidden="true" class="rig pointer-events-none fixed inset-0 -z-10" />
-    <!-- temporary: palette and button comparison, review 2026-09-24 -->
-    <DesignSwitcher v-if="chrome" />
     <SiteHeader v-if="chrome" />
     <main id="main">
       <NuxtPage />
     </main>
     <SiteFooter v-if="chrome" />
+    <!-- temporary: palette and button comparison, review 2026-09-24 -->
+    <DesignSwitcher v-if="chrome" />
     <PublishCurtain
       :open="!!curtain.show.value"
       :name="curtain.show.value?.name ?? ''"

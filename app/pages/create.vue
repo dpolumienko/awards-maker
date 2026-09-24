@@ -21,6 +21,7 @@ import { ideaGroup } from '~/data/ideas'
 import { useAwardDraft } from '~/composables/useAwardDraft'
 import { FIELD, FREE } from '~/types/award'
 import { allTimeZones, utcToZoned, zoneCity, zoneOffset, zonedToUtc } from '#shared/time'
+import { DISPLAY_FONTS, useDisplayFonts } from '~/composables/useDisplayFonts'
 
 const {
   draft,
@@ -43,6 +44,8 @@ const {
   load,
   saving,
 } = useAwardDraft()
+// the Look section offers every headline face, and the preview draws the chosen one
+useDisplayFonts(DISPLAY_FONTS)
 
 // Most useful first, then everything; the label carries today's offset.
 const zones = computed(() => {
@@ -200,11 +203,7 @@ useSeoMeta({
     'Start from a ready-made set of categories, nominate any Twitch, Kick or YouTube channel, and publish a page your viewers vote on. Free with a Twitch login.',
   ogImage: ogCard('create'),
 })
-useSchemaOrg([
-  defineWebPage({ name: 'Create your own streamer awards' }),
-  defineBreadcrumb({ itemListElement: [{ name: 'Awards Maker', item: '/' }, { name: 'Create' }] }),
-  ...faq.map((f) => defineQuestion({ name: f.q, acceptedAnswer: f.a })),
-])
+// No structured data: the builder is noindex (a client-rendered form, not a page to rank).
 </script>
 
 <template>

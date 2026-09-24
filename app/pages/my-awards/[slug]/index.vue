@@ -24,6 +24,10 @@ import { playCue } from '~/composables/useCue'
 import { accentText } from '~/utils/accent'
 import { nomineeName, nomineeSub } from '~/utils/nominee'
 import { FREE, type Nomination } from '~/types/award'
+import { DISPLAY_FONTS, useDisplayFonts } from '~/composables/useDisplayFonts'
+
+// ceremony typefaces and share cards draw in any of the headline faces
+useDisplayFonts(DISPLAY_FONTS)
 
 const route = useRoute()
 const slug = computed(() => String(route.params.slug))
