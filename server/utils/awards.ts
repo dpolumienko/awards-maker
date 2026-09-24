@@ -294,13 +294,8 @@ export async function saveAward(awardId: number, input: AwardInput) {
   })
 }
 
-export function slugify(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 60)
-}
+// lives in shared/ so a test, or the builder one day, reads the same rules
+export { slugify } from '#shared/slug'
 
 /** Appends -2, -3 … until the slug is free. */
 export async function freeSlug(base: string, ignoreId?: number): Promise<string> {
