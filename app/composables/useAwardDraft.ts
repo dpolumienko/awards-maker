@@ -13,9 +13,6 @@ import { FREE, PUBLISH, type Award, type Nomination, type Nominee, type Partner 
 
 const uid = () => Math.random().toString(36).slice(2, 9)
 
-export const slugify = (s: string) =>
-  s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'awards'
-
 const emptyNomination = (): Nomination => ({ id: uid(), title: '', nominees: [] })
 
 const emptyDraft = (): Award => ({
