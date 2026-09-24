@@ -16,3 +16,6 @@ node_modules/
 # uploaded covers and nominee images
 .uploads/
 .env
+
+# nuxi generate links this to .output/public
+dist
