@@ -1,1 +1,0 @@
-import{n as i,k as m}from"./BTgrBufg.js";function l(n=4e3){const e=m(!1);let r;function u(){clearTimeout(r),e.value=!1}function a(t=!0){return e.value===t}function o(t=!0){return e.value===t?(u(),!0):(clearTimeout(r),e.value=t,r=setTimeout(u,n),!1)}return i(()=>clearTimeout(r)),{armed:e,arm:o,isArmed:a,disarm:u}}export{l as u};
