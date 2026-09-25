@@ -588,13 +588,18 @@ if (award.value && !thin.value) {
           <aside class="space-y-6 lg:sticky lg:top-24">
             <div v-if="isHost" ref="hostPanel" class="relative rounded-card border border-gold-24 bg-gold/[0.06] p-5">
               <p class="micro text-gold-text">You host this awards</p>
+              <!-- a paid show has no voter ceiling, so no meter towards one -->
               <LimitMeter
+                v-if="award.tier !== 'paid'"
                 class="mt-3"
                 label="Unique voters"
                 :used="voters"
                 :total="FREE.maxVoters"
                 note="Voting stops at the free ceiling. Votes already cast are kept."
               />
+              <p v-else class="mt-3 flex items-baseline justify-between text-sm text-ink-2">
+                Unique voters <span class="tnum text-ink">{{ voters }}</span>
+              </p>
               <div class="mt-4 flex flex-wrap gap-3">
                 <UiButton
                   v-if="phase === 'counting' || phase === 'capped'"
@@ -620,7 +625,7 @@ if (award.value && !thin.value) {
                 Nobody sees the counts until you do this. It cannot be undone.
               </p>
             </div>
-            <PaywallNote v-if="isHost && voters / FREE.maxVoters >= 0.8" reason="voters" compact />
+            <PaywallNote v-if="isHost && award.tier !== 'paid' && voters / FREE.maxVoters >= 0.8" reason="voters" compact />
 
             <div class="rounded-card border border-hair bg-s1 p-5">
               <p class="label">How voting works</p>
