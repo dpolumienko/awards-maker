@@ -82,7 +82,7 @@ function apply(t: AwardTemplate) {
           :class="active === t.id ? 'text-ink' : 'text-ink-muted group-hover:text-ink'"
         >
           <span class="block h-4 whitespace-nowrap">
-            {{ applied === t.id ? 'Added below' : active === t.id ? 'In use' : 'Use these 5' }}
+            {{ applied === t.id ? 'Added below' : active === t.id ? 'In use' : 'Use this template' }}
           </span>
         </span>
       </button>

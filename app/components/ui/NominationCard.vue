@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // One nomination: its title, its nominees, and the two ways to add one.
 import { computed, nextTick, ref } from 'vue'
-import { fileToStoredImage } from '~/utils/image'
+import { ImageError, fileToStoredImage } from '~/utils/image'
 import ChannelSearch from './ChannelSearch.vue'
 
 import PlatformDot from './PlatformDot.vue'
@@ -57,8 +57,8 @@ async function takeFile(file?: File | null) {
   // stored, not referenced - a blob: URL does not survive the page that made it
   try {
     mediaImage.value = await fileToStoredImage(file, 1200)
-  } catch {
-    mediaError.value = 'That image could not be read. Try a PNG or a JPG.'
+  } catch (e) {
+    mediaError.value = e instanceof ImageError ? e.message : 'That image could not be read. Try a PNG or a JPG.'
     mediaFile.value = ''
   }
 }
@@ -144,7 +144,7 @@ const shortMeta = (n: Nomination['nominees'][number]) =>
           <span class="font-semibold">{{ n.channel.name }}</span>
           <PlatformDot :platform="n.channel.platform" :label="false" />
           <LivePill v-if="n.channel.live" />
-          <span class="text-sm text-ink-2">{{ fmtFollowers(n.channel.followers) }} followers</span>
+          <span v-if="n.channel.followers" class="text-sm text-ink-2">{{ fmtFollowers(n.channel.followers) }} followers</span>
         </template>
         <template v-else-if="n.kind === 'media'">
           <span class="font-semibold">{{ n.text }}</span>

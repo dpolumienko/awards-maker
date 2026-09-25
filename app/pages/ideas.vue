@@ -7,6 +7,7 @@
 // written for search cannot be behind JavaScript.
 import { ref } from 'vue'
 import UiButton from '~/components/ui/UiButton.vue'
+import UiIcon from '~/components/ui/UiIcon.vue'
 import InteractiveAccordion from '~/components/ui/InteractiveAccordion.vue'
 import { useReveal } from '~/composables/useReveal'
 import { useCatalogOpen } from '~/composables/useAwards'
@@ -15,6 +16,8 @@ const catalogOpen = useCatalogOpen()
 import { IDEA_GROUPS, IDEA_TOTAL, ideaEmoji } from '~/data/ideas'
 
 const root = ref<HTMLElement | null>(null)
+const SHOWN = 6
+const ideaRow = 'flex items-center gap-3 rounded-card border border-hair bg-canvas px-4 py-3 text-[15px] font-medium text-ink'
 useReveal(root, { stagger: 0.04 })
 
 const faq = [
@@ -110,20 +113,34 @@ useSchemaOrg([
           <p class="m-0 mt-1 max-w-copy text-ink-2">{{ g.blurb }}</p>
         </div>
         <UiButton :to="`/create?ideas=${g.id}`" variant="ghost" size="sm" class="sm:ml-auto">
-          Start with these {{ g.set }}
+          Use this template
         </UiButton>
       </div>
 
+      <!-- six on show, the rest one click away (review 2026-09-25: twelve at
+           once was a wall). The rest stay in the HTML - <details> is still
+           read by search engines. -->
       <ul class="mt-6 grid list-none gap-2 p-0 sm:grid-cols-2 lg:grid-cols-3">
-        <li
-          v-for="item in g.items"
-          :key="item"
-          class="flex items-center gap-3 rounded-card border border-hair bg-canvas px-4 py-3 text-[15px] font-medium text-ink"
-        >
+        <li v-for="item in g.items.slice(0, SHOWN)" :key="item" :class="ideaRow">
           <span aria-hidden="true" class="text-xl leading-none">{{ ideaEmoji(item, g) }}</span>
           {{ item }}
         </li>
       </ul>
+      <details v-if="g.items.length > SHOWN" class="group mt-2">
+        <summary
+          class="flex w-fit cursor-pointer list-none items-center gap-2 rounded-btn px-1 py-2 text-sm font-semibold text-ink-2 transition-colors hover:text-ink [&::-webkit-details-marker]:hidden"
+        >
+          <span class="group-open:hidden">Show {{ g.items.length - SHOWN }} more ideas</span>
+          <span class="hidden group-open:inline">Show fewer</span>
+          <UiIcon name="chevron-right" :size="12" class="rotate-90 transition-transform group-open:-rotate-90" />
+        </summary>
+        <ul class="mt-2 grid list-none gap-2 p-0 sm:grid-cols-2 lg:grid-cols-3">
+          <li v-for="item in g.items.slice(SHOWN)" :key="item" :class="ideaRow">
+            <span aria-hidden="true" class="text-xl leading-none">{{ ideaEmoji(item, g) }}</span>
+            {{ item }}
+          </li>
+        </ul>
+      </details>
     </section>
 
     <section class="mt-16 border-t border-hair pt-12">

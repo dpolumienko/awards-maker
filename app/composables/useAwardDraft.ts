@@ -1,3 +1,4 @@
+import { uploadInlineImages } from '~/utils/image'
 import { computed, ref, watch } from 'vue'
 import { FREE, PUBLISH, type Award, type Nomination, type Nominee, type Partner } from '~/types/award'
 import { canonicalZone, localTimeZone } from '#shared/time'
@@ -147,7 +148,8 @@ export function useAwardDraft() {
       // the account's draft wins when it has anything in it; otherwise what was
       // built here before signing in becomes the account's draft
       if (!hasContent(res.draft) && hasContent(local)) {
-        draft.value = normalize(local!)
+        // pictures added before sign-in are data URLs; they go up first
+        draft.value = normalize(await uploadInlineImages(local! as Parameters<typeof uploadInlineImages>[0]) as Partial<Award>)
         await $fetch('/api/draft', { method: 'PUT', body: toPayload(draft.value) }).catch(() => {})
       } else {
         draft.value = normalize(res.draft)

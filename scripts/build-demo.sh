@@ -16,7 +16,7 @@ cd "$(dirname "$0")/.."
 # prerendered pages open (the database, most likely) keeps it alive. Wait for
 # its last line and stop it.
 LOG=$(mktemp)
-NUXT_APP_BASE_URL=/awards-maker/ NITRO_PRESET=github_pages NUXT_SITE_ENV=staging \
+NUXT_APP_BASE_URL=/awards-maker/ NITRO_PRESET=github_pages NUXT_SITE_ENV=staging NUXT_PUBLIC_DEMO=1 \
   NUXT_PUBLIC_SITE_URL=https://dpolumienko.github.io/awards-maker \
   npx nuxi generate > "$LOG" 2>&1 &
 GEN=$!

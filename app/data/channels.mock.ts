@@ -31,4 +31,4 @@ export function searchChannels(q: string, limit = 6): Channel[] {
 }
 
 export const fmtFollowers = (n: number) =>
-  n >= 1000 ? `${Math.round(n / 100) / 10}K` : String(n)
+  n >= 1_000_000 ? `${Math.round(n / 100_000) / 10}M` : n >= 1000 ? `${Math.round(n / 100) / 10}K` : String(n)

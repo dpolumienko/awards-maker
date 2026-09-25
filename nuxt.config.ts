@@ -153,12 +153,20 @@ export default defineNuxtConfig({
     // paid shows without paying, which is how the paid tier gets tested.
     adminTwitchLogins: process.env.ADMIN_TWITCH_LOGINS || 'streams_user2',
     uploadsDir: process.env.UPLOADS_DIR || './.uploads',
+    // Streams Charts API, for the builder's channel search (server/api/channels/search.get.ts).
+    // Empty: the search falls back to the sample channels.
+    streamsCharts: {
+      clientId: process.env.STREAMS_CHARTS_CLIENT_ID || '',
+      token: process.env.STREAMS_CHARTS_TOKEN || '',
+    },
     stripe: {
       secretKey: process.env.STRIPE_SECRET_KEY || '',
       webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
       priceId: process.env.STRIPE_PRICE_ID || '',
     },
     public: {
+      // set by scripts/build-demo.sh: the static copy with no server behind it
+      demo: process.env.NUXT_PUBLIC_DEMO === '1',
       // Twitch checks an embed's `parent` against the framing host, so the
       // player needs to be told what that host is rather than guess from the
       // address bar. Empty in dev, where localhost is correct anyway.
