@@ -201,12 +201,18 @@ useSeoMeta({
             <dd class="tnum mt-1 text-3xl font-semibold">{{ perBallot.toFixed(1) }}</dd>
             <dd class="mt-1 text-sm text-ink-muted">categories of {{ award.nominations.length }} filled</dd>
           </div>
-          <div class="bg-s1 p-5">
+          <!-- a paid show has no ceiling to measure against -->
+          <div v-if="award.tier !== 'paid'" class="bg-s1 p-5">
             <dt class="label">Free ceiling</dt>
             <dd class="tnum mt-1 text-3xl font-semibold">{{ Math.round((voters / FREE.maxVoters) * 100) }}%</dd>
             <dd class="mt-2">
               <LimitMeter label="Voters" :used="voters" :total="FREE.maxVoters" />
             </dd>
+          </div>
+          <div v-else class="bg-s1 p-5">
+            <dt class="label">Plan</dt>
+            <dd class="mt-1 text-3xl font-semibold">Paid</dd>
+            <dd class="mt-1 text-sm text-ink-muted">no cap on voters</dd>
           </div>
         </dl>
 
@@ -328,7 +334,7 @@ useSeoMeta({
               <UiIcon name="check" :size="14" class="mt-1 flex-none text-live" />
               You see totals, never who voted for whom - and neither does anyone else.
             </li>
-            <li class="flex gap-2.5">
+            <li v-if="award.tier !== 'paid'" class="flex gap-2.5">
               <UiIcon name="check" :size="14" class="mt-1 flex-none text-live" />
               Voting stops at {{ FREE.maxVoters }} voters on the free plan, whatever the closing date says.
             </li>
@@ -339,7 +345,7 @@ useSeoMeta({
         </div>
       </section>
 
-      <PaywallNote v-if="voters / FREE.maxVoters >= 0.8" class="mt-6" reason="voters" />
+      <PaywallNote v-if="award.tier !== 'paid' && voters / FREE.maxVoters >= 0.8" class="mt-6" reason="voters" />
 
       <div class="mt-10 flex flex-wrap gap-3">
         <UiButton to="/my-awards" variant="ghost">All your awards</UiButton>

@@ -46,6 +46,24 @@ const {
 // the Look section offers every headline face, and the preview draws the chosen one
 useDisplayFonts(DISPLAY_FONTS)
 
+// Demo build only (app/demo/): signs in as a demo host and fills a show with
+// every feature, so the full flow can be clicked through without a server.
+const demo = !!useRuntimeConfig().public.demo
+const demoBusy = ref(false)
+async function createDemoAward() {
+  demoBusy.value = true
+  try {
+    const [{ demoSignIn, DEMO_USER }, { demoAward }] = await Promise.all([import('~/demo/api'), import('~/demo/sample')])
+    demoSignIn()
+    await useUserSession().fetch()
+    draft.value = demoAward(DEMO_USER.name)
+    await nextTick()
+    document.getElementById('nominations')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  } finally {
+    demoBusy.value = false
+  }
+}
+
 // Most useful first, then everything; the label carries today's offset.
 const zones = computed(() => {
   const list = allTimeZones()
@@ -218,6 +236,18 @@ useSeoMeta({
       then publish a page your viewers vote on.
       Free: up to {{ FREE.maxNominations }} nominations, one awards at a time, {{ FREE.maxVoters }} voters.
     </p>
+
+    <!-- demo build only: skip Twitch and fill everything in -->
+    <div
+      v-if="demo"
+      class="mt-8 flex flex-wrap items-center gap-4 rounded-card border border-dashed border-gold-24 bg-gold/[0.06] p-5"
+    >
+      <p class="text-sm text-ink-2">
+        <b class="text-ink">Demo.</b> Signs you in as a test host and fills a show with every feature:
+        channels, images, clips, cover, partners, dates. Then publish, vote, close and run the ceremony.
+      </p>
+      <UiButton class="ml-auto" :disabled="demoBusy" @click="createDemoAward">Create demo award</UiButton>
+    </div>
 
     <!-- signed out: nothing is blocked except publishing, the way the flow was designed -->
     <div

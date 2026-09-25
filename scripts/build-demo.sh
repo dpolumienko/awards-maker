@@ -17,7 +17,7 @@ cd "$(dirname "$0")/.."
 # its last line and stop it.
 LOG=$(mktemp)
 NUXT_APP_BASE_URL=/awards-maker/ NITRO_PRESET=github_pages NUXT_SITE_ENV=staging NUXT_PUBLIC_DEMO=1 \
-  NUXT_PUBLIC_SITE_URL=https://dpolumienko.github.io/awards-maker \
+  NUXT_PUBLIC_SITE_URL=https://dpolumienko.github.io/awards-maker NUXT_PUBLIC_SITE_HOST=dpolumienko.github.io \
   npx nuxi generate > "$LOG" 2>&1 &
 GEN=$!
 until grep -q 'You can now deploy' "$LOG"; do

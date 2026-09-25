@@ -5,10 +5,14 @@ import UiBadge from '../ui/UiBadge.vue'
 import PlatformDot from '../ui/PlatformDot.vue'
 import UiIcon from '../ui/UiIcon.vue'
 
-// A miniature of app/pages/a/[slug].vue as a voter sees it. It used to show a
-// live leaderboard with vote bars and "222 voting right now" - a page that does
-// not exist: counts stay hidden until the host announces the winners. Keep this
-// in step with the real page when that one changes.
+// A miniature of app/pages/a/[slug].vue as a voter sees it. Counts stay hidden
+// until the host announces the winners, so there are no vote bars here. Keep
+// this in step with the real page when that one changes.
+//
+// Rebuilt 2026-09-25 (review: "blocks look detached, massive and uneven"): one
+// framed page on one padding grid - a browser bar, the head, a single numbers
+// row that carries the countdown, then the ballot with the rules beside it
+// behind a hairline instead of in floating cards.
 const picked = ref(1)
 const nominees = [
   { name: 'nightowl_tv', sub: 'Twitch channel', initial: 'N', platform: 'twitch' as const },
@@ -33,90 +37,95 @@ const rules = [
     heading="This is the page your awards get"
     intro="Publishing gives you a page like this one: your categories and nominees, a countdown to the end of voting, and the winners once you announce them. It stays online after the show."
   >
-    <div class="js-reveal mt-6 overflow-hidden rounded-card border border-hair bg-canvas">
-      <!-- the page head: host, phase, title, the numbers row -->
-      <div class="relative border-b border-hair bg-[linear-gradient(180deg,rgb(var(--gold)/.08),transparent)] px-6 pb-6 pt-7 sm:px-8">
-        <div class="flex items-center justify-between gap-3">
+    <figure class="js-reveal m-0 mt-6 overflow-hidden rounded-card border border-hair bg-canvas">
+      <!-- browser bar: says "this is a page", and whose address it has -->
+      <div class="flex items-center gap-3 border-b border-hair bg-s1 px-4 py-2.5" aria-hidden="true">
+        <span class="flex gap-1.5">
+          <span class="h-2.5 w-2.5 rounded-pill bg-hair2" />
+          <span class="h-2.5 w-2.5 rounded-pill bg-hair2" />
+          <span class="h-2.5 w-2.5 rounded-pill bg-hair2" />
+        </span>
+        <span class="min-w-0 flex-1 truncate rounded-btn bg-canvas px-3 py-1 text-center text-xs text-ink-muted">
+          awards.streamscharts.com/a/night-owl-awards-2026
+        </span>
+        <span class="hidden w-[42px] sm:block" />
+      </div>
+
+      <div class="bg-[linear-gradient(180deg,rgb(var(--gold)/.07),transparent_220px)] p-5 sm:p-8">
+        <!-- head -->
+        <div class="flex flex-wrap items-center justify-between gap-3">
           <span class="flex items-center gap-2.5">
-            <span class="grid h-9 w-9 place-items-center rounded-pill bg-gold text-[12px] font-bold text-on-gold">NO</span>
+            <span class="grid h-8 w-8 place-items-center rounded-pill bg-gold text-[11px] font-bold text-on-gold">NO</span>
             <span class="font-semibold">nightowl_tv</span>
             <PlatformDot platform="twitch" />
           </span>
           <UiBadge tone="live">Voting open</UiBadge>
         </div>
-        <p class="mt-6 text-[clamp(28px,4vw,44px)] font-extrabold uppercase leading-[1.02] tracking-heading">Night Owl Awards 2026</p>
-        <span aria-hidden="true" class="mt-3 block h-px w-12 bg-gold" />
-        <dl class="mt-6 grid grid-cols-3 gap-4 border-t border-hair pt-4 sm:max-w-[520px]">
+        <p class="m-0 mt-4 text-[clamp(26px,3.6vw,40px)] font-extrabold uppercase leading-[1.02] tracking-heading">
+          Night Owl Awards 2026
+        </p>
+
+        <!-- one numbers row, the countdown included -->
+        <dl class="m-0 mt-5 grid grid-cols-2 gap-x-6 gap-y-4 border-y border-hair py-4 sm:grid-cols-4">
           <div v-for="[k, v] in stats" :key="k">
             <dt class="micro">{{ k }}</dt>
             <dd class="tnum m-0 mt-1 font-semibold">{{ v }}</dd>
           </div>
-        </dl>
-      </div>
-
-      <div class="grid gap-6 p-6 sm:p-8 lg:grid-cols-[1.4fr_1fr]">
-        <!-- the ballot: one category, pick one -->
-        <div>
-          <p class="label text-gold-text">Voting closes in</p>
-          <div class="mt-2 flex gap-2">
-            <div v-for="[n, u] in [['04', 'Days'], ['11', 'Hrs'], ['38', 'Min']]" :key="u" class="min-w-[58px] rounded-btn border border-hair p-2 text-center">
-              <b class="tnum block text-[22px] font-bold leading-none">{{ n }}</b>
-              <span class="micro">{{ u }}</span>
-            </div>
+          <div>
+            <dt class="micro text-gold-text">Closes in</dt>
+            <dd class="tnum m-0 mt-1 font-semibold">4d 11h 38m</dd>
           </div>
+        </dl>
 
-          <div class="mt-5 rounded-card border border-hair bg-s1 p-4">
-            <div class="flex items-center justify-between">
-              <p class="m-0 font-semibold"><span class="mr-2 text-gold-text">01</span>Moment of the year</p>
+        <!-- ballot, with the rules beside it -->
+        <div class="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_260px] lg:gap-8">
+          <div>
+            <div class="flex items-baseline justify-between gap-3">
+              <p class="m-0 font-semibold"><span class="tnum mr-2 text-gold-text">01</span>Moment of the year</p>
               <span class="text-sm text-ink-muted">Pick one</span>
             </div>
-            <div class="mt-3 flex flex-col gap-2">
+            <div class="mt-3 flex flex-col gap-2" role="radiogroup" aria-label="Moment of the year (example)">
               <button
                 v-for="(n, i) in nominees"
                 :key="n.name"
                 type="button"
-                :aria-pressed="picked === i"
+                role="radio"
+                :aria-checked="picked === i"
                 :class="[
-                  'flex w-full items-center gap-3 rounded-btn border p-3 text-left transition-[background-color,border-color] duration-200',
-                  picked === i ? 'border-gold bg-gold/[0.12]' : 'border-hair bg-canvas hover:border-hair2 hover:bg-s2',
+                  'flex w-full items-center gap-3 rounded-btn border px-3 py-2.5 text-left transition-[background-color,border-color] duration-200',
+                  picked === i ? 'border-gold bg-gold/[0.10]' : 'border-hair bg-s1 hover:border-hair2',
                 ]"
                 @click="picked = i"
               >
                 <span class="grid h-8 w-8 flex-none place-items-center rounded-pill bg-s3 text-[13px] font-bold text-ink-2">{{ n.initial }}</span>
-                <span>
-                  <span class="block font-semibold">{{ n.name }}</span>
-                  <span class="flex items-center gap-1.5 text-sm text-ink-2">
+                <span class="min-w-0">
+                  <span class="block truncate font-semibold">{{ n.name }}</span>
+                  <span class="flex items-center gap-1.5 text-[13px] text-ink-muted">
                     <PlatformDot v-if="n.platform" :platform="n.platform" :label="false" />{{ n.sub }}
                   </span>
                 </span>
                 <span
                   aria-hidden="true"
                   :class="[
-                    'ml-auto grid h-5 w-5 place-items-center rounded-btn bg-gold text-on-gold transition-transform duration-300 ease-gala',
+                    'ml-auto grid h-5 w-5 flex-none place-items-center rounded-btn bg-gold text-on-gold transition-transform duration-300 ease-gala',
                     picked === i ? 'scale-100' : 'scale-0',
                   ]"
                 ><UiIcon name="check" :size="12" /></span>
               </button>
             </div>
           </div>
-          <p class="mt-3 text-sm text-ink-muted">One vote per category, Twitch login on submit.</p>
-        </div>
 
-        <!-- the side column, as on the real page -->
-        <div class="flex flex-col gap-3">
-          <div class="rounded-card border border-hair bg-s1 p-4">
+          <aside class="border-t border-hair pt-5 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
             <p class="micro">How voting works</p>
             <ul class="m-0 mt-3 flex list-none flex-col gap-2 p-0 text-sm text-ink-2">
               <li v-for="r in rules" :key="r" class="flex gap-2"><span aria-hidden="true" class="text-gold-text">•</span>{{ r }}</li>
             </ul>
-          </div>
-          <div class="rounded-card border border-hair bg-s1 p-4">
-            <p class="micro">Share it</p>
-            <p class="m-0 mt-2 text-sm text-ink-2">Every page has its own preview card, so a link in chat or on X shows the show, not a bare URL.</p>
-          </div>
-          <p class="mt-auto text-sm text-ink-muted">Example of a published awards page</p>
+            <p class="micro mt-5">Share it</p>
+            <p class="m-0 mt-2 text-sm text-ink-2">A link in chat or on X unfurls into the show's own preview card.</p>
+          </aside>
         </div>
       </div>
-    </div>
+      <figcaption class="sr-only">Example of a published awards page</figcaption>
+    </figure>
   </SectionShell>
 </template>

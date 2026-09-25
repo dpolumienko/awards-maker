@@ -39,8 +39,11 @@ export function useAccount() {
   // The static demo on GitHub Pages has no server: /auth/* is not there, and
   // sending someone to it ended on GitHub's own 404 (review 2026-09-25).
   const demo = !!useRuntimeConfig().public.demo
-  function demoStop() {
-    window.alert('Sign-in is off in this demo: it is a static copy of the site with no server behind it. Everything can be looked at; voting and publishing need the live site.')
+  // There, "sign in" skips Twitch and signs in a demo host (app/demo/api.ts).
+  async function demoStop() {
+    const { demoSignIn } = await import('~/demo/api')
+    demoSignIn()
+    await useUserSession().fetch()
   }
 
   function signIn() {
