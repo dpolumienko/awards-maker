@@ -7,7 +7,7 @@
 // in, so the control is a sign-in button until there is one.
 import { THEMES, themeCss } from '~/data/themes'
 import { ref } from 'vue'
-import { fileToStoredImage } from '~/utils/image'
+import { ImageError, fileToStoredImage } from '~/utils/image'
 import { DEFAULT_ACCENT, accentReadable, resolveAccent } from '~/utils/accent'
 import type { AwardLook } from '~/types/award'
 import UiMaskIcon from './UiMaskIcon.vue'
@@ -45,8 +45,8 @@ async function pickCover(e: Event) {
   coverError.value = ''
   try {
     set({ coverUrl: await fileToStoredImage(file, 1800) })
-  } catch {
-    coverError.value = 'That image could not be read. Try a PNG or a JPG.'
+  } catch (e) {
+    coverError.value = e instanceof ImageError ? e.message : 'That image could not be read. Try a PNG or a JPG.'
   }
   input.value = ''
 }

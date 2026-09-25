@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import SectionShell from './SectionShell.vue'
 import SpotlightCard from '../ui/SpotlightCard.vue'
-import { PLATFORM_COLORS } from '~/data/platforms'
+import PlatformDot from '../ui/PlatformDot.vue'
 import UiIcon from '../ui/UiIcon.vue'
 
 // Bento, not three equal text boxes: each card shows the thing it describes.
 const channels = [
-  { name: 'ishowspeed', meta: 'YouTube · 41.2M', tone: PLATFORM_COLORS.youtube },
-  { name: 'dzvin_tv', meta: 'Kick · 88K', tone: PLATFORM_COLORS.kick },
-  { name: 'maryana', meta: 'YouTube · 402K', tone: PLATFORM_COLORS.youtube },
+  { name: 'ishowspeed', meta: 'YouTube · 41.2M', platform: 'youtube' as const },
+  { name: 'dzvin_tv', meta: 'Kick · 88K', platform: 'kick' as const },
+  { name: 'maryana', meta: 'YouTube · 402K', platform: 'youtube' as const },
 ]
 </script>
 
@@ -34,7 +34,7 @@ const channels = [
           </div>
           <ul class="mt-2 list-none space-y-1 p-0">
             <li v-for="c in channels" :key="c.name" class="flex items-center gap-3 rounded-btn px-3 py-2 text-sm transition-colors hover:bg-s2">
-              <span aria-hidden="true" class="h-7 w-7 rounded-pill" :style="{ background: c.tone, opacity: 0.85 }" />
+              <span class="grid h-7 w-7 flex-none place-items-center rounded-pill bg-s3"><PlatformDot :platform="c.platform" :label="false" :size="14" /></span>
               <span class="font-semibold">{{ c.name }}</span>
               <span class="ml-auto text-sm text-ink-2">{{ c.meta }}</span>
             </li>

@@ -1,7 +1,8 @@
 <script setup lang="ts">
-// Combobox over the (mock) Streams Charts channel database. Keyboard first:
-// arrows move, Enter picks, Esc closes - WCAG 4.1.2 / 2.1.1.
-import { computed, ref, useId } from 'vue'
+// Combobox over the Streams Charts channel base (server/api/channels/search.get.ts;
+// sample channels until the API keys are set). Keyboard first: arrows move,
+// Enter picks, Esc closes - WCAG 4.1.2 / 2.1.1.
+import { computed, ref, useId, watch } from 'vue'
 import PlatformDot from './PlatformDot.vue'
 import LivePill from './LivePill.vue'
 import { searchChannels, fmtFollowers } from '~/data/channels.mock'
@@ -14,7 +15,34 @@ const id = useId()
 const q = ref('')
 const open = ref(false)
 const active = ref(-1)
-const results = computed(() => searchChannels(q.value))
+const results = ref<Channel[]>([])
+const searching = ref(false)
+let timer: ReturnType<typeof setTimeout> | null = null
+let seq = 0
+// asked once the typing pauses; a page with no server behind it (the static
+// demo) searches the sample list in the browser instead
+watch(q, (v) => {
+  if (timer) clearTimeout(timer)
+  const term = v.trim()
+  if (term.length < 2) {
+    results.value = []
+    searching.value = false
+    return
+  }
+  searching.value = true
+  timer = setTimeout(async () => {
+    const mine = ++seq
+    let found: Channel[]
+    try {
+      found = (await $fetch<{ channels: Channel[] }>('/api/channels/search', { query: { q: term } })).channels
+    } catch {
+      found = searchChannels(term)
+    }
+    if (mine !== seq) return
+    results.value = found
+    searching.value = false
+  }, 250)
+})
 const canAddText = computed(() => q.value.trim().length >= 2)
 
 function choose(c: Channel) {
@@ -72,7 +100,7 @@ function onKey(e: KeyboardEvent) {
     />
 
     <ul
-      v-if="open && (results.length || canAddText)"
+      v-if="open && (results.length || canAddText || searching)"
       :id="id + '-list'"
       role="listbox"
       class="absolute z-20 mt-2 w-full list-none overflow-hidden rounded-card border border-hair bg-s2 p-1 shadow-modal"
@@ -80,10 +108,11 @@ function onKey(e: KeyboardEvent) {
       <li class="flex items-center gap-2 px-3 pb-1 pt-2" aria-hidden="true">
         <UiMaskIcon src="/img/icons/cat-clip.svg" class="h-3.5 w-3.5 text-gold opacity-70" />
         <span class="micro">Channels on</span>
-        <PlatformDot platform="twitch" />
-        <PlatformDot platform="kick" />
-        <PlatformDot platform="youtube" />
+        <PlatformDot platform="twitch" :size="13" />
+        <PlatformDot platform="kick" :size="13" />
+        <PlatformDot platform="youtube" :size="13" />
       </li>
+      <li v-if="searching && !results.length" class="px-3 py-3 text-sm text-ink-muted" aria-live="polite">Searching Streams Charts…</li>
       <li
         v-for="(c, i) in results"
         :id="id + '-opt-' + i"
@@ -99,9 +128,9 @@ function onKey(e: KeyboardEvent) {
           {{ c.name.slice(0, 2).toUpperCase() }}
         </span>
         <span class="font-semibold">{{ c.name }}</span>
-        <PlatformDot :platform="c.platform" :label="false" />
+        <PlatformDot :platform="c.platform" :label="false" :size="14" />
         <LivePill v-if="c.live" :game="c.game" />
-        <span class="ml-auto shrink-0 text-sm text-ink-muted">{{ fmtFollowers(c.followers) }} followers</span>
+        <span v-if="c.followers" class="ml-auto shrink-0 text-sm text-ink-muted">{{ fmtFollowers(c.followers) }} followers</span>
       </li>
 
       <li

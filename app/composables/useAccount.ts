@@ -36,14 +36,25 @@ export function useAccount() {
     document.cookie = `am-return=${encodeURIComponent(useRoute().fullPath)}; path=/; max-age=600; samesite=lax`
   }
 
+  // The static demo on GitHub Pages has no server: /auth/* is not there, and
+  // sending someone to it ended on GitHub's own 404 (review 2026-09-25).
+  const demo = !!useRuntimeConfig().public.demo
+  function demoStop() {
+    window.alert('Sign-in is off in this demo: it is a static copy of the site with no server behind it. Everything can be looked at; voting and publishing need the live site.')
+  }
+
   function signIn() {
+    if (!import.meta.client) return
+    if (demo) return demoStop()
     rememberReturn()
-    if (import.meta.client) window.location.href = '/auth/twitch'
+    window.location.href = '/auth/twitch'
   }
 
   /** The wider consent, for someone who is about to run a show. */
   function signInAsHost() {
-    if (import.meta.client) window.location.href = '/auth/twitch-host'
+    if (!import.meta.client) return
+    if (demo) return demoStop()
+    window.location.href = '/auth/twitch-host'
   }
 
   async function signOut() {
