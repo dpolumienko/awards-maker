@@ -18,6 +18,9 @@ export async function fileToStoredImage(file: File, maxPx = 1600, quality = 0.82
   } catch {
     throw new ImageError('That image could not be read. Try a PNG or a JPG.')
   }
+  // the static demo has nowhere to send it; what GitHub Pages answers a POST
+  // with is not something to rely on
+  if (useRuntimeConfig().public.demo) return blobToDataUrl(blob)
   try {
     return await upload(blob)
   } catch (e) {
