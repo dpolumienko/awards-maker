@@ -1,1 +1,0 @@
-import{s as i,l as m}from"./Dghs_-Pb.js";function s(a=4e3){const e=m(!1);let r;function u(){clearTimeout(r),e.value=!1}function n(t=!0){return e.value===t}function o(t=!0){return e.value===t?(u(),!0):(clearTimeout(r),e.value=t,r=setTimeout(u,a),!1)}return i(()=>clearTimeout(r)),{armed:e,arm:o,isArmed:n,disarm:u}}export{s as u};
