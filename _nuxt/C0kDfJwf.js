@@ -1,0 +1,1 @@
+import{A as i,v as m}from"./Cp19ndwQ.js";function l(a=4e3){const e=m(!1);let r;function u(){clearTimeout(r),e.value=!1}function n(t=!0){return e.value===t}function o(t=!0){return e.value===t?(u(),!0):(clearTimeout(r),e.value=t,r=setTimeout(u,a),!1)}return i(()=>clearTimeout(r)),{armed:e,arm:o,isArmed:n,disarm:u}}export{l as u};
