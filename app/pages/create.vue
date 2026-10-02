@@ -186,7 +186,7 @@ async function onPublish() {
   const award = await publish()
   if (!award) return
   const host = import.meta.client ? location.host : 'awards.streamscharts.com'
-  curtain.open({ slug: award.slug, name: award.name, url: `${host}/a/${award.slug}`, look: award.look })
+  curtain.open({ slug: award.slug, name: award.name, url: `${host}${asset(`/a/${award.slug}`)}`, look: award.look })
 }
 
 // The builder is a tool page, like the other tools that rank: the tool sits on

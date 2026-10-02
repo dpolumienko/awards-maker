@@ -243,7 +243,7 @@ watch(
 const obsLink = ref('')
 const copied = ref(false)
 async function copyObs() {
-  obsLink.value = `${location.origin}/my-awards/${slug.value}/reveal?bare=1`
+  obsLink.value = `${location.origin}${asset(`/my-awards/${slug.value}/reveal`)}?bare=1`
   try {
     await navigator.clipboard.writeText(obsLink.value)
     copied.value = true

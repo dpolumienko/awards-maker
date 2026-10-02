@@ -133,7 +133,7 @@ async function arm(action: 'close' | 'publish', run: () => Promise<unknown>) {
 }
 
 const shareUrl = computed(() =>
-  import.meta.client ? `${location.origin}/a/${slug.value}` : `/a/${slug.value}`,
+  import.meta.client ? `${location.origin}${asset(`/a/${slug.value}`)}` : `/a/${slug.value}`,
 )
 
 useSeoMeta({

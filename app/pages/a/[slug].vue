@@ -237,7 +237,8 @@ const nomineeTotal = computed(() =>
 // anything at all - see the deleted utils/awardLink.ts.
 const siteUrl = String(useSiteConfig().url)
 // absolute on the server too: the Event markup and the share links need it
-const shareUrl = computed(() => `${import.meta.client ? location.origin : siteUrl}/a/${slug.value}`)
+// asset() adds the base path: on the Pages demo the app lives under /awards-maker/
+const shareUrl = computed(() => (import.meta.client ? `${location.origin}${asset(`/a/${slug.value}`)}` : `${siteUrl}/a/${slug.value}`))
 
 // SEO. The page is the reason the catalog exists, so it carries its own title,
 // description, FAQ and Event markup. The indexing thresholds are the publishing
