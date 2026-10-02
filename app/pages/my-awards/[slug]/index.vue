@@ -25,6 +25,7 @@ import { accentText, accentOf } from '~/utils/accent'
 import { nomineeName, nomineeSub } from '~/utils/nominee'
 import { FREE, type Nomination } from '~/types/award'
 import { DISPLAY_FONTS, useDisplayFonts } from '~/composables/useDisplayFonts'
+import { useVersion } from '~/composables/useVersion'
 
 // ceremony typefaces and share cards draw in any of the headline faces
 useDisplayFonts(DISPLAY_FONTS)
@@ -41,7 +42,8 @@ const award = computed(() => data.value?.award ?? null)
 const tally = computed(() => data.value?.tally ?? emptyTally())
 const phase = computed(() => (award.value ? phaseOf(award.value, data.value?.voters ?? 0) : 'open'))
 const accent = computed(() => accentOf(award.value?.look))
-const ink = computed(() => accentText(accent.value))
+const { isZine } = useVersion()
+const ink = computed(() => accentText(accent.value, isZine.value))
 
 const voters = computed(() => data.value?.voters ?? 0)
 const trend = computed(() =>
@@ -131,7 +133,7 @@ async function arm(action: 'close' | 'publish', run: () => Promise<unknown>) {
 }
 
 const shareUrl = computed(() =>
-  import.meta.client ? `${location.origin}/a/${slug.value}` : `/a/${slug.value}`,
+  import.meta.client ? `${location.origin}${asset(`/a/${slug.value}`)}` : `/a/${slug.value}`,
 )
 
 useSeoMeta({

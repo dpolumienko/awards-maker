@@ -18,11 +18,13 @@ import ShareCards from '~/components/ui/ShareCards.vue'
 import PartnerChip from '~/components/ui/PartnerChip.vue'
 import CountdownRow from '~/components/ui/CountdownRow.vue'
 import InteractiveAccordion from '~/components/ui/InteractiveAccordion.vue'
+import ZinePlate from '~/components/zine/ZinePlate.vue'
+import { useVersion } from '~/composables/useVersion'
 import { useAwardPage, useCatalogOpen } from '~/composables/useAwards'
 import { emptyTally, phaseOf, resultsOf, useVoting, votesInOf } from '~/composables/useVoting'
 import { useReveal } from '~/composables/useReveal'
 import { playCue } from '~/composables/useCue'
-import { themeCss } from '~/data/themes'
+import { themeCss, zineCoverCss } from '~/data/themes'
 import { accentText, accentOf, onAccent } from '~/utils/accent'
 import { nomineeName } from '~/utils/nominee'
 import { FREE } from '~/types/award'
@@ -68,8 +70,9 @@ const phase = computed(() =>
     : 'open',
 )
 const accent = computed(() => accentOf(award.value?.look))
+const { isZine } = useVersion()
 // Fills keep the colour the streamer picked; type takes the readable version.
-const ink = computed(() => accentText(accent.value))
+const ink = computed(() => accentText(accent.value, isZine.value))
 const headlineFont = computed(() =>
   award.value?.look?.font ? `'${award.value.look.font}', Archivo, sans-serif` : undefined,
 )
@@ -234,7 +237,8 @@ const nomineeTotal = computed(() =>
 // anything at all - see the deleted utils/awardLink.ts.
 const siteUrl = String(useSiteConfig().url)
 // absolute on the server too: the Event markup and the share links need it
-const shareUrl = computed(() => `${import.meta.client ? location.origin : siteUrl}/a/${slug.value}`)
+// asset() adds the base path: on the Pages demo the app lives under /awards-maker/
+const shareUrl = computed(() => (import.meta.client ? `${location.origin}${asset(`/a/${slug.value}`)}` : `${siteUrl}/a/${slug.value}`))
 
 // SEO. The page is the reason the catalog exists, so it carries its own title,
 // description, FAQ and Event markup. The indexing thresholds are the publishing
@@ -384,7 +388,11 @@ if (award.value && !thin.value) {
       <div class="relative h-48 sm:h-64">
         <!-- the band runs up under the transparent header, so the page has no seam
              where the navigation ends and the show begins -->
-        <span aria-hidden="true" class="absolute inset-x-0 -top-40 bottom-0" :style="themeCss(award.look?.theme, accent, award.look?.coverUrl)" />
+        <span
+          aria-hidden="true"
+          class="absolute inset-x-0 -top-40 bottom-0"
+          :style="isZine ? zineCoverCss(accent, award.look?.coverUrl) : themeCss(award.look?.theme, accent, award.look?.coverUrl)"
+        />
         <!-- fades into the page's own canvas, which is not pure black under SC Blue -->
         <span aria-hidden="true" class="absolute inset-x-0 -top-40 bottom-0 bg-[linear-gradient(180deg,rgb(var(--canvas)/.35),rgb(var(--canvas)))]" />
         <div class="shell relative flex h-full flex-col justify-end pb-5">
@@ -415,10 +423,12 @@ if (award.value && !thin.value) {
       </div>
 
       <div class="shell pt-8">
-        <h1
+        <!-- the masthead is a display moment: two plates in the Fanzine -->
+        <ZinePlate
           class="display-2"
           :style="{ fontFamily: headlineFont }"
-        >{{ award.name }}</h1>
+          :text="award.name"
+        />
         <span aria-hidden="true" class="mt-4 block h-0.5 w-20" :style="{ background: accent }" />
         <p class="mt-4 max-w-copy text-lg text-ink-2">{{ award.description }}</p>
 

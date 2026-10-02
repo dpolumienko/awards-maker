@@ -7,17 +7,22 @@
 // public in the gh-pages branch of a public repository.
 //
 //   node scripts/demo-gate.mjs <dir> <user> <password>
+//   DEMO_DIGEST=<sha256 of user:password> node scripts/demo-gate.mjs <dir>
+//
+// The digest form rebuilds the demo behind the same sign-in without anyone having
+// to hold the password: the live one is in any page of the gh-pages branch.
 import { createHash } from 'node:crypto'
 import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const [dir, user, pass] = process.argv.slice(2)
-if (!dir || !user || !pass) {
-  console.error('usage: node scripts/demo-gate.mjs <dir> <user> <password>')
+const given = process.env.DEMO_DIGEST
+if (!dir || (!given && (!user || !pass)) || (given && !/^[a-f0-9]{64}$/.test(given))) {
+  console.error('usage: node scripts/demo-gate.mjs <dir> <user> <password>  |  DEMO_DIGEST=<sha256> node scripts/demo-gate.mjs <dir>')
   process.exit(1)
 }
 // the pair is compared as a hash, so it is not sitting in the page as text
-const digest = createHash('sha256').update(`${user}:${pass}`).digest('hex')
+const digest = given || createHash('sha256').update(`${user}:${pass}`).digest('hex')
 
 const gate = `<meta name="robots" content="noindex, nofollow">
 <style id="demo-gate-hide">html{visibility:hidden}</style>

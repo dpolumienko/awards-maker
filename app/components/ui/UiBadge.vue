@@ -19,8 +19,9 @@ const dots: Record<Tone, string> = {
 
 <template>
   <span
+    :data-tone="tone"
     :class="[
-      'inline-flex h-6 items-center gap-2 text-[11px] font-semibold uppercase tracking-micro',
+      'ui-badge inline-flex h-6 items-center gap-2 text-[11px] font-semibold uppercase tracking-micro',
       tones[tone],
     ]"
   >

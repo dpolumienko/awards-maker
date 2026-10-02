@@ -6,6 +6,7 @@ import UiButton from '~/components/ui/UiButton.vue'
 import SiteHeader from '~/components/SiteHeader.vue'
 import SiteFooter from '~/components/SiteFooter.vue'
 import type { NuxtError } from '#app'
+import { useVersionHead } from '~/composables/useVersion'
 
 const { error } = defineProps<{ error: NuxtError }>()
 const notFound = error.statusCode === 404
@@ -14,6 +15,8 @@ useSeoMeta({
   title: notFound ? 'Page not found' : 'Something went wrong',
   robots: 'noindex, follow',
 })
+// the error page renders without app.vue, so it sets the site's version itself
+useVersionHead()
 </script>
 
 <template>

@@ -1,4 +1,5 @@
-import { accentOf, resolveAccent } from './accent'
+import qrcode from 'qrcode-generator'
+import { accentOf, accentText, resolveAccent } from './accent'
 import type { Award, AwardLook } from '~/types/award'
 
 /**
@@ -30,6 +31,10 @@ export interface CardSpec {
   url: string
   look: AwardLook
   format: ShareFormat
+  /** The Fanzine version's flyer instead of the stage card (renderZineCard). */
+  zine?: boolean
+  /** The full address the flyer's QR code opens; `url` is the one printed. */
+  href?: string
 }
 
 export const FORMATS: Record<ShareFormat, { w: number; h: number; name: string; note: string }> = {
@@ -155,6 +160,7 @@ function wrap(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): st
  * and wraps in the wrong place.
  */
 export async function renderShareCard(spec: CardSpec): Promise<string> {
+  if (spec.zine) return renderZineCard(spec)
   const { w, h } = FORMATS[spec.format]
   const canvas = document.createElement('canvas')
   canvas.width = w
@@ -261,6 +267,193 @@ export async function renderShareCard(spec: CardSpec): Promise<string> {
   ctx.fillStyle = '#FFFFFF'
   ctx.font = `600 ${bodySize}px Archivo, sans-serif`
   ctx.fillText(spec.url, pad + bodySize * 1.1, footY)
+
+  return canvas.toDataURL('image/png')
+}
+
+const PAPER = '#FAFAF7'
+const INK = '#1D1D1F'
+const INK_2 = '#4B4B52'
+const PINK = '#FF48B0'
+
+/** A QR code drawn straight onto the canvas, dark modules on a white square. */
+function drawQr(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, size: number) {
+  const qr = qrcode(0, 'M')
+  qr.addData(text)
+  qr.make()
+  const n = qr.getModuleCount()
+  const quiet = 2
+  const cell = size / (n + quiet * 2)
+  ctx.fillStyle = '#FFFFFF'
+  ctx.fillRect(x, y, size, size)
+  ctx.fillStyle = INK
+  for (let r = 0; r < n; r++)
+    for (let c = 0; c < n; c++)
+      if (qr.isDark(r, c)) ctx.fillRect(x + (c + quiet) * cell, y + (r + quiet) * cell, Math.ceil(cell), Math.ceil(cell))
+}
+
+/** The pen circle, by hand: an ellipse that runs a quarter past where it started. */
+function drawPen(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, width: number) {
+  ctx.save()
+  ctx.strokeStyle = PINK
+  ctx.lineWidth = width
+  ctx.lineCap = 'round'
+  ctx.globalCompositeOperation = 'multiply'
+  ctx.beginPath()
+  ctx.ellipse(x + w / 2, y + h / 2, w / 2, h / 2, -0.04, Math.PI * 0.95, Math.PI * 0.95 + Math.PI * 2.35)
+  ctx.stroke()
+  ctx.restore()
+}
+
+/**
+ * The Fanzine's share card: a flyer. Paper, the claim printed on two plates, the
+ * name in black ink (circled when it won), and a tear-off strip at the foot with
+ * a QR code that opens the awards page - a card on a stream is scanned as often
+ * as it is tapped.
+ */
+async function renderZineCard(spec: CardSpec): Promise<string> {
+  const { w, h } = FORMATS[spec.format]
+  const canvas = document.createElement('canvas')
+  canvas.width = w
+  canvas.height = h
+  const ctx = canvas.getContext('2d')!
+  const story = spec.format === 'story'
+  const blue = resolveAccent(accentOf(spec.look))
+  const blueInk = accentText(blue, true)
+  // the width goes in the font string: assigning ctx.font resets ctx.fontStretch
+  const display = spec.look.font ? `900 SIZEpx '${spec.look.font}', Anybody, Archivo, sans-serif` : '900 expanded SIZEpx Anybody, Archivo, sans-serif'
+  const face = (px: number) => display.replace('SIZE', String(px))
+  try {
+    await Promise.all([
+      document.fonts.load('900 100px Anybody'),
+      document.fonts.load('700 40px "Schibsted Grotesk"'),
+      spec.look.font ? document.fonts.load(`800 100px '${spec.look.font}'`) : null,
+    ])
+  } catch {
+    /* a face that will not load simply falls back */
+  }
+  await document.fonts.ready
+
+  ctx.fillStyle = PAPER
+  ctx.fillRect(0, 0, w, h)
+  const pad = Math.round(w * 0.07)
+  const body = Math.round(w * (story ? 0.032 : 0.022))
+  const tearH = Math.round(story ? h * 0.2 : h * 0.3)
+  const tearTop = h - tearH
+  ctx.textBaseline = 'top'
+
+  // who is speaking, small, as the masthead line
+  ctx.fillStyle = INK
+  ctx.font = `700 ${body}px "Schibsted Grotesk", Archivo, sans-serif`
+  ctx.letterSpacing = '3px'
+  ctx.fillText(spec.kicker.toUpperCase(), pad, pad)
+  ctx.letterSpacing = '0px'
+
+  // the claim on two plates: the first ink, then pink multiplied a few pixels off
+  const claim = ({ host: 'Vote now', nominee: 'Nominated', voter: 'I voted', winner: 'Winner' } as const)[spec.role].toUpperCase()
+  let claimSize = Math.round(w * (story ? 0.15 : 0.1))
+  for (; claimSize > body * 2; claimSize -= 4) {
+    ctx.font = `900 expanded ${claimSize}px Anybody, Archivo, sans-serif`
+    if (ctx.measureText(claim).width <= w - pad * 2) break
+  }
+  const claimY = pad + body * 2.2
+  ctx.fillStyle = blue
+  ctx.fillText(claim, pad, claimY)
+  ctx.globalCompositeOperation = 'multiply'
+  ctx.fillStyle = PINK
+  ctx.fillText(claim, pad + claimSize * 0.045, claimY + claimSize * 0.035)
+  ctx.globalCompositeOperation = 'source-over'
+
+  // the name in black ink, as big as the room under the claim allows
+  const top = claimY + claimSize * 1.2
+  const bottom = tearTop - body * 1.6
+  let size = Math.round(w * (story ? 0.2 : 0.08))
+  let lines: string[] = []
+  let subLines: string[] = []
+  let block = 0
+  for (; size > body * 1.3; size -= 4) {
+    ctx.font = face(size)
+    lines = wrap(ctx, spec.headline, w - pad * 2)
+    // one long word does not wrap: it has to fit on its own
+    const fits = lines.every((l) => ctx.measureText(l).width <= w - pad * 2)
+    ctx.font = `600 ${body}px "Schibsted Grotesk", Archivo, sans-serif`
+    subLines = spec.sub ? wrap(ctx, spec.sub, w - pad * 2).slice(0, 2) : []
+    block = lines.length * size * 0.98 + subLines.length * body * 1.4 + body + (spec.cta ? body * 3 : 0)
+    if (fits && lines.length <= 3 && block <= bottom - top) break
+  }
+  // a story is tall: the name sits down on the tear-off strip, not under the claim
+  let y = story ? Math.max(top, bottom - block) : top
+  // the room a story leaves between the claim and the name is a halftone of the
+  // first ink - the riso's way of laying a tint; nothing is printed over the dots
+  if (story && y - top > size) {
+    const step = Math.round(w * 0.012)
+    ctx.fillStyle = blue
+    for (let dy = top; dy < y - size * 0.35; dy += step)
+      for (let dx = pad; dx < w - pad; dx += step) {
+        ctx.beginPath()
+        ctx.arc(dx + step / 2, dy + step / 2, step * 0.3, 0, Math.PI * 2)
+        ctx.fill()
+      }
+  }
+  ctx.fillStyle = INK
+  ctx.font = face(size)
+  lines.forEach((line, i) => {
+    ctx.fillText(line, pad, y)
+    if (spec.role === 'winner' && i === 0) {
+      const lw = ctx.measureText(line).width
+      drawPen(ctx, pad - size * 0.25, y - size * 0.22, lw + size * 0.5, size * 1.3, Math.max(4, size * 0.06))
+    }
+    y += size * 0.98
+  })
+  if (subLines.length) {
+    y += body * 0.6
+    ctx.fillStyle = INK_2
+    ctx.font = `600 ${body}px "Schibsted Grotesk", Archivo, sans-serif`
+    for (const line of subLines) {
+      ctx.fillText(line, pad, y)
+      y += body * 1.4
+    }
+  }
+  if (spec.cta) {
+    y += body * 0.8
+    ctx.font = `800 ${Math.round(body * 1.1)}px "Schibsted Grotesk", Archivo, sans-serif`
+    const label = spec.cta.toUpperCase()
+    const bw = ctx.measureText(label).width + body * 1.6
+    ctx.fillStyle = INK
+    ctx.fillRect(pad, y, bw, body * 2.2)
+    ctx.fillStyle = '#FFFFFF'
+    ctx.fillText(label, pad + body * 0.8, y + body * 0.55)
+  }
+
+  // the tear-off strip: a dashed rule, the QR, the address
+  ctx.strokeStyle = INK
+  ctx.lineWidth = Math.max(3, w * 0.003)
+  ctx.setLineDash([w * 0.012, w * 0.008])
+  ctx.beginPath()
+  ctx.moveTo(0, tearTop)
+  ctx.lineTo(w, tearTop)
+  ctx.stroke()
+  ctx.setLineDash([])
+  const qrSize = Math.round(tearH - body * 2.4)
+  const href = spec.href || (/^https?:\/\//.test(spec.url) ? spec.url : `https://${spec.url}`)
+  drawQr(ctx, href, pad, tearTop + (tearH - qrSize) / 2, qrSize)
+  const tx = pad + qrSize + body * 1.6
+  const [host, ...rest] = spec.url.replace(/^https?:\/\//, '').split('/')
+  // a path has no spaces to wrap at, so it is set as large as it fits on one line
+  const path = '/' + rest.join('/')
+  let pathSize = Math.round(body * 1.6)
+  for (; pathSize > body * 0.8; pathSize -= 2) {
+    ctx.font = `900 expanded ${pathSize}px Anybody, Archivo, sans-serif`
+    if (ctx.measureText(path).width <= w - tx - pad) break
+  }
+  ctx.fillStyle = blueInk
+  let ty = tearTop + (tearH - (pathSize * 1.2 + body * 3)) / 2
+  ctx.fillText(path, tx, ty)
+  ty += pathSize * 1.2
+  ctx.fillStyle = INK_2
+  ctx.font = `600 ${body}px "Schibsted Grotesk", Archivo, sans-serif`
+  ctx.fillText(host ?? '', tx, ty + body * 0.3)
+  ctx.fillText('Scan it, or type it in', tx, ty + body * 1.6)
 
   return canvas.toDataURL('image/png')
 }

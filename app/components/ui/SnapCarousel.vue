@@ -88,6 +88,9 @@ let lastAt = 0
 
 function onDown(e: PointerEvent) {
   if (count <= perView.value || e.button !== 0) return
+  // A control inside a slide is pressed, not dragged: capturing the pointer here
+  // retargeted its click to the track, and the share cards' Download did nothing.
+  if ((e.target as HTMLElement).closest('button, a, input, select, textarea')) return
   const { gsap } = useGsap()
   gsap.killTweensOf(paintProxy)
   dragging.value = true

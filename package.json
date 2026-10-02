@@ -6,6 +6,7 @@
   "description": "Awards Maker - streamer-made awards on a Streams Charts subdomain",
   "scripts": {
     "dev": "nuxt dev",
+    "dev:demo": "nuxt dev --dotenv .env.demo",
     "build": "nuxt build",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
@@ -23,6 +24,7 @@
     "mysql2": "^3.24.4",
     "nuxt": "^3.17.7",
     "nuxt-auth-utils": "^0.5.30",
+    "qrcode-generator": "^1.4.4",
     "satori": "^0.33.5",
     "vue": "^3.5.16",
     "vue-router": "^4.5.1",

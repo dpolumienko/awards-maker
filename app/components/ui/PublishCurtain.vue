@@ -12,7 +12,8 @@
 // The letter mechanic is ported from "Vertical Cut Reveal" on 21st.dev: each
 // character sits in its own overflow-hidden box and slides up from below, with
 // the stagger running out from the centre.
-import { accentOf, tint } from '~/utils/accent'
+import { accentOf, inkOnFlood, tint } from '~/utils/accent'
+import { useVersion } from '~/composables/useVersion'
 import { computed, nextTick, ref, watch } from 'vue'
 import { prefersReducedMotion, useGsap } from '~/composables/useReveal'
 import { themeCss } from '~/data/themes'
@@ -35,6 +36,10 @@ const accent = computed(() => accentOf(look))
 const font = computed(() => (look.font ? `'${look.font}', Archivo, sans-serif` : undefined))
 // Split on words first so a long name wraps where a name should wrap.
 const words = computed(() => name.trim().split(/\s+/).map((w) => [...w]))
+// The Fanzine goes to print instead: the page floods with the show's first ink
+// and the name lands on it in white or black, with no stage light crossing.
+const { isZine } = useVersion()
+const flood = computed(() => (isZine.value ? { background: accent.value, color: inkOnFlood(accent.value) } : undefined))
 
 function play() {
   const { gsap } = useGsap()
@@ -81,15 +86,19 @@ watch(
       ref="root"
       class="fixed inset-0 z-50 grid place-items-center overflow-hidden bg-canvas px-6"
       style="clip-path: inset(0 0 0 0)"
+      :style="flood"
       role="status"
       aria-live="polite"
     >
       <!-- the stage this show will live on, and a scrim so the name reads on it -->
-      <span aria-hidden="true" class="absolute inset-0" :style="themeCss(look.theme, accent, look.coverUrl)" />
-      <span aria-hidden="true" class="absolute inset-0 bg-black/45" />
+      <template v-if="!isZine">
+        <span aria-hidden="true" class="absolute inset-0" :style="themeCss(look.theme, accent, look.coverUrl)" />
+        <span aria-hidden="true" class="absolute inset-0 bg-black/45" />
+      </template>
 
       <!-- one house light, crossing once -->
       <span
+        v-if="!isZine"
         aria-hidden="true"
         class="js-beam absolute inset-y-[-30%] left-0 w-1/3 -rotate-12"
         :style="{
@@ -103,6 +112,7 @@ watch(
         <p
           aria-hidden="true"
           class="flex max-w-[22ch] flex-wrap justify-center gap-x-[0.28em] text-[clamp(2.6rem,9vw,7rem)] font-extrabold uppercase leading-[0.95] tracking-display"
+          :class="isZine && 'zine-display'"
           :style="{ fontFamily: font }"
         >
           <span v-for="(word, w) in words" :key="w" class="flex">
@@ -112,7 +122,7 @@ watch(
           </span>
         </p>
 
-        <p class="js-where mt-8 flex max-w-full items-center justify-center gap-2.5 whitespace-nowrap text-sm text-ink-2">
+        <p class="js-where mt-8 flex max-w-full items-center justify-center gap-2.5 whitespace-nowrap text-sm" :class="!isZine && 'text-ink-2'">
           <span aria-hidden="true" class="h-1.5 w-1.5 rounded-pill" :style="{ background: accent }" />
           {{ url }}
         </p>

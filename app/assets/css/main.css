@@ -6,6 +6,13 @@
   :root {
     /* backstage: the builder and the host's pages, where cards have to separate */
     --canvas: 10 10 12;
+    --ink: 255 255 255;
+    --ink-2: 165 165 172;
+    --ink-muted: 138 138 147;
+    --ink-disabled: 110 110 118;
+    --live: 61 214 140;
+    --warn: 255 176 32;
+    --danger: 255 92 92;
   }
   body[data-stage='1'] {
     /* the stage: an unlit room, and nothing in it but what is announced */

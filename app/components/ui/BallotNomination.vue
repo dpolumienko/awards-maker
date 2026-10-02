@@ -8,10 +8,12 @@ import PlatformDot from './PlatformDot.vue'
 import LivePill from './LivePill.vue'
 import MediaLightbox from './MediaLightbox.vue'
 import UiIcon from './UiIcon.vue'
+import ZinePen from '~/components/zine/ZinePen.vue'
 import { nomineeInitials, nomineeName, nomineeSub } from '~/utils/nominee'
 import { accentText } from '~/utils/accent'
 import type { Result } from '~/composables/useVoting'
 import type { Nomination } from '~/types/award'
+import { useVersion } from '~/composables/useVersion'
 
 const {
   nomination,
@@ -43,7 +45,8 @@ const radios = ref<HTMLButtonElement[]>([])
 const num = computed(() => String(index + 1).padStart(2, '0'))
 const winners = computed(() => results.filter((r) => r.top))
 // Fills keep the streamer's colour; anything that is type takes the readable one.
-const ink = computed(() => accentText(accent))
+const { isZine } = useVersion()
+const ink = computed(() => accentText(accent, isZine.value))
 // Only one row sits in the tab order and the arrows move between them. That is
 // the radio-group pattern, and it keeps a ten-category page from eating forty tabs.
 const tabTarget = computed(() => {
@@ -92,7 +95,8 @@ function onKey(e: KeyboardEvent, i: number) {
             {{ nomineeInitials(r.nominee) }}
           </span>
           <span class="min-w-0">
-            <span class="block truncate font-semibold">{{ nomineeName(r.nominee) }}</span>
+            <!-- the Fanzine circles a single winner; a tie gets nobody circled -->
+            <span class="block truncate font-semibold"><ZinePen :on="r.top && winners.length === 1">{{ nomineeName(r.nominee) }}</ZinePen></span>
             <span class="block text-[13px] text-ink-muted">{{ nomineeSub(r.nominee) }}</span>
           </span>
           <span
@@ -141,7 +145,7 @@ function onKey(e: KeyboardEvent, i: number) {
           {{ nomineeInitials(n) }}
         </span>
         <span class="min-w-0">
-          <span class="block truncate font-semibold">{{ nomineeName(n) }}</span>
+          <span class="block truncate font-semibold"><ZinePen :on="picked === n.id">{{ nomineeName(n) }}</ZinePen></span>
           <span class="flex flex-wrap items-center gap-x-2 text-[13px] text-ink-muted">
             <PlatformDot v-if="n.kind === 'channel'" :platform="n.channel.platform" :label="false" />
             {{ nomineeSub(n) }}
