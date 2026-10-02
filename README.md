@@ -28,11 +28,25 @@ pushed yet: that needs a token with the `workflow` scope (`gh auth refresh -s wo
 then commit the file). Pages on a private repository also requires a paid GitHub plan -
 on the free plan the demo starts working the moment the repository is public.
 
-Build it with `scripts/build-demo.sh` (usage at the top of the file): it renders
-the landing pages plus the award pages listed in `PRERENDER_ROUTES` from a local
-database, marks every page noindex, and puts a sign-in screen over the site
+Build it with `scripts/build-demo.sh` (usage at the top of the file). The demo needs
+no database: every page renders in the browser and `/api/*` is answered from
+localStorage (`app/demo/api.ts`), so sign-in, building, voting and the ceremony all
+work. It marks every page noindex and puts a sign-in screen over the site
 (`scripts/demo-gate.mjs` - a screen, not security: the branch is public). Commit
-`.output/public` as the `gh-pages` branch.
+`.output/public` as the `gh-pages` branch. `DEMO_DIGEST` keeps the live demo's
+sign-in: the hash is in any page of that branch. On Windows run it with
+`MSYS_NO_PATHCONV=1`, or Git Bash rewrites the `/awards-maker/` base into a path.
+
+`npm run dev:demo` is the same mode on localhost (`.env.demo`).
+
+## Two versions
+
+The design preview tab (left edge of every page) switches the whole site between
+**Current** and **Fanzine** - Concept C from the 2026-10-01 design round. Same pages
+and logic; the Fanzine is a token set (`app/assets/css/zine.css`) plus the pieces in
+`app/components/zine/`. The choice is a cookie (`am-version`), so pages render on the
+server in the right version; `?version=zine` in a link picks it. Removal once one
+wins: `zine.css`, `components/zine/`, `useVersion` and the `isZine` branches.
 
 ## Components ported from 21st.dev
 

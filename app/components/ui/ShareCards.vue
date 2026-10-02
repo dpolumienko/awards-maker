@@ -13,6 +13,7 @@ import SnapCarousel from './SnapCarousel.vue'
 import { nomineeName } from '~/utils/nominee'
 import { FORMATS, NOMINEE_CTAS, cardCopy, renderShareCard, type ShareFormat, type ShareRole } from '~/utils/shareCard'
 import type { Award } from '~/types/award'
+import { useVersion } from '~/composables/useVersion'
 
 const { award, url, closes = '', winners = {}, isHost = false, hasVoted = false } = defineProps<{
   award: Award
@@ -58,10 +59,13 @@ const nominees = computed(() =>
 )
 watch(nominees, (list) => { if (!nomineeChoice.value && list[0]) nomineeChoice.value = list[0].id }, { immediate: true })
 
+// the Fanzine draws flyers instead of stage cards
+const { isZine } = useVersion()
+
 /** One card for the whole show, then one per category. */
 const cards = computed(() => {
   const picked = nominees.value.find((n) => n.id === nomineeChoice.value)
-  const base = { look: award.look, url: plainUrl.value, format: format.value }
+  const base = { look: award.look, url: plainUrl.value, href: url, format: format.value, zine: isZine.value }
 
   if (role.value === 'nominee') {
     return picked
@@ -130,7 +134,7 @@ let palette: MutationObserver | null = null
 onMounted(() => {
   watch(cards, draw, { immediate: true, deep: true })
   palette = new MutationObserver(() => draw())
-  palette.observe(document.documentElement, { attributes: true, attributeFilter: ['data-palette'] })
+  palette.observe(document.documentElement, { attributes: true, attributeFilter: ['data-palette', 'data-version'] })
 })
 onBeforeUnmount(() => palette?.disconnect())
 

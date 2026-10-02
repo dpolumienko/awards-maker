@@ -13,6 +13,7 @@ import { FREE } from '~/types/award'
 import type { AwardSummary } from '~/composables/useAwards'
 import type { Phase } from '~/composables/useVoting'
 import { formatInZone } from '#shared/time'
+import { useVersion } from '~/composables/useVersion'
 
 // A summary, not the whole show: the catalog needs a name, a look and two
 // numbers, and shipping every nominee of every card down the wire to render a
@@ -24,7 +25,8 @@ const { award, phase, voters } = defineProps<{
 }>()
 
 const accent = computed(() => accentOf(award.look))
-const ink = computed(() => accentText(accent.value))
+const { isZine } = useVersion()
+const ink = computed(() => accentText(accent.value, isZine.value))
 const nominees = computed(() => award.categories)
 
 const STATE: Record<Phase, { tone: 'live' | 'results' | 'ended'; text: string }> = {

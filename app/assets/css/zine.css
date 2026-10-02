@@ -1,0 +1,198 @@
+/*
+  The Fanzine version (Concept C, outputs/awards-maker-concepts-2026-10-01):
+  a community's year printed on a risograph. Switched by data-version on <html>
+  (data/design.ts); everything here is scoped to it, so the Current version
+  never reads a line of this file.
+
+  The press has two inks and each has one job:
+    blue  - the press itself: structure, headings, data, state  (--gold here)
+    pink  - only what was chosen: your pick, the winner          (--pink)
+    black - type and every action button
+  Print is flat: no shadows, square corners. Type sits on solid ink or paper,
+  never on halftone dots. The one authored motion is the pen circle
+  (components/zine/ZinePen.vue).
+
+  Loaded after palettes.css, at the same specificity, so it wins over whatever
+  palette the Current version last had.
+*/
+
+:root[data-version='zine'] {
+  --font-body: 'Schibsted Grotesk';
+  --font-display: 'Anybody';
+  /* paper and ink */
+  --canvas: 250 250 247;
+  --s1: 250 250 247;
+  --s2: 239 239 234;
+  --s3: 228 228 222;
+  --hair: 207 207 200;
+  --hair2: 29 29 31;
+  --ink: 29 29 31;
+  --ink-2: 75 75 82;
+  --ink-muted: 92 92 100;
+  --ink-disabled: 120 120 128;
+  /* states print in ink too: live is the press blue, warn and danger dark enough for type */
+  --live: 0 100 159;
+  --warn: 150 82 0;
+  --danger: 190 30 30;
+  /* riso Blue is the accent; "gold" is only the token's name */
+  --gold: 0 120 191;
+  --gold-pressed: 0 100 159;
+  --gold-text: 0 100 159;
+  --on-gold: 255 255 255;
+  --on-gold-soft: 255 255 255;
+  --ivory: 29 29 31;
+  /* riso Fluorescent Pink: the pen, and only the pen */
+  --pink: 255 72 176;
+  --pink-ink: 194 25 127;
+  /* a bar that is not the leader still has to print */
+  --bar: 92 92 100;
+  --r-card: 0px;
+  --r-btn: 0px;
+  --glow-fill: none;
+  --glow-text: currentColor;
+}
+/* the stage and backstage are the same sheet of paper */
+:root[data-version='zine'] body,
+:root[data-version='zine'] body[data-stage] {
+  --canvas: 250 250 247;
+}
+
+:root[data-version='zine'] input,
+:root[data-version='zine'] textarea,
+:root[data-version='zine'] select {
+  color-scheme: light !important;
+}
+:root[data-version='zine'] input[type='date']::-webkit-calendar-picker-indicator,
+:root[data-version='zine'] input[type='time']::-webkit-calendar-picker-indicator {
+  filter: none;
+}
+:root[data-version='zine'] .rig {
+  display: none;
+}
+:root[data-version='zine'] .glow {
+  filter: none;
+}
+
+/* ---------------------------------------------------------------- type */
+
+:root[data-version='zine'] .display-1,
+:root[data-version='zine'] .display-2,
+:root[data-version='zine'] .heading,
+:root[data-version='zine'] .zine-display {
+  font-family: var(--font-display), 'Arial Black', sans-serif;
+  font-weight: 900;
+  font-stretch: 135%;
+  letter-spacing: -0.01em;
+}
+:root[data-version='zine'] .display-1 {
+  line-height: 0.86;
+}
+
+/* ---------------------------------------------------------------- buttons */
+
+/* every action is black ink; the palette's button treatments do not apply */
+:root[data-version='zine'] .btn-primary {
+  background-color: rgb(var(--ink));
+  background-image: none;
+  color: #fff;
+  box-shadow: none;
+  text-shadow: none;
+}
+:root[data-version='zine'] .btn-primary:hover {
+  background-color: #000;
+  background-image: none;
+}
+:root[data-version='zine'] .btn-primary:disabled,
+:root[data-version='zine'] .btn-primary[aria-disabled='true'] {
+  background-color: rgb(var(--s2));
+  color: rgb(var(--ink-disabled));
+  box-shadow: inset 0 0 0 2px rgb(var(--hair));
+}
+
+/* ---------------------------------------------------------------- the pen */
+
+.zine-pen {
+  position: relative;
+  display: inline-block;
+}
+.zine-pen-line {
+  position: absolute;
+  left: -9%;
+  top: -30%;
+  width: 118%;
+  height: 160%;
+  overflow: visible;
+  pointer-events: none;
+  fill: none;
+  stroke: rgb(var(--pink));
+  stroke-width: 4;
+  stroke-linecap: round;
+  mix-blend-mode: multiply;
+}
+.zine-pen-line.is-inked {
+  stroke-dasharray: var(--len);
+  animation: zine-pen 0.55s cubic-bezier(0.45, 0.05, 0.25, 1) both;
+}
+@keyframes zine-pen {
+  from {
+    stroke-dashoffset: var(--len);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .zine-pen-line.is-inked {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------- two plates */
+
+.zine-plate {
+  position: relative;
+  isolation: isolate;
+  color: rgb(var(--gold));
+}
+.zine-plate-1 {
+  display: block;
+}
+.zine-plate-2 {
+  position: absolute;
+  inset: 0;
+  color: rgb(var(--pink));
+  transform: translate(0.045em, 0.035em);
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------- stamps */
+
+/* a state is a rubber stamp: Voting open in the press blue, the winners in pink */
+:root[data-version='zine'] .ui-badge {
+  height: auto;
+  gap: 0;
+  padding: 6px 10px 5px;
+  border: 3px double currentColor;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 800;
+  font-stretch: 118%;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transform: rotate(-4deg);
+  color: rgb(var(--gold-text));
+}
+:root[data-version='zine'] .ui-badge > span[aria-hidden] {
+  display: none;
+}
+:root[data-version='zine'] .ui-badge[data-tone='results'] {
+  color: rgb(var(--pink-ink));
+}
+:root[data-version='zine'] .ui-badge[data-tone='ended'] {
+  color: rgb(var(--ink));
+}
+/* a circled name may not be clipped by the truncation around it */
+:root[data-version='zine'] .truncate:has(> .zine-pen) {
+  overflow: visible;
+  white-space: normal;
+}

@@ -47,7 +47,11 @@ export default defineNuxtConfig({
     },
   },
 
-  css: ['~/assets/css/main.css', '~/assets/css/palettes.css'],
+  css: ['~/assets/css/main.css', '~/assets/css/palettes.css', '~/assets/css/zine.css'],
+
+  // The static demo has no server to render on: every page is drawn in the
+  // browser from demo/api.ts, the way GitHub Pages serves it anyway (404.html).
+  ssr: process.env.NUXT_PUBLIC_DEMO !== '1',
 
   modules: ['@nuxtjs/tailwindcss', '@nuxtjs/seo', 'nuxt-auth-utils'],
 
@@ -89,6 +93,8 @@ export default defineNuxtConfig({
   // signal, so they are kept out of it. Award pages come in through their own
   // source, which is the whole point of the catalog existing.
   sitemap: {
+    // the demo has no database to list shows from, and is kept out of search anyway
+    enabled: process.env.NUXT_PUBLIC_DEMO !== '1',
     exclude: ['/my-awards', '/my-awards/**', '/create'],
     sources: ['/api/__sitemap__/urls'],
   },

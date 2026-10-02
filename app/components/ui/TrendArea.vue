@@ -8,6 +8,7 @@
 // The geometry lives in a stretched 0..100 viewBox and everything that must not
 // stretch - labels, gridlines, the hover dot - is HTML on top of it.
 import { DEFAULT_ACCENT } from '~/utils/accent'
+import { useVersion } from '~/composables/useVersion'
 import { computed, ref, useId } from 'vue'
 import type { DayCount } from '~/composables/useVoting'
 
@@ -20,6 +21,8 @@ const { points, accent = DEFAULT_ACCENT, label } = defineProps<{
 
 // one gradient per instance; two charts on a page must not share a fill
 const gradientId = `trend-fill-${useId()}`
+// print has no glow: in the Fanzine the area is one flat tint of the ink
+const { isZine } = useVersion()
 
 const max = computed(() => {
   const top = Math.max(...points.map((p) => p.votes), 1)
@@ -131,8 +134,8 @@ const ticks = computed(() => {
       >
         <defs>
           <linearGradient :id="gradientId" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" :stop-color="accent" stop-opacity="0.34" />
-            <stop offset="100%" :stop-color="accent" stop-opacity="0" />
+            <stop offset="0%" :stop-color="accent" :stop-opacity="isZine ? 0.28 : 0.34" />
+            <stop offset="100%" :stop-color="accent" :stop-opacity="isZine ? 0.28 : 0" />
           </linearGradient>
         </defs>
         <g class="js-trend">

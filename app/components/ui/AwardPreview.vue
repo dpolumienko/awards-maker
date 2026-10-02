@@ -13,6 +13,7 @@ import UiIcon from './UiIcon.vue'
 import PartnerChip from './PartnerChip.vue'
 import MediaLightbox from './MediaLightbox.vue'
 import { formatInZone } from '#shared/time'
+import { useVersion } from '~/composables/useVersion'
 
 const { award, state = 'draft', signedIn = false } = defineProps<{
   award: Award
@@ -27,7 +28,8 @@ const viewing = ref<{ src?: string; url?: string; title: string } | null>(null)
 // the whole point of letting people try them before the bill.
 const accent = computed(() => accentOf(award.look))
 // Accent as type has to clear 4.5:1; as a fill it stays exactly as picked.
-const ink = computed(() => accentText(accent.value))
+const { isZine } = useVersion()
+const ink = computed(() => accentText(accent.value, isZine.value))
 const headlineFont = computed(() =>
   award.look?.font ? `'${award.look.font}', Archivo, sans-serif` : undefined,
 )

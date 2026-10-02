@@ -4,6 +4,7 @@
 // bars, and text gets a lightened version of the same hue.
 
 const SURFACE = [14, 14, 16] // #0E0E10, the darkest surface any accent text sits on
+const PAPER = [250, 250, 247] // the Fanzine version's paper (assets/css/zine.css)
 const FLOOR = 4.5
 
 const channel = (v: number) => {
@@ -13,9 +14,9 @@ const channel = (v: number) => {
 const luminance = ([r, g, b]: number[]) =>
   0.2126 * channel(r!) + 0.7152 * channel(g!) + 0.0722 * channel(b!)
 
-function contrast(rgb: number[]) {
+function contrast(rgb: number[], surface = SURFACE) {
   const a = luminance(rgb)
-  const b = luminance(SURFACE)
+  const b = luminance(surface)
   return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)
 }
 
@@ -37,18 +38,20 @@ export function accentReadable(hex: string) {
 
 /**
  * The same colour, lightened toward white just far enough to clear 4.5:1.
- * Hue and character survive; the text becomes readable.
+ * Hue and character survive; the text becomes readable. On the Fanzine's paper
+ * (`paper`) it goes the other way: darkened toward black, the way an ink is.
  */
-export function accentText(hex: string) {
+export function accentText(hex: string, paper = false) {
   if (hex === DEFAULT_ACCENT) return 'rgb(var(--gold-text))'
   const rgb = toRgb(hex)
   if (!rgb) return hex
-  if (contrast(rgb) >= FLOOR) return hex
+  const surface = paper ? PAPER : SURFACE
+  if (contrast(rgb, surface) >= FLOOR) return hex
   for (let mix = 0.05; mix <= 1; mix += 0.05) {
-    const lifted = rgb.map((v) => v + (255 - v) * mix)
-    if (contrast(lifted) >= FLOOR) return toHex(lifted)
+    const moved = rgb.map((v) => (paper ? v * (1 - mix) : v + (255 - v) * mix))
+    if (contrast(moved, surface) >= FLOOR) return toHex(moved)
   }
-  return '#FFFFFF'
+  return paper ? '#000000' : '#FFFFFF'
 }
 
 /**
@@ -62,6 +65,18 @@ export const DEFAULT_ACCENT = 'rgb(var(--gold))'
 /** The show's accent: the streamer's own colour, or the palette's. */
 export function accentOf(look?: { accent?: string } | null) {
   return look?.accent || DEFAULT_ACCENT
+}
+
+/**
+ * Type on a whole page flooded with the accent - the Fanzine's ceremony. White
+ * wherever it holds 3:1 (the type there is display size), black ink otherwise.
+ */
+export function inkOnFlood(color: string) {
+  if (color === DEFAULT_ACCENT) return '#FFFFFF'
+  const rgb = toRgb(color)
+  if (!rgb) return '#FFFFFF'
+  const l = luminance(rgb)
+  return 1.05 / (l + 0.05) >= 3 ? '#FFFFFF' : '#1D1D1F'
 }
 
 /** Type on an accent fill. */

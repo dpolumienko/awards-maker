@@ -4,6 +4,7 @@ import GlowFilterDefs from '~/components/ui/GlowFilterDefs.vue'
 import PublishCurtain from '~/components/ui/PublishCurtain.vue'
 import { usePublishCurtain } from '~/composables/usePublishCurtain'
 import { DESIGN_BOOT } from '~/data/design'
+import { useVersionHead } from '~/composables/useVersion'
 
 // A page can ask for the shell to step aside - `definePageMeta({ chrome: false })`.
 // The ceremony screen is captured by OBS, and a site header in the shot is a site
@@ -27,6 +28,8 @@ useHead({ bodyAttrs: { 'data-stage': () => (stage.value ? '1' : '0') } })
 // Search Console HTML-tag verification, when NUXT_PUBLIC_GOOGLE_SITE_VERIFICATION is set
 const gsc = String(useRuntimeConfig().public.googleSiteVerification || '')
 if (gsc) useHead({ meta: [{ name: 'google-site-verification', content: gsc }] })
+// the site's version on <html>, and `?version=` in a link to pick it (data/design.ts)
+useVersionHead()
 // the design switcher's choice, applied before first paint (data/design.ts)
 useHead({ script: [{ innerHTML: DESIGN_BOOT, tagPriority: 'critical' }] })
 </script>

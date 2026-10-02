@@ -49,22 +49,19 @@ const pad = (i: number) => String(i + 1).padStart(2, '0')
               }"
               :transition="spring"
             />
-            <motion.span
-              class="tnum relative z-10 text-sm font-semibold tracking-micro"
-              :animate="{ color: active === i ? '#000000' : '#8A8A93' }"
-              :transition="prefersReducedMotion() ? still : { duration: 0.2 }"
+            <!-- colours are tokens, not animated hex: the Fanzine prints dark on paper -->
+            <span
+              class="tnum relative z-10 text-sm font-semibold tracking-micro transition-colors duration-200 motion-reduce:transition-none"
+              :class="active === i ? 'text-on-gold' : 'text-ink-muted'"
             >
               {{ pad(i) }}
-            </motion.span>
+            </span>
           </div>
 
+          <!-- full ink at rest: grey questions read as disabled (design audit) -->
           <motion.h3
-            class="text-lg font-semibold sm:text-xl"
-            :animate="{
-              x: active === i || hovered === i ? 4 : 0,
-              // white at rest: grey questions read as disabled (design audit)
-              color: '#FFFFFF',
-            }"
+            class="text-lg font-semibold text-ink sm:text-xl"
+            :animate="{ x: active === i || hovered === i ? 4 : 0 }"
             :transition="springSlow"
           >
             {{ item.q }}
