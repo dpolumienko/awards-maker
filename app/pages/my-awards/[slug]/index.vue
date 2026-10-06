@@ -298,11 +298,14 @@ useSeoMeta({
               and cannot be undone. Check the ties first.
             </template>
           </p>
-          <div class="mt-5 flex flex-wrap gap-3">
+          <!-- a grid, not a wrapping row: the one-way move gets the full width, the
+               two ways out share a line at equal width (review 2026-10-06) -->
+          <div class="mt-5 grid gap-3 sm:grid-cols-2">
             <UiButton
               v-if="phase === 'open' || phase === 'soon'"
               variant="ghost"
               size="sm"
+              class="w-full sm:col-span-2"
               @click="arm('close', () => closeVoting(slug))"
             >
               <span class="grid">
@@ -313,6 +316,7 @@ useSeoMeta({
             <UiButton
               v-if="phase === 'counting' || phase === 'capped'"
               size="sm"
+              class="w-full sm:col-span-2"
               @click="arm('publish', () => publishResults(slug))"
             >
               <span class="grid">
@@ -320,8 +324,8 @@ useSeoMeta({
                 <span class="col-start-1 row-start-1">{{ isArmed('publish') ? 'Publish - sure?' : 'Publish the winners' }}</span>
               </span>
             </UiButton>
-            <UiButton :to="`/my-awards/${award.slug}/reveal`" variant="ghost" size="sm">Run the ceremony</UiButton>
-            <UiButton :to="`/a/${award.slug}`" variant="ghost" size="sm">Open public page</UiButton>
+            <UiButton :to="`/my-awards/${award.slug}/reveal`" variant="ghost" size="sm" class="w-full">Run the ceremony</UiButton>
+            <UiButton :to="`/a/${award.slug}`" variant="ghost" size="sm" class="w-full">Open public page</UiButton>
           </div>
         </div>
 

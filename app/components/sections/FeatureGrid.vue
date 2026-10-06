@@ -28,7 +28,7 @@ const channels = [
           <span class="tnum text-sm font-semibold tracking-micro text-gold-text">01</span>
         </template>
         <h3 class="text-xl font-semibold">Nominate any channel, or type in anything</h3>
-        <p class="m-0 max-w-[60ch] text-sm leading-relaxed text-ink-2">Every channel we track, or plain text when the nominee is a mod, a clip or a running joke.</p>
+        <p class="m-0 max-w-[60ch] text-sm leading-relaxed text-ink-2">Every channel we track, plain text for a mod or a running joke, or an image or a clip of the moment itself.</p>
 
         <div class="mt-5 border-t border-hair pt-4">
           <div class="flex items-center gap-2 rounded-btn border border-gold-24 bg-s2 px-3 py-2 text-sm text-ink-2">
@@ -44,6 +44,12 @@ const channels = [
             <li class="flex items-center gap-3 rounded-btn border border-dashed border-hair2 px-3 py-2 text-sm text-ink-muted">
               <span aria-hidden="true" class="grid h-7 w-7 place-items-center rounded-pill border border-hair2">+</span>
               Add "the 3am raid" as text
+            </li>
+            <!-- the paid nominee type: a picture or a clip link (review 2026-10-06) -->
+            <li class="flex items-center gap-3 rounded-btn px-3 py-2 text-sm">
+              <span aria-hidden="true" class="h-7 w-10 flex-none rounded-btn bg-gradient-to-br from-gold/60 to-s3" />
+              <span class="font-semibold">The 3am raid</span>
+              <span class="ml-auto text-sm text-ink-2">Image or clip · paid</span>
             </li>
           </ul>
         </div>

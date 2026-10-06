@@ -34,5 +34,11 @@ export default defineNuxtPlugin((nuxtApp) => {
   const apply = (path: string) => (path === '/' ? start() : stop())
 
   nuxtApp.hook('app:mounted', () => apply(useRoute().path))
+  // Leaving the landing stops it before the route changes, not after: a wheel
+  // scroll still easing out could otherwise carry the next page down with it
+  // (review 2026-10-06: "All category ideas" opened /ideas at the bottom).
+  useRouter().beforeEach((to) => {
+    if (to.path !== '/') stop()
+  })
   useRouter().afterEach((to) => apply(to.path))
 })

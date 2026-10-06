@@ -47,8 +47,9 @@ useHead({ script: [{ innerHTML: DESIGN_BOOT, tagPriority: 'critical' }] })
     <!-- the room's light. Not on the ceremony screen: that one is its own stage,
          and in OBS mode the background has to stay exactly what the host chose. -->
     <div v-if="chrome" aria-hidden="true" class="rig pointer-events-none fixed inset-0 -z-10" />
-    <!-- the Fanzine's one animation: a follow-spot that lights the page -->
-    <ZineSpotlight v-if="chrome && isZine" />
+    <!-- the Fanzine's one animation: a follow-spot over the landing, and only
+         there (review 2026-10-06) - the tool pages are for working in -->
+    <ZineSpotlight v-if="isZine && route.path === '/'" />
     <SiteHeader v-if="chrome" />
     <main id="main">
       <NuxtPage />

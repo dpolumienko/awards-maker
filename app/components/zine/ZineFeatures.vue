@@ -24,13 +24,15 @@ const channels = [
       <div class="zf-grid">
         <article class="zf-clip">
           <h3>Nominate any channel, or type in anything</h3>
-          <p>Every channel we track, or plain text when the nominee is a mod, a clip or a running joke.</p>
+          <p>Every channel we track, plain text for a mod or a running joke, or an image or a clip of the moment itself.</p>
           <div class="zf-art" aria-hidden="true">
             <p class="zf-fill"><span>Nominee</span><i>search any channel</i></p>
             <ul class="zf-list">
               <li v-for="c in channels" :key="c.name"><PlatformDot :platform="c.platform" :label="false" :size="14" /><b>{{ c.name }}</b><span class="zf-meta">{{ c.meta }}</span></li>
             </ul>
             <p class="zf-add">+ Add "the 3am raid" as text</p>
+            <!-- the paid nominee type: a picture or a clip link (review 2026-10-06) -->
+            <p class="zf-media"><span class="zf-thumb" />The 3am raid<span class="zf-meta">Image or clip · paid</span></p>
           </div>
         </article>
 
@@ -98,6 +100,8 @@ const channels = [
 .zf-list { margin: 10px 0 0; padding: 0; list-style: none; }
 .zf-list li { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1.5px dashed rgb(var(--hair)); font-size: 14px; }
 .zf-meta { margin-left: auto; color: rgb(var(--ink-2)); font-size: 13px; }
+.zf-media { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 8px 10px; border: 2px solid rgb(var(--ink)); font: 800 14px/1.2 var(--font-display), sans-serif; font-stretch: 112%; }
+.zf-thumb { width: 44px; height: 30px; flex: none; background: radial-gradient(circle, rgb(var(--gold)) 46%, transparent 48%) 0 0 / 6px 6px, rgb(var(--s2)); border: 1.5px solid rgb(var(--ink)); }
 .zf-add { margin-top: 10px; padding: 8px 10px; border: 2px dashed rgb(var(--ink)); font-size: 14px; color: rgb(var(--ink-2)); }
 .zf-slip { position: relative; padding: 4px 12px; border: 2px solid rgb(var(--ink)); }
 .zf-slip p { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1.5px dashed rgb(var(--hair)); font: 800 16px/1 var(--font-display), sans-serif; font-stretch: 112%; }

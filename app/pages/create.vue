@@ -418,8 +418,9 @@ useSeoMeta({
               <div class="min-w-[200px] flex-[2]">
                 <UiField v-model="p.url" label="Link" placeholder="https://" />
               </div>
+              <!-- as tall as the inputs it sits beside, bottom edges lined up -->
               <UiConfirmButton
-                class="mb-9"
+                class="!h-12"
                 :aria-label="'Remove partner ' + (p.name || 'row')"
                 :confirm-aria-label="'Confirm removing partner ' + (p.name || 'row')"
                 @confirm="removePartner(p.id)"

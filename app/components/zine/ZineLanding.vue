@@ -257,7 +257,7 @@ const PACK_LINES: Record<string, string> = {
 .zl-grey { background: rgb(var(--s2)); }
 .zl-flood { display: grid; place-items: center; text-align: center; background: rgb(var(--gold)); color: #fff; }
 .zl-flood :deep(.zine-pen-line) { mix-blend-mode: normal; }
-.zl-flood-name { font-family: var(--font-display), sans-serif; font-weight: 900; font-stretch: 125%; font-size: 46px; }
+.zl-flood-name { font-family: var(--font-display), sans-serif; font-weight: 900; font-stretch: 112%; font-size: clamp(26px, 2.4vw, 34px); }
 .zl-flood p { margin-top: 26px; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
 .zl-cap { padding: 16px 18px; border-top: 2.5px solid var(--rule); background: rgb(var(--canvas)); }
 .zl-cap h3 { font-family: var(--font-display), sans-serif; font-weight: 900; font-stretch: 120%; font-size: 21px; line-height: 1.05; text-transform: uppercase; }
