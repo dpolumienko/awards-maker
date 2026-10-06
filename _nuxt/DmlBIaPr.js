@@ -1,1 +1,0 @@
-import{addressResolver as s}from"./BCamsCbl.js";import{aE as a,aH as o}from"./DA_yNBCs.js";const d=a({defaults:{"@type":"Place"},resolve(e,r){return typeof e.address!="string"&&(e.address=o(e.address,r,s)),e}});export{d as placeResolver};
