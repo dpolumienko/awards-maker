@@ -360,6 +360,7 @@ if (award.value && !thin.value) {
     defineBreadcrumb({
       // a getter: whether the catalog is open is only known once its fetch lands
       itemListElement: computed(() => [
+        { name: 'Streams Charts', item: 'https://streamscharts.com' },
         { name: 'Awards Maker', item: '/' },
         ...(catalogOpen.value ? [{ name: 'Catalog', item: '/catalog' }] : []),
         { name: award.value?.name ?? '' },
@@ -737,10 +738,8 @@ if (award.value && !thin.value) {
     <div v-else class="shell py-20 text-center">
       <h1 class="heading">This awards page is not here</h1>
       <p class="mx-auto mt-3 max-w-copy text-ink-2">
-        Nothing has been published under <b class="text-ink">/a/{{ slug }}</b> from this browser. Until the backend
-        lands a show lives in the browser that made it - a plain address from another device opens nothing.
-        The <b class="text-ink">Copy link</b> button on an awards page hands out a link that carries the show with
-        it, and that one opens anywhere.
+        Nothing is published under <b class="text-ink">/a/{{ slug }}</b>. The host may have taken it down, or the
+        link lost a letter on the way.
       </p>
       <div class="mt-6 flex flex-wrap justify-center gap-3">
         <UiButton to="/create">Create your awards</UiButton>

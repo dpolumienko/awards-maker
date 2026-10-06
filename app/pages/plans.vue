@@ -42,7 +42,7 @@ const faq = [
 ]
 
 useSeoMeta({
-  title: 'Plans and Pricing for Streamer Awards',
+  title: 'Awards Maker Plans and Pricing',
   description: `Free for ${FREE.maxNominations} categories and ${FREE.maxVoters} voters. $${PAID.priceUsd} once for an awards show without limits and with your own look. Or we run the production for you.`,
   ogImage: ogCard('plans'),
 })
@@ -50,7 +50,7 @@ useSeoMeta({
 
 useSchemaOrg([
   defineWebPage({ '@type': ['WebPage', 'FAQPage'], name: 'Plans and pricing' }),
-  defineBreadcrumb({ itemListElement: [{ name: 'Awards Maker', item: '/' }, { name: 'Plans' }] }),
+  defineBreadcrumb({ itemListElement: [{ name: 'Streams Charts', item: 'https://streamscharts.com' }, { name: 'Awards Maker', item: '/' }, { name: 'Plans' }] }),
   ...faq.map((f) => defineQuestion({ name: f.q, acceptedAnswer: f.a })),
 ])
 

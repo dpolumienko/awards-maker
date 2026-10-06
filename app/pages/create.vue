@@ -20,6 +20,7 @@ import type { AwardTemplate } from '~/data/templates'
 import { ideaGroup } from '~/data/ideas'
 import { useAwardDraft } from '~/composables/useAwardDraft'
 import { FIELD, FREE } from '~/types/award'
+import { INDEX } from '#shared/indexable'
 import { allTimeZones, utcToZoned, zoneCity, zoneOffset, zonedToUtc } from '#shared/time'
 import { DISPLAY_FONTS, useDisplayFonts } from '~/composables/useDisplayFonts'
 
@@ -224,12 +225,12 @@ const faq = [
   },
   {
     q: 'When does my awards page show up in search?',
-    a: 'Once it has at least three nominations, two nominees in each and a description. The checklist above the publish button is exactly that rule.',
+    a: `Once it has at least three nominations, two nominees in each and a description of ${INDEX.minDescription}+ characters. The checklist above the publish button is exactly that rule.`,
   },
 ]
 
 useSeoMeta({
-  title: 'Create Your Own Streamer Awards',
+  title: 'Create Your Own Awards Show',
   description:
     'Start from a ready-made set of categories, nominate any Twitch, Kick or YouTube channel, and publish a page your viewers vote on. Free with a Twitch or Kick login.',
   ogImage: ogCard('create'),
@@ -239,7 +240,7 @@ useSeoMeta({
 
 <template>
   <div class="shell py-10">
-    <h1 class="heading">Create your own streamer awards</h1>
+    <h1 class="heading">Create your own awards show</h1>
     <p class="mt-3 max-w-copy text-lg text-ink-2">
       Start from a ready-made set of categories or write your own, nominate channels from Twitch, Kick and YouTube or your community's favourite meme,
       then publish a page your viewers vote on.

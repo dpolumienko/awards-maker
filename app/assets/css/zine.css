@@ -165,7 +165,7 @@
 :root[data-ink='night'] .zine-plate {
   color: rgb(var(--gold-text));
 }
-:root[data-ink='night'] .zine-plate-2 {
+:root[data-ink='night'] .zine-plate::after {
   z-index: -1;
   mix-blend-mode: normal;
 }
@@ -275,10 +275,8 @@
   isolation: isolate;
   color: rgb(var(--gold));
 }
-.zine-plate-1 {
-  display: block;
-}
-.zine-plate-2 {
+.zine-plate::after {
+  content: attr(data-text);
   position: absolute;
   inset: 0;
   color: rgb(var(--pink));

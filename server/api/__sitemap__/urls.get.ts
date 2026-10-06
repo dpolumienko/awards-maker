@@ -12,12 +12,12 @@ export default defineSitemapEventHandler(async () => {
     slug: string
     name: string
     description: string
-    published_at: string | null
     results_at: string | null
+    updated_at: string | null
     categories: number | null
     min_nominees: number | null
   }>(
-    `SELECT a.slug, a.name, a.description, a.published_at, a.results_at,
+    `SELECT a.slug, a.name, a.description, a.results_at, a.updated_at,
             s.categories, s.min_nominees
        FROM awards a
        LEFT JOIN (
@@ -41,7 +41,8 @@ export default defineSitemapEventHandler(async () => {
     .map((r) => ({
       loc: `/a/${r.slug}`,
       // W3C dates only - the module drops a MySQL DATETIME string silently
-      lastmod: fromDbDateTime(r.results_at ?? r.published_at) || undefined,
+      // updated_at moves on every change to the show - closing, results, edits
+      lastmod: fromDbDateTime(r.updated_at) || undefined,
       changefreq: r.results_at ? ('monthly' as const) : ('daily' as const),
     }))
 })

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// "End of year awards category ideas" on the Fanzine landing: a contents page.
+// "Category ideas to start from" on the Fanzine landing: a contents page.
 // Three groups as columns of dashed rows, no emoji and no drifting rows - the
 // ideas are text a crawler and a reader can both take in. Same data and intro
 // as sections/CategoryIdeas.vue; all of them live on /ideas.
@@ -15,7 +15,7 @@ const shown = groups.reduce((n, g) => n + Math.min(g.items.length, SHOWN), 0)
 <template>
   <section id="ideas" class="zi">
     <div class="shell">
-      <h2 class="zi-h zine-display">End of year awards category ideas</h2>
+      <h2 class="zi-h zine-display">Category ideas to start from</h2>
       <p class="zi-intro">Stuck? Here are {{ shown }} of them, in three groups - all {{ IDEA_TOTAL }} are one page away.</p>
       <div class="zi-cols">
         <div v-for="g in groups" :key="g.id" class="zi-col">

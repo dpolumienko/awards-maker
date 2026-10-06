@@ -11,6 +11,7 @@ import CatalogSection from '~/components/sections/CatalogSection.vue'
 import FaqSection, { type FaqItem } from '~/components/sections/FaqSection.vue'
 import ZineLanding from '~/components/zine/ZineLanding.vue'
 import { useVersion } from '~/composables/useVersion'
+import { SC } from '~/data/sc'
 
 const { isZine } = useVersion()
 
@@ -19,16 +20,18 @@ const faq: FaqItem[] = [
   { q: 'How do I host my own streamer awards?', a: 'Sign in with Twitch or Kick, add up to 5 categories and fill each one with channels from Twitch, Kick or YouTube, or text nominees, publish, and share the page link with your viewers.' },
   { q: 'Is the awards maker free?', a: 'It\u2019s free. One awards can be active at a time, with up to 5 nominations in it.' },
   { q: 'Who can vote, and how are fake votes stopped?', a: 'In an open viewer vote, anyone can vote after signing in with Twitch or Kick. Each account gets exactly one vote per category, and that limit is always on.' },
-  { q: 'What are good categories for end of year awards?', a: 'Mix one or two big ones, like Clip of the Year or Chatter of the Year, with something only your community gets, like Rage Quit of the Year. The 30 ideas above are a good place to start.' },
+  { q: 'What are good categories for end of year awards?', a: 'Mix one or two big ones, like Clip of the Year or Chatter of the Year, with something only your community gets, like Rage Quit of the Year. The category ideas above are a good place to start.' },
   { q: 'Can I nominate Kick or YouTube streamers, or only Twitch channels?', a: 'Any channel in the Streams Charts database can be a nominee, and it covers Twitch, YouTube, Kick and more. A nominee doesn\u2019t even have to be a channel: type in a name, a clip title or a meme as text.' },
   { q: 'How many nominations can one awards have?', a: 'Up to 5 on the free plan, as many as you need on a paid show. If viewers give you more ideas than that, keep the ones they\u2019ll argue about hardest.' },
   { q: 'Does my awards get its own page?', a: 'Yes. Every published awards gets its own public page on Streams Charts, with a link you can paste in chat and a preview card for X and Discord.' },
   { q: 'Can I reveal the winners live on stream?', a: 'Yes, on your own stream. Close voting, announce each winner live, then publish the results so anyone who missed the broadcast finds the same list on the awards page.' },
-  { q: 'Is Awards Maker part of The Streamer Awards?', a: 'No. Awards Maker lets any streamer run awards for their own community on Streams Charts. News, nominees and winners of The Streamer Awards live on our awards events page.' },
+  { q: 'Is Awards Maker part of The Streamer Awards?', a: 'No. Awards Maker lets any streamer run awards for their own community on Streams Charts. News, nominees and winners of The Streamer Awards live on our awards events page.', link: { href: SC.awardsHub, text: 'Streaming awards calendar on Streams Charts' } },
 ]
 
 useSeoMeta({
-  title: 'Awards Maker: Create Your Own Streamer Awards',
+  // no "Streamer Awards" in a title: that cluster is navigational for The Streamer
+  // Awards and SC's /tools/awards already ranks for it (SEO audit 2026-10-06)
+  title: 'Awards Maker for Streamers: Let Chat Vote',
   description:
     'Run your own streamer awards: pick the categories, nominate channels from Twitch, Kick and YouTube, and let your viewers vote. Free to start.',
   ogImage: ogCard('home'),
@@ -37,6 +40,14 @@ useSeoMeta({
 
 useSchemaOrg([
   defineWebPage({ '@type': ['WebPage', 'FAQPage'], name: 'Awards Maker for Streamers: Run Your Own Awards Show' }),
+  // what the page is about, as an entity: no rating, so no rich result - it is
+  // for AI answers and knowledge panels (SEO audit 2026-10-06)
+  defineSoftwareApp({
+    name: 'Awards Maker',
+    applicationCategory: 'EntertainmentApplication',
+    operatingSystem: 'Web',
+    offers: { price: 0, priceCurrency: 'USD' },
+  }),
   ...faq.map((f) => defineQuestion({ name: f.q, acceptedAnswer: f.a })),
 ])
 </script>

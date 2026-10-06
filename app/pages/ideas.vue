@@ -47,9 +47,9 @@ useSeoMeta({
 
 
 useSchemaOrg([
-  defineWebPage({ '@type': ['WebPage', 'FAQPage'], name: 'End of year awards category ideas' }),
+  defineWebPage({ '@type': ['WebPage', 'FAQPage'], name: 'Award Category Ideas for Streamers' }),
   defineBreadcrumb({
-    itemListElement: [{ name: 'Awards Maker', item: '/' }, { name: 'Category ideas' }],
+    itemListElement: [{ name: 'Streams Charts', item: 'https://streamscharts.com' }, { name: 'Awards Maker', item: '/' }, { name: 'Category ideas' }],
   }),
   ...faq.map((f) => defineQuestion({ name: f.q, acceptedAnswer: f.a })),
   defineItemList({
@@ -73,7 +73,7 @@ useSchemaOrg([
       </ol>
     </nav>
 
-    <h1 class="heading max-w-[22ch]">End of year awards category ideas</h1>
+    <h1 class="heading max-w-[22ch]">Award Category Ideas for Streamers</h1>
     <p class="mt-4 max-w-copy text-lg text-ink-2">
       {{ IDEA_TOTAL }} categories for a streamer awards show, in four groups. Open a group as a draft,
       keep the ones that fit your channel, rename the rest.
