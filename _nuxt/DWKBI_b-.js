@@ -1,0 +1,1 @@
+import{p as t}from"./qQGzO45s.js";import{r as a}from"./BWJQx-M7.js";import{aJ as i,aM as o}from"./DU_SLz4p.js";import"./D4q39P7U.js";import"./wUxtwMMk.js";import"./_ILqjqqV.js";import"./My7VQ-rr.js";const v=i({defaults:{"@type":"Review"},inheritMeta:["inLanguage"],resolve(r,e){return r.reviewRating=o(r.reviewRating,e,a),r.author=o(r.author,e,t),r}});export{v as reviewResolver};

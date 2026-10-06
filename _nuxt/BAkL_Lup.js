@@ -1,0 +1,1 @@
+import{a as n}from"./D-r9598F.js";const e=/streamer'?s?\s*awards/i,s={minDescription:80};function o(i){return i.categories>=n.minNominations&&i.minNominees>=n.minNomineesPerNomination&&i.description.trim().length>=s.minDescription&&!e.test(i.name)}export{s as I,e as T,o as i};
