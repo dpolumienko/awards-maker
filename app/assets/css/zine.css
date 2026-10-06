@@ -214,13 +214,25 @@
    swipes across the button you are about to press - drawn in from the left,
    like a hand doing it. Pink stays the pen's and only marks what was chosen. */
 :root[data-version='zine'] {
-  --brush: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'%3E%3Cpath d='M4 9C40 3 92 7 140 4s50 1 56 4l3 6-4 5 4 6-3 7c-38 4-90 1-136 5S10 36 3 33L1 26l3-5-3-6z'/%3E%3C/svg%3E");
+  /* five strokes, so no two buttons in a row look stamped from one die: a plain
+     swipe, a dry brush that leaves streaks, a wobbly one, a slanted one that
+     starts in a blob, and a double pass. UiButton picks one at random on mount
+     (data-brush), menu items take them in turn. */
+  --brush-0: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'%3E%3Cpath d='M4 9C40 3 92 7 140 4s50 1 56 4l3 6-4 5 4 6-3 7c-38 4-90 1-136 5S10 36 3 33L1 26l3-5-3-6z'/%3E%3C/svg%3E");
+  --brush-1: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'%3E%3Cpath d='M2 12C50 6 120 10 196 7l2 9-3 6 2 8c-60 4-130 0-194 6L1 28l3-6-3-5z'/%3E%3Cpath d='M10 35c60-3 120-1 182-4l-1 3c-60 3-120 1-180 4z'/%3E%3Cpath d='M22 4c50-2 110 0 160-1v2c-50 1-110-1-160 1z'/%3E%3C/svg%3E");
+  --brush-2: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'%3E%3Cpath d='M3 10c20-6 40 4 60-2s40-6 60 0 40 4 70-3l5 9-5 6 6 7-6 6c-30-5-50 5-70 0s-40-6-60 0-40 6-60 1L0 28l4-7-3-6z'/%3E%3C/svg%3E");
+  --brush-3: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'%3E%3Cpath d='M12 6c60-2 120-4 186-1l-8 30c-60 4-120 2-186 4z'/%3E%3Cpath d='M16 4C4 7 0 22 6 36c5 2 10 1 12-2z'/%3E%3C/svg%3E");
+  --brush-4: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'%3E%3Cpath d='M3 15c50-5 120-3 194-6l1 14c-70 4-130 6-194 8z'/%3E%3Cpath fill-opacity='.55' d='M6 5c60-3 120-1 190 2l-2 10c-70 1-130-1-187 3z'/%3E%3C/svg%3E");
+  --brush: var(--brush-0);
   --squiggle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 12' preserveAspectRatio='none'%3E%3Cpath d='M3 7C31 2 62 10 101 6s69-5 96 0' fill='none' stroke='black' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E");
 }
-.zine-reveal {
-  clip-path: inset(0 100% 0 0);
-  transition: clip-path 0.38s cubic-bezier(0.45, 0.05, 0.25, 1);
-}
+/* each stroke also lands with its own tilt, speed and direction */
+:root[data-version='zine'] [data-brush='1'] { --brush: var(--brush-1); --brush-tilt: -1.2deg; --brush-dur: 0.2s; }
+:root[data-version='zine'] [data-brush='2'] { --brush: var(--brush-2); --brush-tilt: 0.8deg; --brush-dur: 0.26s; }
+:root[data-version='zine'] [data-brush='3'] { --brush: var(--brush-3); --brush-tilt: -0.6deg; --brush-dur: 0.22s; --brush-from: inset(0 0 0 100%); }
+:root[data-version='zine'] [data-brush='4'] { --brush: var(--brush-4); --brush-tilt: 1.4deg; --brush-dur: 0.18s; }
+:root[data-version='zine'] .account-item:nth-of-type(2n) { --brush: var(--brush-2); --brush-tilt: 0.6deg; }
+:root[data-version='zine'] .account-item:nth-of-type(3n) { --brush: var(--brush-4); --brush-tilt: -0.8deg; }
 
 /* the nav: a hand-drawn underline instead of a ruler-straight bar */
 :root[data-version='zine'] .nav-link .nav-bar {
@@ -231,7 +243,7 @@
   -webkit-mask: var(--squiggle) center / 100% 100% no-repeat;
   mask: var(--squiggle) center / 100% 100% no-repeat;
   clip-path: inset(0 100% 0 0);
-  transition: clip-path 0.38s cubic-bezier(0.45, 0.05, 0.25, 1);
+  transition: clip-path 0.24s cubic-bezier(0.45, 0.05, 0.25, 1);
 }
 :root[data-version='zine'] .nav-link:hover .nav-bar,
 :root[data-version='zine'] .nav-link:focus-visible .nav-bar,
@@ -255,8 +267,9 @@
   background: var(--marker, rgb(var(--gold)));
   -webkit-mask: var(--brush) center / 100% 100% no-repeat;
   mask: var(--brush) center / 100% 100% no-repeat;
-  clip-path: inset(0 100% 0 0);
-  transition: clip-path 0.38s cubic-bezier(0.45, 0.05, 0.25, 1);
+  transform: rotate(var(--brush-tilt, 0deg));
+  clip-path: var(--brush-from, inset(0 100% 0 0));
+  transition: clip-path var(--brush-dur, 0.24s) cubic-bezier(0.45, 0.05, 0.25, 1);
 }
 :root[data-version='zine'] .ui-btn-ghost::before,
 :root[data-version='zine'] .account-item::before {

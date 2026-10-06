@@ -16,7 +16,7 @@ const catalogOpen = useCatalogOpen()
 import { IDEA_GROUPS, IDEA_TOTAL, ideaEmoji } from '~/data/ideas'
 
 const root = ref<HTMLElement | null>(null)
-const SHOWN = 6
+const SHOWN = 5
 const ideaRow = 'idea-row flex items-center gap-3 rounded-card border border-hair bg-canvas px-4 py-3 text-[15px] font-medium text-ink'
 useReveal(root, { stagger: 0.04 })
 
