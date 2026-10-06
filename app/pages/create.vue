@@ -7,6 +7,7 @@ import UiField from '~/components/ui/UiField.vue'
 import UiDateTimeField from '~/components/ui/UiDateTimeField.vue'
 import UiTextarea from '~/components/ui/UiTextarea.vue'
 import UiButton from '~/components/ui/UiButton.vue'
+import SignInButtons from '~/components/ui/SignInButtons.vue'
 import NominationCard from '~/components/ui/NominationCard.vue'
 import AwardPreview from '~/components/ui/AwardPreview.vue'
 import PublishPanel from '~/components/ui/PublishPanel.vue'
@@ -91,7 +92,7 @@ watch(
 )
 
 // A draft belongs to an account now, so the builder loads it once there is one.
-const { signedIn, isHost, signInAsHost } = useAccount()
+const { signedIn, isHost, channel, signInAsHost } = useAccount()
 const { load: loadBilling, checkout, checkoutError } = usePro()
 onMounted(async () => {
   loadBilling()
@@ -179,8 +180,16 @@ async function onPublish() {
   // Running a show needs the channel scopes, which the voter sign-in does not
   // grant. Sending them through the wider consent here beats a 403 after they
   // have filled in the whole form.
-  if (!signedIn.value || !isHost.value) {
-    signInAsHost()
+  // Signed out, there are two accounts to choose from, so the page takes them to
+  // the pair of sign-in buttons instead of picking Twitch for them.
+  if (!signedIn.value) {
+    const box = document.getElementById('host-signin')
+    box?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    box?.querySelector('button')?.focus({ preventScroll: true })
+    return
+  }
+  if (!isHost.value) {
+    signInAsHost(channel.value.platform === 'kick' ? 'kick' : 'twitch')
     return
   }
   const award = await publish()
@@ -222,7 +231,7 @@ const faq = [
 useSeoMeta({
   title: 'Create Your Own Streamer Awards',
   description:
-    'Start from a ready-made set of categories, nominate any Twitch, Kick or YouTube channel, and publish a page your viewers vote on. Free with a Twitch login.',
+    'Start from a ready-made set of categories, nominate any Twitch, Kick or YouTube channel, and publish a page your viewers vote on. Free with a Twitch or Kick login.',
   ogImage: ogCard('create'),
 })
 // No structured data: the builder is noindex (a client-rendered form, not a page to rank).
@@ -252,18 +261,13 @@ useSeoMeta({
     <!-- signed out: nothing is blocked except publishing, the way the flow was designed -->
     <div
       v-if="!signedIn"
+      id="host-signin"
       class="mt-8 flex flex-wrap items-center gap-4 rounded-card border border-hair bg-s1 p-5"
     >
       <p class="text-sm text-ink-2">
-        You can build the whole thing first. Twitch login is asked when you publish.
+        You can build the whole thing first. A Twitch or Kick login is asked when you publish.
       </p>
-      <button
-        type="button"
-        class="ml-auto flex h-11 items-center gap-2 rounded-btn bg-twitch px-4 text-sm font-bold uppercase tracking-button text-white transition-opacity hover:opacity-90"
-        @click="signInAsHost"
-      >
-        Sign in with Twitch
-      </button>
+      <SignInButtons class="ml-auto" @choose="signInAsHost" />
     </div>
 
     <!-- signed in: the channel the awards belong to -->

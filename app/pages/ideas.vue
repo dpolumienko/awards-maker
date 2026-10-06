@@ -154,7 +154,7 @@ useSchemaOrg([
       <h2 class="text-2xl font-bold">Take five and run the show</h2>
       <p class="mt-3 max-w-copy text-ink-2">
         Start from a draft, nominate any channel Streams Charts tracks, and your awards get a public
-        page your viewers can vote on. Free with a Twitch login.
+        page your viewers can vote on. Free with a Twitch or Kick login.
       </p>
       <div class="mt-6 flex flex-wrap gap-3">
         <UiButton to="/create">Create your awards</UiButton>

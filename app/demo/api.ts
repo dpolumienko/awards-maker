@@ -23,6 +23,7 @@ interface DemoUser {
   avatar: null
   role: 'admin'
   host: true
+  platform: 'twitch' | 'kick'
 }
 interface Ballot {
   userId: number
@@ -43,7 +44,7 @@ interface Db {
 }
 
 // admin, so a paid-looking show publishes without a checkout that cannot run here
-export const DEMO_USER: DemoUser = { id: 9001, login: 'demo_host', name: 'demo_host', avatar: null, role: 'admin', host: true }
+export const DEMO_USER: DemoUser = { id: 9001, login: 'demo_host', name: 'demo_host', avatar: null, role: 'admin', host: true, platform: 'twitch' }
 
 function load(): Db {
   try {
@@ -62,9 +63,10 @@ function save(db: Db) {
   }
 }
 
-export function demoSignIn() {
+/** Signs in the demo host, as whichever provider was clicked. */
+export function demoSignIn(platform: DemoUser['platform'] = 'twitch') {
   const db = load()
-  db.user = DEMO_USER
+  db.user = { ...DEMO_USER, platform }
   save(db)
 }
 
@@ -201,7 +203,7 @@ export async function demoApi(url: string, opts: { method?: string; body?: unkno
       save(db)
       return { ok: true }
     }
-    const draft = db.draft ?? { name: '', description: '', nominations: [], partners: [], look: {}, host: { name: DEMO_USER.name, platform: 'twitch' } }
+    const draft = db.draft ?? { name: '', description: '', nominations: [], partners: [], look: {}, host: { name: DEMO_USER.name, platform: db.user?.platform ?? 'twitch' } }
     return { draft: withIds(db, { slug: '', status: 'draft', ...draft }) }
   }
 

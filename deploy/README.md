@@ -11,6 +11,9 @@ behind an nginx that something else on the box already owns.
    matches them exactly:
    - `https://<domain>/auth/twitch` - voters
    - `https://<domain>/auth/twitch-host` - hosts
+   And the same two on the Kick application:
+   - `https://<domain>/auth/kick` - voters
+   - `https://<domain>/auth/kick-host` - hosts
 3. `cp deploy/nginx/awards-maker.conf /etc/nginx/sites-available/` and symlink it
    into `sites-enabled`, then `nginx -t && systemctl reload nginx`.
    The app container must share a docker network nginx can reach.

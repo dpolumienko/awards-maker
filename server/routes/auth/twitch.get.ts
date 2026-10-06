@@ -1,3 +1,4 @@
+import { safeReturn } from '../../utils/signin'
 import { VOTER_SCOPES, upsertTwitchUser } from '../../utils/users'
 
 /**
@@ -25,14 +26,3 @@ export default defineOAuthTwitchEventHandler({
     return sendRedirect(event, '/?signin=failed')
   },
 })
-
-/**
- * Where to land afterwards. Taken from our own cookie rather than a query
- * parameter, and only ever a path on this site - an open redirect on a login
- * endpoint is how a phishing page borrows your domain.
- */
-function safeReturn(event: Parameters<typeof getCookie>[0]): string {
-  const to = getCookie(event, 'am-return') || '/'
-  deleteCookie(event, 'am-return')
-  return to.startsWith('/') && !to.startsWith('//') ? to : '/'
-}

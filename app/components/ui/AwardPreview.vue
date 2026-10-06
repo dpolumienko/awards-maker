@@ -197,7 +197,7 @@ const countdown = computed(() => {
       <div v-else class="mt-3 rounded-btn border border-dashed border-hair2 px-4 py-6 text-center text-sm text-ink-muted">
         Nominees you add appear here, as your viewers will see them.
       </div>
-      <p class="mt-4 text-sm text-ink-muted">One vote per category, Twitch login on submit</p>
+      <p class="mt-4 text-sm text-ink-muted">One vote per category, Twitch or Kick login on submit</p>
 
       <!-- everything below the ballot: dates, the rest of the card -->
       <div class="mt-6 grid gap-6 border-t border-hair pt-6 sm:grid-cols-2">

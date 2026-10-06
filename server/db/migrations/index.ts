@@ -9,8 +9,10 @@
 // through plain Node, which needs it. The bundler does not mind either way.
 import { sql as initial } from './001_initial.ts'
 import { sql as datetimes } from './002_datetimes.ts'
+import { sql as kickLogin } from './003_kick_login.ts'
 
 export const MIGRATIONS: { name: string; sql: string }[] = [
   { name: '001_initial', sql: initial },
   { name: '002_datetimes', sql: datetimes },
+  { name: '003_kick_login', sql: kickLogin },
 ]

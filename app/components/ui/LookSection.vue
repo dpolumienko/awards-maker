@@ -7,6 +7,8 @@
 // in, so the control is a sign-in button until there is one.
 import { THEMES, themeCss } from '~/data/themes'
 import { ref } from 'vue'
+import SignInButtons from './SignInButtons.vue'
+import type { SignInProvider } from '~/composables/useAccount'
 import { ImageError, fileToStoredImage } from '~/utils/image'
 import { DEFAULT_ACCENT, accentReadable, resolveAccent } from '~/utils/accent'
 import type { AwardLook } from '~/types/award'
@@ -17,7 +19,7 @@ const { look, signedIn = false, channel = '' } = defineProps<{
   signedIn?: boolean
   channel?: string
 }>()
-const emit = defineEmits<{ 'update:look': [AwardLook]; signIn: [] }>()
+const emit = defineEmits<{ 'update:look': [AwardLook]; signIn: [SignInProvider] }>()
 
 // First swatch is the free default - the site palette's own accent, so it is
 // blue under SC Blue - the rest are the paid palette, plus a custom picker for a
@@ -204,13 +206,7 @@ function clearCover() {
         <span class="text-sm text-ink-muted">Change it there and the awards page follows.</span>
       </div>
       <div v-else class="flex flex-wrap items-center gap-3">
-        <button
-          type="button"
-          class="flex h-11 items-center gap-2 rounded-btn bg-twitch px-4 text-sm font-bold uppercase tracking-button text-white transition-opacity hover:opacity-90"
-          @click="emit('signIn')"
-        >
-          Sign in with Twitch
-        </button>
+        <SignInButtons @choose="(p) => emit('signIn', p)" />
         <span class="text-sm text-ink-2">Your channel avatar becomes the logo on the awards page.</span>
       </div>
     </div>

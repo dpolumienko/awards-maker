@@ -8,6 +8,8 @@
 // shell. `?state=` still forces a phase for demos and screenshots.
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import UiButton from '~/components/ui/UiButton.vue'
+import SignInButtons from '~/components/ui/SignInButtons.vue'
+import type { SignInProvider } from '~/composables/useAccount'
 import UiBadge from '~/components/ui/UiBadge.vue'
 import PlatformDot from '~/components/ui/PlatformDot.vue'
 import LimitMeter from '~/components/ui/LimitMeter.vue'
@@ -112,7 +114,7 @@ const mode = computed<'vote' | 'locked' | 'results'>(() => {
  * per account, so the voter presses it.
  */
 const PARKED = (s: string) => `am-picks:${s}`
-async function submit() {
+async function submit(provider?: SignInProvider) {
   if (!pickedCount.value) return
   voteError.value = ''
   if (!signedIn.value) {
@@ -121,7 +123,7 @@ async function submit() {
     } catch {
       /* private mode: the voter picks again */
     }
-    signIn()
+    signIn(provider)
     return
   }
   try {
@@ -263,7 +265,7 @@ const faq = computed(() => {
   return [
     {
       q: `Who can vote in ${a.name}?`,
-      a: `Anyone with a Twitch account. You sign in when you submit, and the account is only used to keep one person to one ballot - we read your email and nothing else. ${a.host.name} does not see who voted for whom.`,
+      a: `Anyone with a Twitch or Kick account. You sign in when you submit, and the account is only used to keep one person to one ballot - we read your email and nothing else. ${a.host.name} does not see who voted for whom.`,
     },
     {
       q: 'How many times can I vote?',
@@ -324,7 +326,7 @@ const seoDescription = computed(() => {
           ]
         : [
           `${a.host.name} is running ${a.name}: ${titles}${more}.`,
-          `${nomineeTotal.value} nominees, and anyone can vote with a Twitch login.`,
+          `${nomineeTotal.value} nominees, and anyone can vote with a Twitch or Kick login.`,
           a.closesAt && `Voting closes ${fmtDate(a.closesAt)}.`,
         ]
   return parts.filter(Boolean).join(' ')
@@ -526,7 +528,7 @@ if (award.value && !thin.value) {
                 :mins="countdown.mins"
                 :ink="ink"
               />
-              <p class="mt-3 text-sm text-ink-2">One vote per category. Twitch login on submit.</p>
+              <p class="mt-3 text-sm text-ink-2">One vote per category. Twitch or Kick login on submit.</p>
             </div>
 
             <div class="mt-6 space-y-4">
@@ -557,17 +559,17 @@ if (award.value && !thin.value) {
                 <p v-if="pickedCount < award.nominations.length" class="hidden text-sm text-ink-muted sm:block">
                   You get one submit, so finish the ones you care about first.
                 </p>
-                <button
+                <!-- signed out: submitting is signing in, with either account; a
+                     disabled pair that does not say why reads as broken -->
+                <SignInButtons
                   v-if="!signedIn"
-                  type="button"
-                  class="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-btn bg-twitch px-5 py-2 text-center text-[15px] font-bold uppercase leading-tight tracking-button text-white transition-opacity hover:opacity-90 disabled:opacity-40 sm:ml-auto sm:w-auto"
+                  label="Vote with"
                   :disabled="!pickedCount"
-                  @click="submit"
-                >
-                  <!-- a disabled button that does not say why reads as broken -->
-                  {{ pickedCount ? 'Sign in with Twitch to submit' : 'Pick at least one' }}
-                </button>
-                <UiButton v-else class="w-full sm:ml-auto sm:w-auto" :disabled="!pickedCount" @click="submit">
+                  block
+                  class="sm:ml-auto sm:w-auto"
+                  @choose="submit"
+                />
+                <UiButton v-else class="w-full sm:ml-auto sm:w-auto" :disabled="!pickedCount" @click="submit()">
                   {{ pickedCount ? `Submit ${pickedCount} ${pickedCount === 1 ? 'vote' : 'votes'}` : 'Pick at least one' }}
                 </UiButton>
               </div>
@@ -641,7 +643,7 @@ if (award.value && !thin.value) {
               <p class="label">How voting works</p>
               <ul class="mt-3 list-none space-y-2.5 p-0 text-sm text-ink-2">
                 <li v-for="r in [
-                  'Any Twitch account can vote, one ballot each.',
+                  'Any Twitch or Kick account can vote, one ballot each.',
                   'One vote per category, locked once you submit.',
                   'Counts stay hidden until the host announces the winners.',
                   'The host sets the categories and the nominees.',

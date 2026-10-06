@@ -12,6 +12,7 @@
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import UiButton from './ui/UiButton.vue'
 import UiIcon from './ui/UiIcon.vue'
+import SignInButtons from './ui/SignInButtons.vue'
 import PlatformDot from './ui/PlatformDot.vue'
 import ScBrand from './ScBrand.vue'
 import { useCatalogOpen, useMyAwards } from '~/composables/useAwards'
@@ -115,15 +116,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
             <span class="sr-only">Your account, {{ host }}</span>
           </button>
 
-          <!-- signed out: the one thing there is to do -->
-          <button
-            v-else
-            type="button"
-            class="flex h-11 items-center gap-2 rounded-btn border border-twitch px-4 text-[13px] font-bold uppercase tracking-button text-ink transition-colors hover:bg-twitch/15"
-            @click="signIn"
-          >
-            Sign in with Twitch
-          </button>
+          <!-- signed out: the one thing there is to do, with either account -->
+          <SignInButtons v-else label="" @choose="signIn" />
 
           <div
             v-show="menuOpen && signedIn"
@@ -234,14 +228,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
             Sign out, {{ host }}
           </button>
         </template>
-        <button
-          v-else
-          type="button"
-          class="mt-4 flex h-11 w-full items-center justify-center rounded-btn bg-twitch text-sm font-bold uppercase tracking-button text-white"
-          @click="signIn"
-        >
-          Sign in with Twitch
-        </button>
+        <SignInButtons v-else block class="mt-4" @choose="signIn" />
       </ClientOnly>
       <UiButton to="/create" size="sm" class="mt-5 w-full">Create your awards</UiButton>
     </nav>

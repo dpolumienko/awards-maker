@@ -78,7 +78,7 @@ const faq = [
   },
   {
     q: 'Can I vote in someone else’s awards?',
-    a: 'Yes. Open the page, pick a nominee in each category and submit with a Twitch login. One ballot per account, one vote per category, and the counts stay hidden until the host announces the winners.',
+    a: 'Yes. Open the page, pick a nominee in each category and submit with a Twitch or Kick login. One ballot per account, one vote per category, and the counts stay hidden until the host announces the winners.',
   },
   {
     q: 'What does it cost to run my own?',

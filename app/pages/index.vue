@@ -16,9 +16,9 @@ const { isZine } = useVersion()
 
 // Copy is frozen in outputs/awards-landing-copy-2026-09-13.md - change it there first.
 const faq: FaqItem[] = [
-  { q: 'How do I host my own streamer awards?', a: 'Sign in with Twitch, add up to 5 categories and fill each one with channels from Twitch, Kick or YouTube, or text nominees, publish, and share the page link with your viewers.' },
+  { q: 'How do I host my own streamer awards?', a: 'Sign in with Twitch or Kick, add up to 5 categories and fill each one with channels from Twitch, Kick or YouTube, or text nominees, publish, and share the page link with your viewers.' },
   { q: 'Is the awards maker free?', a: 'It\u2019s free. One awards can be active at a time, with up to 5 nominations in it.' },
-  { q: 'Who can vote, and how are fake votes stopped?', a: 'In an open viewer vote, anyone can vote after signing in with Twitch. Each account gets exactly one vote per category, and that limit is always on.' },
+  { q: 'Who can vote, and how are fake votes stopped?', a: 'In an open viewer vote, anyone can vote after signing in with Twitch or Kick. Each account gets exactly one vote per category, and that limit is always on.' },
   { q: 'What are good categories for end of year awards?', a: 'Mix one or two big ones, like Clip of the Year or Chatter of the Year, with something only your community gets, like Rage Quit of the Year. The 30 ideas above are a good place to start.' },
   { q: 'Can I nominate Kick or YouTube streamers, or only Twitch channels?', a: 'Any channel in the Streams Charts database can be a nominee, and it covers Twitch, YouTube, Kick and more. A nominee doesn\u2019t even have to be a channel: type in a name, a clip title or a meme as text.' },
   { q: 'How many nominations can one awards have?', a: 'Up to 5 on the free plan, as many as you need on a paid show. If viewers give you more ideas than that, keep the ones they\u2019ll argue about hardest.' },
