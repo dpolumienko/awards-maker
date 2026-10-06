@@ -129,6 +129,35 @@ function tally(s: Show) {
   return { voters: s.ballots.length, counts, days }
 }
 
+/**
+ * A demo show is published with a week of other people's ballots already in it,
+ * so the host dashboard has a curve, reach per category and a standing to look
+ * at (review 2026-10-06). Every category has a favourite and a runner-up, later
+ * categories are skipped more often, and two days carry most of the traffic. The
+ * demo host's own ballot is still theirs to cast.
+ */
+function sampleBallots(award: Award, voters = 60, days = 7): Ballot[] {
+  const weighted = <T>(items: T[], w: number[]) => {
+    let r = Math.random() * w.reduce((a, b) => a + b, 0)
+    for (let i = 0; i < items.length; i++) if ((r -= w[i]!) < 0) return items[i]!
+    return items[0]!
+  }
+  const dayWeights = Array.from({ length: days }, (_, i) => (i === 0 ? 4 : i === Math.floor(days / 2) ? 6 : 1 + Math.random() * 2))
+  const ballots: Ballot[] = []
+  for (let v = 0; v < voters; v++) {
+    const picks: Record<string, string> = {}
+    award.nominations.forEach((n, i) => {
+      if (!n.nominees.length || Math.random() < 0.08 + i * 0.07) return
+      picks[n.id] = weighted(n.nominees, n.nominees.map((_, k) => (k === 0 ? 5 : k === 1 ? 3 : 1))).id
+    })
+    if (!Object.keys(picks).length) continue
+    const day = weighted([...dayWeights.keys()], dayWeights)
+    const at = new Date(Date.now() - (days - 1 - day) * 86_400_000 - Math.random() * 6 * 3_600_000)
+    ballots.push({ userId: 20_000 + v, picks, at: at.toISOString().replace(/\.\d{3}Z$/, 'Z') })
+  }
+  return ballots
+}
+
 function paidFeatures(a: Partial<Award>) {
   const look = (a.look ?? {}) as Record<string, unknown>
   return (
@@ -187,7 +216,7 @@ export async function demoApi(url: string, opts: { method?: string; body?: unkno
     for (let n = 2; db.shows[slug]; n++) slug = `${base.slice(0, 60 - String(n).length - 1)}-${n}`
     const tier = paidFeatures(input) ? 'paid' : 'free'
     const award = withIds(db, { ...input, nominations, slug, status: 'published', tier, publishedAt: now() })
-    db.shows[slug] = { award, ownerId: DEMO_USER.id, ballots: [], ceremony: null }
+    db.shows[slug] = { award, ownerId: DEMO_USER.id, ballots: sampleBallots(award), ceremony: null }
     db.draft = null
     save(db)
     return { award, tier }
