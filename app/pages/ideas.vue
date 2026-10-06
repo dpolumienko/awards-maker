@@ -17,7 +17,7 @@ import { IDEA_GROUPS, IDEA_TOTAL, ideaEmoji } from '~/data/ideas'
 
 const root = ref<HTMLElement | null>(null)
 const SHOWN = 6
-const ideaRow = 'flex items-center gap-3 rounded-card border border-hair bg-canvas px-4 py-3 text-[15px] font-medium text-ink'
+const ideaRow = 'idea-row flex items-center gap-3 rounded-card border border-hair bg-canvas px-4 py-3 text-[15px] font-medium text-ink'
 useReveal(root, { stagger: 0.04 })
 
 const faq = [
@@ -90,9 +90,9 @@ useSchemaOrg([
         v-for="g in IDEA_GROUPS"
         :key="g.id"
         :href="`#${g.id}`"
-        class="rounded-pill border border-hair px-4 py-2 text-sm text-ink-2 no-underline transition-colors hover:border-gold hover:text-ink"
+        class="idea-jump rounded-pill border border-hair px-4 py-2 text-sm text-ink-2 no-underline transition-colors hover:border-gold hover:text-ink"
       >
-        <span aria-hidden="true" class="mr-1">{{ g.emoji }}</span>{{ g.title }}
+        <span aria-hidden="true" class="idea-emoji mr-1">{{ g.emoji }}</span>{{ g.title }}
         <span class="tnum ml-1 text-ink-muted">{{ g.items.length }}</span>
       </a>
     </nav>
@@ -104,12 +104,12 @@ useSchemaOrg([
       v-for="g in IDEA_GROUPS"
       :id="g.id"
       :key="g.id"
-      class="js-reveal mt-12 scroll-mt-24 rounded-card border border-hair bg-s1 p-5 sm:p-6"
+      class="idea-group js-reveal mt-12 scroll-mt-24 rounded-card border border-hair bg-s1 p-5 sm:p-6"
     >
       <div class="flex flex-wrap items-center gap-4">
-        <span aria-hidden="true" class="grid h-14 w-14 flex-none place-items-center rounded-card border border-hair bg-s2 text-[30px] leading-none">{{ g.emoji }}</span>
+        <span aria-hidden="true" class="idea-emoji grid h-14 w-14 flex-none place-items-center rounded-card border border-hair bg-s2 text-[30px] leading-none">{{ g.emoji }}</span>
         <div class="min-w-0">
-          <h2 class="text-2xl font-bold">{{ g.title }}</h2>
+          <h2 class="idea-title text-2xl font-bold">{{ g.title }}</h2>
           <p class="m-0 mt-1 max-w-copy text-ink-2">{{ g.blurb }}</p>
         </div>
         <UiButton :to="`/create?ideas=${g.id}`" variant="ghost" size="sm" class="sm:ml-auto">
@@ -122,7 +122,7 @@ useSchemaOrg([
            read by search engines. -->
       <ul class="mt-6 grid list-none gap-2 p-0 sm:grid-cols-2 lg:grid-cols-3">
         <li v-for="item in g.items.slice(0, SHOWN)" :key="item" :class="ideaRow">
-          <span aria-hidden="true" class="text-xl leading-none">{{ ideaEmoji(item, g) }}</span>
+          <span aria-hidden="true" class="idea-emoji text-xl leading-none">{{ ideaEmoji(item, g) }}</span>
           {{ item }}
         </li>
       </ul>
@@ -136,7 +136,7 @@ useSchemaOrg([
         </summary>
         <ul class="mt-2 grid list-none gap-2 p-0 sm:grid-cols-2 lg:grid-cols-3">
           <li v-for="item in g.items.slice(SHOWN)" :key="item" :class="ideaRow">
-            <span aria-hidden="true" class="text-xl leading-none">{{ ideaEmoji(item, g) }}</span>
+            <span aria-hidden="true" class="idea-emoji text-xl leading-none">{{ ideaEmoji(item, g) }}</span>
             {{ item }}
           </li>
         </ul>

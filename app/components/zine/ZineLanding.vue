@@ -10,6 +10,11 @@ import UiButton from '~/components/ui/UiButton.vue'
 import UiIcon from '~/components/ui/UiIcon.vue'
 import ZinePen from './ZinePen.vue'
 import ZinePlate from './ZinePlate.vue'
+// the Current landing's other sections, each with its Fanzine print
+import ZinePageProof from './ZinePageProof.vue'
+import ZineFeatures from './ZineFeatures.vue'
+import ZineIdeas from './ZineIdeas.vue'
+import ZineCta from './ZineCta.vue'
 import { STEPS } from '~/data/steps'
 import { TEMPLATES } from '~/data/templates'
 import { PLANS } from '~/data/plans'
@@ -62,6 +67,8 @@ const SCISSORS = 'M6 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM6 15a3 3 0 1 0 0 6 3 3 0 0 0
         </div>
       </div>
     </section>
+
+    <ZinePageProof />
 
     <!-- how an awards gets made: three panels -->
     <section class="zl-sec">
@@ -130,6 +137,8 @@ const SCISSORS = 'M6 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM6 15a3 3 0 1 0 0 6 3 3 0 0 0
       </div>
     </section>
 
+    <ZineFeatures />
+
     <!-- packs to start from -->
     <section class="zl-sec">
       <div class="shell">
@@ -150,6 +159,8 @@ const SCISSORS = 'M6 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM6 15a3 3 0 1 0 0 6 3 3 0 0 0
       </div>
     </section>
 
+    <ZineIdeas />
+
     <!-- prices: the paid one is a coupon -->
     <section class="zl-sec">
       <div class="shell">
@@ -166,6 +177,8 @@ const SCISSORS = 'M6 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM6 15a3 3 0 1 0 0 6 3 3 0 0 0
         </div>
       </div>
     </section>
+
+    <ZineCta />
 
     <!-- on the rack: real shows only, like the Current landing -->
     <section v-if="catalogOpen && rack.length" class="zl-sec">

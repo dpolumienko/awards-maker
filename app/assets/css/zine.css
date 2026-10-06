@@ -196,3 +196,190 @@
   overflow: visible;
   white-space: normal;
 }
+
+/* ---------------------------------------------------------------- the header */
+
+/* The masthead is printed: solid paper and an ink rule, never see-through. An
+   awards' cover band used to run up under a transparent bar and the halftone
+   swallowed the navigation. */
+:root[data-version='zine'] .site-header {
+  background: rgb(var(--canvas));
+  border-bottom: 2px solid rgb(var(--ink));
+  backdrop-filter: none;
+}
+
+/* ---------------------------------------------------------------- the marker
+
+   The pen's sibling: a blue marker. It underlines the link you point at and
+   swipes across the button you are about to press - drawn in from the left,
+   like a hand doing it. Pink stays the pen's and only marks what was chosen. */
+:root[data-version='zine'] {
+  --brush: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'%3E%3Cpath d='M4 9C40 3 92 7 140 4s50 1 56 4l3 6-4 5 4 6-3 7c-38 4-90 1-136 5S10 36 3 33L1 26l3-5-3-6z'/%3E%3C/svg%3E");
+  --squiggle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 12' preserveAspectRatio='none'%3E%3Cpath d='M3 7C31 2 62 10 101 6s69-5 96 0' fill='none' stroke='black' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+.zine-reveal {
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 0.38s cubic-bezier(0.45, 0.05, 0.25, 1);
+}
+
+/* the nav: a hand-drawn underline instead of a ruler-straight bar */
+:root[data-version='zine'] .nav-link .nav-bar {
+  height: 7px;
+  bottom: -3px;
+  transform: none;
+  background: rgb(var(--gold));
+  -webkit-mask: var(--squiggle) center / 100% 100% no-repeat;
+  mask: var(--squiggle) center / 100% 100% no-repeat;
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 0.38s cubic-bezier(0.45, 0.05, 0.25, 1);
+}
+:root[data-version='zine'] .nav-link:hover .nav-bar,
+:root[data-version='zine'] .nav-link:focus-visible .nav-bar,
+:root[data-version='zine'] .nav-link.router-link-active .nav-bar {
+  clip-path: inset(0 0 0 0);
+}
+
+/* buttons: the black one gets inked over in blue, the outlined one gets a
+   highlighter pass - the type stays on top and stays readable either way */
+:root[data-version='zine'] .ui-btn-sheen {
+  display: none;
+}
+:root[data-version='zine'] .ui-btn::before,
+:root[data-version='zine'] .account-item::before {
+  content: '';
+  position: absolute;
+  /* inside the button, so the ragged ends of the stroke show */
+  inset: 5px 4px;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--marker, rgb(var(--gold)));
+  -webkit-mask: var(--brush) center / 100% 100% no-repeat;
+  mask: var(--brush) center / 100% 100% no-repeat;
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 0.38s cubic-bezier(0.45, 0.05, 0.25, 1);
+}
+:root[data-version='zine'] .ui-btn-ghost::before,
+:root[data-version='zine'] .account-item::before {
+  --marker: rgb(var(--gold) / 0.22);
+}
+:root[data-version='zine'] .ui-btn-text::before {
+  inset: auto -2px -2px;
+  height: 0.55em;
+  --marker: rgb(var(--gold) / 0.3);
+}
+:root[data-version='zine'] .ui-btn:hover::before,
+:root[data-version='zine'] .ui-btn:focus-visible::before,
+:root[data-version='zine'] .account-item:hover::before,
+:root[data-version='zine'] .account-item:focus-visible::before {
+  clip-path: inset(0 0 0 0);
+}
+:root[data-version='zine'] .ui-btn:disabled::before,
+:root[data-version='zine'] .ui-btn[aria-disabled='true']::before {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root[data-version='zine'] .ui-btn::before,
+  :root[data-version='zine'] .account-item::before,
+  :root[data-version='zine'] .nav-link .nav-bar {
+    transition: none;
+  }
+}
+
+/* ---------------------------------------------------------------- the account */
+
+/* the account chip and its menu are a slip of paper, not a floating card */
+:root[data-version='zine'] .account-chip {
+  border-radius: 0;
+  border: 2px solid rgb(var(--ink));
+  color: rgb(var(--ink));
+}
+:root[data-version='zine'] .account-av {
+  border-radius: 0;
+  background: rgb(var(--gold));
+  color: #fff;
+  font-family: var(--font-display), sans-serif;
+  font-stretch: 112%;
+}
+:root[data-version='zine'] .account-menu {
+  width: 16.5rem;
+  padding: 0;
+  border-radius: 0;
+  border: 2.5px solid rgb(var(--ink));
+  background: rgb(var(--canvas));
+  box-shadow: none;
+}
+:root[data-version='zine'] .account-who {
+  padding: 12px 14px 10px;
+  border-bottom: 2px solid rgb(var(--ink));
+  font: 700 11px/1.2 var(--font-body), sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(var(--ink-2));
+}
+:root[data-version='zine'] .account-who span:first-of-type {
+  color: rgb(var(--ink));
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 14px;
+}
+:root[data-version='zine'] .account-item {
+  position: relative;
+  isolation: isolate;
+  margin: 0;
+  padding: 11px 14px;
+  border-radius: 0;
+  border-top: 1.5px dashed rgb(var(--hair));
+  font-family: var(--font-display), sans-serif;
+  font-weight: 800;
+  font-stretch: 115%;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: rgb(var(--ink));
+}
+:root[data-version='zine'] .account-who + .account-item {
+  border-top: 0;
+}
+:root[data-version='zine'] .account-item:hover {
+  background: none;
+}
+:root[data-version='zine'] .account-item > * {
+  position: relative;
+  z-index: 1;
+}
+/* signing out is the end of the slip: a cut line above it */
+:root[data-version='zine'] .account-out {
+  border-top: 2px dashed rgb(var(--ink));
+  color: rgb(var(--ink-2));
+}
+
+/* ---------------------------------------------------------------- /ideas */
+
+/* the ideas are a printed list: no emoji, ink rules, dashed rows */
+:root[data-version='zine'] .idea-emoji {
+  display: none;
+}
+:root[data-version='zine'] .idea-group {
+  border: 2.5px solid rgb(var(--ink));
+  background: rgb(var(--canvas));
+}
+:root[data-version='zine'] .idea-title {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 900;
+  font-stretch: 120%;
+  text-transform: uppercase;
+  color: rgb(var(--gold));
+}
+:root[data-version='zine'] .idea-row {
+  border: 0;
+  border-bottom: 1.5px dashed rgb(var(--hair));
+  background: none;
+  padding-left: 0;
+}
+
+:root[data-version='zine'] .idea-jump {
+  border-radius: 0;
+  border: 2px solid rgb(var(--ink));
+  color: rgb(var(--ink));
+  font-weight: 600;
+}

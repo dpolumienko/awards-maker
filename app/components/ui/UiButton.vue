@@ -28,14 +28,14 @@ const variants = {
     :is="internal ? NuxtLink : to ? 'a' : 'button'"
     :to="internal ? to : undefined"
     :href="internal ? undefined : to"
-    :class="[base, sizes[size], variants[variant], variant === 'primary' && 'group']"
+    :class="['ui-btn', `ui-btn-${variant}`, base, sizes[size], variants[variant], variant === 'primary' && 'group']"
   >
     <span class="relative z-10"><slot /></span>
     <!-- gold sheen: the one decorative flourish a primary button gets -->
     <span
       v-if="variant === 'primary'"
       aria-hidden="true"
-      class="pointer-events-none absolute inset-0 -translate-x-[120%] bg-[linear-gradient(100deg,transparent_35%,rgba(255,255,255,.55)_50%,transparent_65%)] transition-transform duration-700 ease-gala group-hover:translate-x-[120%] motion-reduce:hidden"
+      class="ui-btn-sheen pointer-events-none absolute inset-0 -translate-x-[120%] bg-[linear-gradient(100deg,transparent_35%,rgba(255,255,255,.55)_50%,transparent_65%)] transition-transform duration-700 ease-gala group-hover:translate-x-[120%] motion-reduce:hidden"
     />
   </component>
 </template>
