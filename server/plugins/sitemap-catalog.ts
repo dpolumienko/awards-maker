@@ -8,6 +8,8 @@ import { catalogStatus } from '../utils/catalog'
  */
 export default defineNitroPlugin((nitro) => {
   nitro.hooks.hook('sitemap:resolved', async (ctx) => {
+    // the static demo has no database to ask; its sitemap is never crawled anyway
+    if (useRuntimeConfig().public.demo) return
     if ((await catalogStatus()).open) return
     ctx.urls = ctx.urls.filter((u) => {
       const loc = typeof u === 'string' ? u : u.loc
