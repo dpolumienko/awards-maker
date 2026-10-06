@@ -10,6 +10,7 @@ import UiButton from '~/components/ui/UiButton.vue'
 import UiIcon from '~/components/ui/UiIcon.vue'
 import ZinePen from './ZinePen.vue'
 import ZinePlate from './ZinePlate.vue'
+import ZineStamps from './ZineStamps.vue'
 // the Current landing's other sections, each with its Fanzine print
 import ZinePageProof from './ZinePageProof.vue'
 import ZineFeatures from './ZineFeatures.vue'
@@ -37,6 +38,7 @@ const SCISSORS = 'M6 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM6 15a3 3 0 1 0 0 6 3 3 0 0 0
   <div class="zl">
     <!-- the cover -->
     <section class="zl-cover">
+      <ZineStamps />
       <div class="shell zl-cover-grid">
         <div>
           <h1>
@@ -221,7 +223,8 @@ const SCISSORS = 'M6 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM6 15a3 3 0 1 0 0 6 3 3 0 0 0
 .zl-intro { margin-top: 18px; max-width: 58ch; font-size: 19px; line-height: 1.55; color: rgb(var(--ink-2)); }
 
 /* cover */
-.zl-cover { padding: 48px 0 72px; overflow-x: clip; }
+.zl-cover { position: relative; padding: 48px 0 72px; overflow-x: clip; }
+.zl-cover-grid { position: relative; z-index: 1; }
 @media (max-width: 639px) { .zl-issue-h { font-size: 32px; } .zl-issue-lines li { font-size: 15px; } }
 .zl-cover-grid { display: grid; gap: 48px; grid-template-columns: minmax(0, 1fr); }
 @media (min-width: 1024px) { .zl-cover-grid { grid-template-columns: minmax(0, 1fr) 500px; } }
@@ -286,7 +289,7 @@ const SCISSORS = 'M6 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM6 15a3 3 0 1 0 0 6 3 3 0 0 0
 .zl-pack { display: grid; gap: 12px; align-content: start; color: inherit; text-decoration: none; }
 .zl-zine { aspect-ratio: 3 / 4; display: flex; flex-direction: column; border: 2.5px solid var(--rule); background: rgb(var(--canvas)); }
 .zl-band { min-height: 46%; padding: 16px; background: rgb(var(--gold)); color: #fff; }
-.zl-zine.is-ink .zl-band { background: rgb(var(--ink)); }
+.zl-zine.is-ink .zl-band { background: rgb(var(--ink)); color: rgb(var(--canvas)); }
 .zl-band b { display: block; font-family: var(--font-display), sans-serif; font-weight: 900; font-stretch: 112%; font-size: 27px; line-height: 0.92; text-transform: uppercase; overflow-wrap: anywhere; }
 .zl-n { margin-top: auto; padding: 0 16px 14px; font-family: var(--font-display), sans-serif; font-weight: 900; font-stretch: 130%; font-size: 100px; line-height: 0.8; color: rgb(var(--gold)); }
 .zl-zine.is-ink .zl-n { color: rgb(var(--ink)); }

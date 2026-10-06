@@ -27,10 +27,13 @@ export const DESIGN_KEYS = { palette: 'am-palette', button: 'am-button' } as con
  * components in components/zine/. Kept in a cookie, not localStorage: the
  * landing and the awards pages render on the server, and a version only the
  * browser knows would hydrate into the other one. `?version=zine` sets it.
+ * Night (review 2026-10-06) is the Fanzine printed on black, lit by a follow-spot
+ * (components/zine/ZineSpotlight.vue): the same components, its own tokens.
  */
 export const VERSIONS = [
   { id: 'stage', label: 'Current' },
   { id: 'zine', label: 'Fanzine' },
+  { id: 'night', label: 'Fanzine Night' },
 ] as const
 export type Version = (typeof VERSIONS)[number]['id']
 export const VERSION_COOKIE = 'am-version'

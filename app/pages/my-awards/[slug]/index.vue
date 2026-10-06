@@ -42,8 +42,8 @@ const award = computed(() => data.value?.award ?? null)
 const tally = computed(() => data.value?.tally ?? emptyTally())
 const phase = computed(() => (award.value ? phaseOf(award.value, data.value?.voters ?? 0) : 'open'))
 const accent = computed(() => accentOf(award.value?.look))
-const { isZine } = useVersion()
-const ink = computed(() => accentText(accent.value, isZine.value))
+const { isZine, onPaper } = useVersion()
+const ink = computed(() => accentText(accent.value, onPaper.value))
 
 const voters = computed(() => data.value?.voters ?? 0)
 const trend = computed(() =>

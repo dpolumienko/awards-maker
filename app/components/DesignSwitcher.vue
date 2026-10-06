@@ -126,7 +126,7 @@ const seg = (active: boolean) =>
             >{{ b.label }}</button>
           </div>
         </template>
-        <p v-else class="ds-note">The Fanzine prints in its own two inks, so it has no palette or button options.</p>
+        <p v-else class="ds-note">The Fanzine prints in its own two inks, on paper or on black, so it has no palette or button options.</p>
         <button type="button" class="ds-link" @click="share">{{ copied ? 'Link copied' : 'Copy link to this view' }}</button>
       </div>
     </div>
@@ -240,6 +240,26 @@ const seg = (active: boolean) =>
   height: 8px;
   background: #ff48b0;
   mix-blend-mode: multiply;
+}
+.ds-swatch-night {
+  background: #111113;
+  border-radius: 0;
+  box-shadow: inset 0 0 0 1px #3a3a42;
+}
+.ds-swatch-night i {
+  left: 6px;
+  top: 6px;
+  width: 26px;
+  height: 8px;
+  background: #5cace8;
+}
+.ds-swatch-night b {
+  left: 8px;
+  top: 8px;
+  width: 26px;
+  height: 8px;
+  background: #ff48b0;
+  mix-blend-mode: screen;
 }
 .ds-more {
   display: grid;

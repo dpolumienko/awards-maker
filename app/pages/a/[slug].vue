@@ -70,9 +70,9 @@ const phase = computed(() =>
     : 'open',
 )
 const accent = computed(() => accentOf(award.value?.look))
-const { isZine } = useVersion()
+const { isZine, onPaper } = useVersion()
 // Fills keep the colour the streamer picked; type takes the readable version.
-const ink = computed(() => accentText(accent.value, isZine.value))
+const ink = computed(() => accentText(accent.value, onPaper.value))
 const headlineFont = computed(() =>
   award.value?.look?.font ? `'${award.value.look.font}', Archivo, sans-serif` : undefined,
 )

@@ -45,8 +45,8 @@ const radios = ref<HTMLButtonElement[]>([])
 const num = computed(() => String(index + 1).padStart(2, '0'))
 const winners = computed(() => results.filter((r) => r.top))
 // Fills keep the streamer's colour; anything that is type takes the readable one.
-const { isZine } = useVersion()
-const ink = computed(() => accentText(accent, isZine.value))
+const { isZine, onPaper } = useVersion()
+const ink = computed(() => accentText(accent, onPaper.value))
 // Only one row sits in the tab order and the arrows move between them. That is
 // the radio-group pattern, and it keeps a ten-category page from eating forty tabs.
 const tabTarget = computed(() => {

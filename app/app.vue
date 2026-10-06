@@ -4,7 +4,8 @@ import GlowFilterDefs from '~/components/ui/GlowFilterDefs.vue'
 import PublishCurtain from '~/components/ui/PublishCurtain.vue'
 import { usePublishCurtain } from '~/composables/usePublishCurtain'
 import { DESIGN_BOOT } from '~/data/design'
-import { useVersionHead } from '~/composables/useVersion'
+import ZineSpotlight from '~/components/zine/ZineSpotlight.vue'
+import { useVersion, useVersionHead } from '~/composables/useVersion'
 
 // A page can ask for the shell to step aside - `definePageMeta({ chrome: false })`.
 // The ceremony screen is captured by OBS, and a site header in the shot is a site
@@ -30,6 +31,7 @@ const gsc = String(useRuntimeConfig().public.googleSiteVerification || '')
 if (gsc) useHead({ meta: [{ name: 'google-site-verification', content: gsc }] })
 // the site's version on <html>, and `?version=` in a link to pick it (data/design.ts)
 useVersionHead()
+const { isNight } = useVersion()
 // the design switcher's choice, applied before first paint (data/design.ts)
 useHead({ script: [{ innerHTML: DESIGN_BOOT, tagPriority: 'critical' }] })
 </script>
@@ -45,6 +47,8 @@ useHead({ script: [{ innerHTML: DESIGN_BOOT, tagPriority: 'critical' }] })
     <!-- the room's light. Not on the ceremony screen: that one is its own stage,
          and in OBS mode the background has to stay exactly what the host chose. -->
     <div v-if="chrome" aria-hidden="true" class="rig pointer-events-none fixed inset-0 -z-10" />
+    <!-- Fanzine Night: the follow-spot that lights the page -->
+    <ZineSpotlight v-if="chrome && isNight" />
     <SiteHeader v-if="chrome" />
     <main id="main">
       <NuxtPage />

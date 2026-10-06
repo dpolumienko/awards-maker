@@ -28,8 +28,8 @@ const viewing = ref<{ src?: string; url?: string; title: string } | null>(null)
 // the whole point of letting people try them before the bill.
 const accent = computed(() => accentOf(award.look))
 // Accent as type has to clear 4.5:1; as a fill it stays exactly as picked.
-const { isZine } = useVersion()
-const ink = computed(() => accentText(accent.value, isZine.value))
+const { isZine, onPaper } = useVersion()
+const ink = computed(() => accentText(accent.value, onPaper.value))
 const headlineFont = computed(() =>
   award.look?.font ? `'${award.look.font}', Archivo, sans-serif` : undefined,
 )
