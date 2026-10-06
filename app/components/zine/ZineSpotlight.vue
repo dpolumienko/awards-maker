@@ -1,6 +1,6 @@
 <script setup lang="ts">
-// The Fanzine's light: a follow-spot hung under the masthead, throwing a warm
-// beam down to a pool where the pointer is. It only adds light, and only a
+// The Fanzine's light: a follow-spot hung under the masthead, throwing a cool,
+// nearly white beam down to a pool where the pointer is. It only adds light, and only a
 // little - the page reads as it does without it (review 2026-10-06). Fixed to the
 // viewport, so the lamp rides along as the page scrolls; with no pointer (touch,
 // or a still mouse) it sweeps on its own. Chosen from the backdrop board,
@@ -10,13 +10,19 @@
 // canvas's own opacity and blend (.zine-spot in assets/css/zine.css), so the beam
 // and the pool merge without a seam where they overlap. The lamp is an SVG on
 // top, never blended, so it stays a solid object.
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+//
+// A switch by the lamp turns it off; off, the lamp still hangs there, dark. The
+// choice is kept in this browser. Phones get no spotlight: no pointer to follow,
+// and no margin to hang the lamp in.
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 const canvas = ref<HTMLCanvasElement | null>(null)
 const lamp = ref<SVGSVGElement | null>(null)
 const head = ref<SVGGElement | null>(null)
-// tungsten: the beam's warm yellow
-const WARM = '255,196,72'
+const toggle = ref<HTMLButtonElement | null>(null)
+// the beam's colour lives in CSS (--spot in assets/css/zine.css), one per paper
+const OFF_KEY = 'am-spot-off'
+const lit = ref(true)
 const IDLE_AFTER = 4 // seconds without a pointer move before the spot sweeps
 const PIVOT = 24 // px below the masthead where the lamp turns
 // It hangs in the right-hand margin, not over the middle of the page: the lamp is
@@ -32,6 +38,30 @@ onMounted(() => {
   let x = -1, y = -1
   let mx = -1, my = -1, moved = -Infinity
   let raf = 0
+  let light = '235 241 255'
+  const phone = matchMedia('(max-width: 767px)')
+
+  try {
+    lit.value = localStorage.getItem(OFF_KEY) !== '1'
+  } catch {
+    /* no storage: the light starts on */
+  }
+  watch(lit, (on) => {
+    try {
+      if (on) localStorage.removeItem(OFF_KEY)
+      else localStorage.setItem(OFF_KEY, '1')
+    } catch {
+      /* private mode: the choice lasts for this page */
+    }
+    if (still) draw(0)
+  })
+  // the paper decides the beam's colour; read again when Fanzine and Night swap
+  const readLight = () => (light = getComputedStyle(c).getPropertyValue('--spot').trim() || light)
+  const inks = new MutationObserver(() => {
+    readLight()
+    if (still) draw(0)
+  })
+  inks.observe(document.documentElement, { attributes: true, attributeFilter: ['data-ink'] })
 
   function size() {
     const dpr = Math.min(devicePixelRatio || 1, 2)
@@ -43,6 +73,8 @@ onMounted(() => {
     // the masthead is sticky, so its bottom edge is where the rig hangs on every scroll
     top = document.querySelector('.site-header')?.getBoundingClientRect().height ?? 0
     lamp.value!.style.top = `${top}px`
+    toggle.value!.style.top = `${top + 12}px`
+    readLight()
   }
 
   function draw(t: number) {
@@ -64,13 +96,16 @@ onMounted(() => {
     const sx = px + Math.cos(a) * 10, sy = py + Math.sin(a) * 10
 
     ctx.clearRect(0, 0, W, H)
+    head.value!.setAttribute('transform', `rotate(${(a * 180) / Math.PI - 90})`)
+    if (!lit.value || phone.matches) return
+    const beam = light.split(/\s+/).join(',')
     // the pool: solid in the middle, soft at the rim
     ctx.save()
     ctx.translate(x, y)
     ctx.scale(1, ry / R)
     const pool = ctx.createRadialGradient(0, 0, R * 0.55, 0, 0, R * 1.2)
-    pool.addColorStop(0, `rgba(${WARM},1)`)
-    pool.addColorStop(1, `rgba(${WARM},0)`)
+    pool.addColorStop(0, `rgba(${beam},1)`)
+    pool.addColorStop(1, `rgba(${beam},0)`)
     ctx.fillStyle = pool
     ctx.beginPath()
     ctx.arc(0, 0, R * 1.2, 0, Math.PI * 2)
@@ -80,8 +115,8 @@ onMounted(() => {
     // under it - so the two read as one light and the pool never brightens twice
     ctx.globalCompositeOperation = 'destination-over'
     const cone = ctx.createLinearGradient(sx, sy, x, y)
-    cone.addColorStop(0, `rgba(${WARM},0.15)`)
-    cone.addColorStop(1, `rgba(${WARM},0.45)`)
+    cone.addColorStop(0, `rgba(${beam},0.15)`)
+    cone.addColorStop(1, `rgba(${beam},0.45)`)
     ctx.fillStyle = cone
     ctx.beginPath()
     ctx.moveTo(sx - 9, sy)
@@ -91,8 +126,6 @@ onMounted(() => {
     ctx.closePath()
     ctx.fill()
     ctx.globalCompositeOperation = 'source-over'
-
-    head.value!.setAttribute('transform', `rotate(${(a * 180) / Math.PI - 90})`)
   }
 
   function frame(ms: number) {
@@ -122,6 +155,7 @@ onMounted(() => {
     removeEventListener('resize', resize)
     removeEventListener('pointermove', move)
     removeEventListener('pointerdown', move)
+    inks.disconnect()
   }
 })
 onBeforeUnmount(() => stop())
@@ -131,7 +165,7 @@ onBeforeUnmount(() => stop())
   <!-- under the masthead and every sticky bar that comes later in the page, over the content -->
   <canvas ref="canvas" aria-hidden="true" class="zine-spot pointer-events-none fixed inset-0 z-30 h-full w-full" />
   <!-- the lamp: the hanger stays put, the can turns to follow its beam -->
-  <svg ref="lamp" aria-hidden="true" class="zine-lamp pointer-events-none fixed z-30" viewBox="-30 -24 60 60" width="60" height="60">
+  <svg ref="lamp" aria-hidden="true" class="zine-lamp pointer-events-none fixed z-30" :class="!lit && 'is-off'" viewBox="-30 -24 60 60" width="60" height="60">
     <rect class="zine-lamp-rig" x="-2" y="-24" width="4" height="22" />
     <g ref="head">
       <path class="zine-lamp-can" d="M-13 -22H13L17 8H-17Z" />
@@ -139,4 +173,15 @@ onBeforeUnmount(() => stop())
     </g>
     <circle class="zine-lamp-rig" r="4" />
   </svg>
+  <button
+    ref="toggle"
+    type="button"
+    class="zine-spot-switch fixed z-30"
+    :aria-pressed="lit"
+    :aria-label="lit ? 'Turn the spotlight off' : 'Turn the spotlight on'"
+    :title="lit ? 'Turn the spotlight off' : 'Turn the spotlight on'"
+    @click="lit = !lit"
+  >
+    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 3v8M6.4 6.6a8 8 0 1 0 11.2 0" /></svg>
+  </button>
 </template>

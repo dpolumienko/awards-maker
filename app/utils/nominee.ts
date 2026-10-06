@@ -21,6 +21,13 @@ export const nomineeSub = (n: Nominee) =>
 
 export const nomineeInitials = (n: Nominee) => nomineeName(n).slice(0, 2).toUpperCase()
 
+/** A nominee without a picture gets its own colour behind its initials, the same on every visit. */
+export function nomineeTint(n: Nominee) {
+  let h = 0
+  for (const ch of nomineeName(n)) h = (h * 31 + ch.charCodeAt(0)) % 360
+  return `hsl(${h} 55% 32%)`
+}
+
 /**
  * The picture that stands for a nominee: an uploaded image, or the poster frame
  * of the clip. Channels and plain text have none - those fall back to initials.

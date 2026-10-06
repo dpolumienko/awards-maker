@@ -5,11 +5,12 @@
 // data/plans, steps from data/steps, shows from the catalog. What changes is how
 // it is printed: covers on a rack, a three-panel strip, a ballot slip marked with
 // a pen, a cut-out coupon and a letters page.
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import UiButton from '~/components/ui/UiButton.vue'
 import UiIcon from '~/components/ui/UiIcon.vue'
 import InteractiveAccordion from '~/components/ui/InteractiveAccordion.vue'
 import ZinePen from './ZinePen.vue'
+import ZineBallotRows from './ZineBallotRows.vue'
 // the Current landing's other sections, each with its Fanzine print
 import ZinePageProof from './ZinePageProof.vue'
 import ZineFeatures from './ZineFeatures.vue'
@@ -18,7 +19,6 @@ import ZineCta from './ZineCta.vue'
 import { STEPS } from '~/data/steps'
 import { TEMPLATES } from '~/data/templates'
 import { PLANS } from '~/data/plans'
-import { IDEA_TOTAL } from '~/data/ideas'
 import { useCatalog, useCatalogOpen } from '~/composables/useAwards'
 import type { FaqItem } from '~/components/sections/FaqSection.vue'
 
@@ -30,7 +30,18 @@ const rack = computed(() => (data.value?.awards ?? []).slice(0, 3))
 
 // the two covers on the stand are examples, built from two of the real packs
 const covers = [TEMPLATES[2]!, TEMPLATES[1]!]
-const SCISSORS = 'M6 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM6 15a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM20 4L8.1 15.9M14.5 14.5L20 20M8.1 8.1L12 12'
+// the strip's ballot and its winner panel share one pick
+const STRIP = ['forsenE', 'OMEGALUL', 'Pog']
+const stripPick = ref(0)
+// the slip arrives half filled in: one pick made, one still to make
+const slipPicks = ref([1, -1])
+// A pack is a kind of show, not a list - the ideas section below is the list
+// (review 2026-10-06: the two read alike).
+const PACK_LINES: Record<string, string> = {
+  classics: 'The big night: the categories every streaming award show runs.',
+  chat: 'For your own chat: the regulars, the mods, the emotes.',
+  funny: 'The blooper reel: fails, rage quits and streams that went sideways.',
+}
 </script>
 
 <template>
@@ -89,18 +100,14 @@ const SCISSORS = 'M6 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM6 15a3 3 0 1 0 0 6 3 3 0 0 0
           <div class="zl-panel">
             <div class="zl-scene zl-grey">
               <p class="zl-chat"><b>ishowspeed:</b> ballot's up, one pick per category</p>
-              <div class="zl-mini">
-                <p><span class="zl-box is-on" /><ZinePen>forsenE</ZinePen></p>
-                <p><span class="zl-box" />OMEGALUL</p>
-                <p><span class="zl-box" />Pog</p>
-              </div>
+              <ZineBallotRows v-model="stripPick" class="zl-mini" :names="STRIP" label="Best emote" />
             </div>
             <div class="zl-cap"><h3>{{ STEPS[1]!.title }}</h3><p>{{ STEPS[1]!.body }}</p></div>
           </div>
           <div class="zl-panel">
             <div class="zl-scene zl-flood">
               <div>
-                <ZinePen class="zl-flood-name">forsenE</ZinePen>
+                <ZinePen :key="stripPick" class="zl-flood-name">{{ STRIP[stripPick] }}</ZinePen>
                 <p>Best emote · winner</p>
               </div>
             </div>
@@ -119,15 +126,12 @@ const SCISSORS = 'M6 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM6 15a3 3 0 1 0 0 6 3 3 0 0 0
             <article><h3>The link goes wherever your viewers are</h3><p>No account needed to look at the nominees.</p></article>
             <article><h3>One pick per category</h3><p>Choosing comes first, nothing blocks it.</p></article>
           </div>
-          <div class="zl-slip" role="img" aria-label="Example ballot with one nominee circled">
+          <div class="zl-slip">
             <div class="zl-slip-hd"><b>Ballot</b><span class="ui-badge" data-tone="live">Voting open</span></div>
             <h4>Streamer of the year</h4>
-            <p><span class="zl-box" />forsen</p>
-            <p><span class="zl-box is-on" /><ZinePen>maryana</ZinePen></p>
-            <p><span class="zl-box" />nightcrew</p>
+            <ZineBallotRows v-model="slipPicks[0]" ruled :names="['forsen', 'maryana', 'nightcrew']" label="Streamer of the year" />
             <h4>Best emote</h4>
-            <p><span class="zl-box" />forsenE</p>
-            <p><span class="zl-box" />OMEGALUL</p>
+            <ZineBallotRows v-model="slipPicks[1]" ruled :names="['forsenE', 'OMEGALUL']" label="Best emote" />
             <p class="zl-sign">One ballot per Twitch account, signed at submit.</p>
           </div>
           <div class="zl-notes zl-notes-r">
@@ -145,15 +149,13 @@ const SCISSORS = 'M6 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM6 15a3 3 0 1 0 0 6 3 3 0 0 0
         <h2 class="zl-h2 zine-display">Packs to start from</h2>
         <p class="zl-intro">In the builder, each pack fills in five categories with one click. Rename or drop any of them after.</p>
         <div class="zl-packs">
-          <NuxtLink v-for="t in TEMPLATES" :key="t.id" to="/create" class="zl-pack">
-            <div class="zl-zine"><div class="zl-band"><b>{{ t.name }}</b></div><span class="zl-n tnum">{{ t.nominations.length }}<small>categories</small></span></div>
-            <p><b>{{ t.nominations[0] }}</b>, {{ t.nominations.slice(1).join(', ') }}</p>
+          <NuxtLink v-for="(t, i) in TEMPLATES" :key="t.id" to="/create" class="zl-pack">
+            <div class="zl-zine" :class="i === 1 && 'is-ink'">
+              <div class="zl-band"><small>Tonight</small><b>{{ t.name }}</b></div>
+              <p class="zl-line">{{ PACK_LINES[t.id] }}</p>
+              <span class="zl-n tnum">{{ t.nominations.length }}<small>categories</small></span>
+            </div>
             <span class="zl-use">Use this pack</span>
-          </NuxtLink>
-          <NuxtLink to="/ideas" class="zl-pack">
-            <div class="zl-zine is-ink"><div class="zl-band"><b>Category ideas</b></div><span class="zl-n tnum">{{ IDEA_TOTAL }}<small>ideas</small></span></div>
-            <p>Build your own set one category at a time, from the ideas other streamers run.</p>
-            <span class="zl-use">See the ideas</span>
           </NuxtLink>
         </div>
       </div>
@@ -167,8 +169,8 @@ const SCISSORS = 'M6 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM6 15a3 3 0 1 0 0 6 3 3 0 0 0
         <h2 class="zl-h2 zine-display">Free, paid, or we run it</h2>
         <p class="zl-intro">The paid tier is a one-off purchase for one awards, not a subscription.</p>
         <div class="zl-prices">
-          <div v-for="p in PLANS" :key="p.id" class="zl-prc" :class="p.featured && 'is-coupon'">
-            <span v-if="p.featured" class="zl-scissors" aria-hidden="true"><svg viewBox="0 0 24 24"><path :d="SCISSORS" /></svg></span>
+          <div v-for="p in PLANS" :key="p.id" class="zl-prc" :class="p.featured && 'is-coupon zine-ticket'">
+            <span v-if="p.featured" class="zine-ticket-tag" aria-hidden="true">Admit one</span>
             <h3>{{ p.name }}</h3>
             <p class="zl-pr"><b class="tnum">{{ p.price }}</b> {{ p.per }}</p>
             <ul><li v-for="f in p.features" :key="f">{{ f }}</li></ul>
@@ -243,9 +245,9 @@ const SCISSORS = 'M6 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM6 15a3 3 0 1 0 0 6 3 3 0 0 0
 
 /* strip */
 .zl-strip { display: grid; gap: 18px; margin-top: 44px; }
-@media (min-width: 1024px) { .zl-strip { grid-template-columns: 1fr 1.15fr 1fr; } }
+@media (min-width: 1024px) { .zl-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); } .zl-scene { height: 280px; } }
 .zl-panel { display: flex; flex-direction: column; border: 2.5px solid var(--rule); }
-.zl-scene { position: relative; min-height: 240px; padding: 20px; overflow: hidden; }
+.zl-scene { position: relative; min-height: 240px; padding: 20px; overflow: hidden; display: flex; flex-direction: column; justify-content: center; }
 .zl-dots { background: radial-gradient(circle, rgb(var(--gold)) 46%, transparent 48%) 0 0 / 7px 7px, #D5E8F4; }
 .zl-grey { background: rgb(var(--s2)); }
 .zl-flood { display: grid; place-items: center; text-align: center; background: rgb(var(--gold)); color: #fff; }
@@ -260,10 +262,7 @@ const SCISSORS = 'M6 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM6 15a3 3 0 1 0 0 6 3 3 0 0 0
 .zl-form i { flex: 1; border-bottom: 1.5px solid var(--rule); font-style: normal; font-weight: 700; color: rgb(var(--gold-text)); }
 .zl-chat { padding: 10px 12px; border: 2px solid var(--rule); background: rgb(var(--canvas)); font-size: 15px; }
 .zl-chat b { color: #7B2FF7; }
-.zl-mini { margin-top: 18px; display: grid; gap: 12px; padding: 14px 16px; border: 2px solid var(--rule); background: rgb(var(--canvas)); }
-.zl-mini p, .zl-slip p:not(.zl-sign) { display: flex; align-items: center; gap: 14px; font-family: var(--font-display), sans-serif; font-weight: 800; font-stretch: 118%; font-size: 22px; }
-.zl-box { width: 22px; height: 22px; flex: none; border: 2.5px solid var(--rule); }
-.zl-box.is-on { background: rgb(var(--ink)); }
+.zl-mini { margin-top: 18px; padding: 14px 16px; border: 2px solid var(--rule); background: rgb(var(--canvas)); }
 
 /* slip */
 .zl-notes { display: grid; gap: 24px; }
@@ -275,32 +274,31 @@ const SCISSORS = 'M6 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM6 15a3 3 0 1 0 0 6 3 3 0 0 0
 .zl-slip-hd { display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 2px solid var(--rule); }
 .zl-slip-hd b { font-family: var(--font-display), sans-serif; font-weight: 900; font-stretch: 130%; font-size: 22px; text-transform: uppercase; }
 .zl-slip h4 { margin: 18px 0 6px; font-size: 13px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: rgb(var(--ink-2)); }
-.zl-slip p:not(.zl-sign) { padding: 9px 0; border-bottom: 1.5px dashed rgb(var(--hair)); }
 .zl-sign { margin-top: 20px; padding-top: 10px; border-top: 1.5px solid var(--rule); font-size: 14px; color: rgb(var(--ink-2)); }
 
 /* packs */
 .zl-packs { display: grid; gap: 24px; margin-top: 44px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.zl-pack .zl-zine { aspect-ratio: auto; min-height: 300px; }
+.zl-pack .zl-band { min-height: 0; padding-bottom: 28px; }
 .zl-pack { display: grid; gap: 12px; align-content: start; color: inherit; text-decoration: none; }
 .zl-zine { aspect-ratio: 3 / 4; display: flex; flex-direction: column; border: 2.5px solid var(--rule); background: rgb(var(--canvas)); }
 .zl-band { min-height: 46%; padding: 16px; background: rgb(var(--gold)); color: #fff; }
+.zl-band small { display: block; margin-bottom: 10px; font-size: 12px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.85; }
+.zl-line { padding: 14px 16px 0; font-size: 15px; line-height: 1.45; color: rgb(var(--ink-2)); }
 .zl-zine.is-ink .zl-band { background: rgb(var(--ink)); color: rgb(var(--canvas)); }
 .zl-band b { display: block; font-family: var(--font-display), sans-serif; font-weight: 900; font-stretch: 112%; font-size: 27px; line-height: 0.92; text-transform: uppercase; overflow-wrap: anywhere; }
 .zl-n { margin-top: auto; padding: 0 16px 14px; font-family: var(--font-display), sans-serif; font-weight: 900; font-stretch: 130%; font-size: 100px; line-height: 0.8; color: rgb(var(--gold)); }
 .zl-zine.is-ink .zl-n { color: rgb(var(--ink)); }
 .zl-n small { margin-left: 6px; font-family: var(--font-body), sans-serif; font-stretch: 100%; font-size: 17px; font-weight: 800; }
-.zl-pack p { font-size: 15px; line-height: 1.5; color: rgb(var(--ink-2)); }
-.zl-pack p b { color: rgb(var(--ink)); }
 .zl-use { font-family: var(--font-display), sans-serif; font-weight: 800; font-stretch: 118%; font-size: 14px; letter-spacing: 0.04em; text-transform: uppercase; color: rgb(var(--gold-text)); }
 .zl-pack:hover .zl-use { text-decoration: underline; text-underline-offset: 4px; }
 
 /* prices */
 .zl-prices { display: grid; margin-top: 44px; border-top: 2.5px solid var(--rule); border-bottom: 2.5px solid var(--rule); }
-@media (min-width: 1024px) { .zl-prices { grid-template-columns: repeat(3, minmax(0, 1fr)); } .zl-prc + .zl-prc { border-left: 1.5px solid var(--rule); } .zl-prc.is-coupon { margin: -14px 0; } }
+@media (min-width: 1024px) { .zl-prices { grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 32px; } .zl-prc.is-coupon { margin: -14px 0; } }
 @media (max-width: 1023px) { .zl-prc + .zl-prc { border-top: 1.5px solid var(--rule); } }
 .zl-prc { position: relative; display: flex; flex-direction: column; gap: 14px; padding: 28px; }
-.zl-prc.is-coupon { border: 3px dashed var(--rule); background: rgb(var(--canvas)); }
-.zl-scissors { position: absolute; top: -14px; left: 24px; padding: 0 6px; background: rgb(var(--canvas)); }
-.zl-scissors svg { width: 20px; height: 20px; fill: none; stroke: rgb(var(--ink)); stroke-width: 2; stroke-linecap: round; }
+.zl-prc.is-coupon { background: rgb(var(--canvas)); }
 .zl-prc h3 { font-family: var(--font-display), sans-serif; font-weight: 900; font-stretch: 130%; font-size: 32px; line-height: 1; text-transform: uppercase; }
 .zl-pr { font-size: 15px; color: rgb(var(--ink-2)); }
 .zl-pr b { font-family: var(--font-display), sans-serif; font-size: 26px; font-weight: 900; color: rgb(var(--ink)); }

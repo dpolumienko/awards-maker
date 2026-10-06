@@ -444,10 +444,11 @@ useSeoMeta({
 
       <!-- PREVIEW -->
       <!-- the preview is a panel, not a page: past three nominations it used to grow
-           under the fold and the bottom of it was unreachable while the form scrolled -->
+           under the fold and the bottom of it was unreachable while the form scrolled.
+           It still scrolls, but shows no scrollbar (review 2026-10-06). -->
       <div
         :class="tab === 'form' && 'hidden lg:block'"
-        class="lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pr-1"
+        class="lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         <!-- no label over the panel: a line of micro type here pushed the preview
              three rows below the form column and the two stopped lining up. The

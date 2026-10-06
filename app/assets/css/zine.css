@@ -57,13 +57,17 @@
   --canvas: 250 250 247;
 }
 
-/* the follow-spot (components/zine/ZineSpotlight.vue) only ever adds light: warm
-   ink multiplied into the paper, warm light added to the black */
+/* the follow-spot (components/zine/ZineSpotlight.vue) only ever adds light, and
+   only a little. Cool, close to white (review 2026-10-06: the yellow was too
+   warm). White light cannot show on white paper, so on the Fanzine's paper the
+   beam is a pale press blue multiplied in; on Night's black it is near-white added. */
 .zine-spot {
+  --spot: 150 190 235;
   mix-blend-mode: multiply;
-  opacity: 0.2;
+  opacity: 0.22;
 }
 :root[data-ink='night'] .zine-spot {
+  --spot: 235 241 255;
   mix-blend-mode: screen;
   opacity: 0.16;
 }
@@ -72,22 +76,54 @@
   /* centred on FROM_RIGHT in ZineSpotlight.vue */
   right: 26px;
 }
-/* a phone has no margin to hang it in: the beam comes from offstage */
-@media (max-width: 767px) {
-  .zine-lamp {
-    display: none;
-  }
-}
 .zine-lamp-can {
   fill: #26262b;
   stroke: rgb(var(--ink));
   stroke-width: 1.5;
 }
 .zine-lamp-lens {
-  fill: rgb(255 196 72);
+  fill: rgb(235 241 255);
+  stroke: rgb(var(--ink));
+  stroke-width: 1;
+}
+.zine-lamp.is-off .zine-lamp-lens {
+  fill: #55555c;
 }
 .zine-lamp-rig {
   fill: rgb(var(--ink));
+}
+/* the switch hangs just left of the lamp, on the same rail */
+.zine-spot-switch {
+  right: 76px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 2px solid rgb(var(--ink));
+  border-radius: 50%;
+  background: rgb(var(--canvas));
+  color: rgb(var(--ink));
+}
+.zine-spot-switch svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+.zine-spot-switch[aria-pressed='false'] {
+  color: rgb(var(--ink-muted));
+  border-style: dashed;
+}
+.zine-spot-switch:focus-visible {
+  outline: 2px solid rgb(var(--gold));
+  outline-offset: 2px;
+}
+/* a phone has no pointer to follow and no margin to hang the lamp in */
+@media (max-width: 767px) {
+  .zine-lamp,
+  .zine-spot-switch {
+    display: none;
+  }
 }
 
 /* Fanzine Night (review 2026-10-06): the same press on black stock, under a
@@ -209,7 +245,7 @@
   overflow: visible;
   pointer-events: none;
   fill: none;
-  stroke: rgb(var(--pink));
+  stroke: rgb(var(--pen, var(--pink)));
   stroke-width: 4;
   stroke-linecap: round;
   mix-blend-mode: multiply;
@@ -335,6 +371,47 @@
 }
 :root[data-version='zine'] .nav-link.router-link-active .nav-bar {
   transform: scaleX(1);
+}
+
+/* ---------------------------------------------------------------- the ticket
+
+   An offer is an admission ticket to the show, not a coupon to cut out
+   (review 2026-10-06): a perforated edge, a notch each side, "Admit one". */
+.zine-ticket {
+  position: relative;
+  border: 3px dashed rgb(var(--ink));
+}
+.zine-ticket::before,
+.zine-ticket::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 30px;
+  height: 30px;
+  margin-top: -15px;
+  border: 3px solid rgb(var(--ink));
+  border-radius: 50%;
+  background: rgb(var(--canvas));
+}
+.zine-ticket::before {
+  left: -16.5px;
+  clip-path: inset(0 0 0 50%);
+}
+.zine-ticket::after {
+  right: -16.5px;
+  clip-path: inset(0 50% 0 0);
+}
+.zine-ticket-tag {
+  position: absolute;
+  top: -13px;
+  left: 24px;
+  padding: 0 8px;
+  background: rgb(var(--canvas));
+  font: 800 12px/22px var(--font-display), sans-serif;
+  font-stretch: 115%;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgb(var(--ink));
 }
 
 /* ---------------------------------------------------------------- the account */

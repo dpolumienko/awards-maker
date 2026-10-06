@@ -9,7 +9,7 @@ import LivePill from './LivePill.vue'
 import MediaLightbox from './MediaLightbox.vue'
 import UiIcon from './UiIcon.vue'
 import ZinePen from '~/components/zine/ZinePen.vue'
-import { nomineeInitials, nomineeName, nomineeSub } from '~/utils/nominee'
+import { nomineeInitials, nomineeName, nomineeSub, nomineeTint } from '~/utils/nominee'
 import { accentText } from '~/utils/accent'
 import type { Result } from '~/composables/useVoting'
 import type { Nomination } from '~/types/award'
@@ -91,7 +91,7 @@ function onKey(e: KeyboardEvent, i: number) {
           :style="{ transform: `scaleX(${r.pct / 100})`, background: accent, opacity: r.top ? 0.18 : 0.08 }"
         />
         <span class="relative flex items-center gap-3">
-          <span aria-hidden="true" class="grid h-8 w-8 flex-none place-items-center rounded-pill bg-s3 text-[13px] font-bold text-ink-2">
+          <span aria-hidden="true" class="grid h-10 w-10 flex-none place-items-center rounded-pill text-sm font-bold text-white" :style="{ background: nomineeTint(r.nominee) }">
             {{ nomineeInitials(r.nominee) }}
           </span>
           <span class="min-w-0">
@@ -139,9 +139,10 @@ function onKey(e: KeyboardEvent, i: number) {
           v-if="n.kind === 'media' && n.image"
           :src="n.image"
           alt=""
-          class="h-12 w-16 flex-none rounded-btn object-cover"
+          class="h-14 w-20 flex-none rounded-btn object-cover"
         />
-        <span v-else aria-hidden="true" class="grid h-10 w-10 flex-none place-items-center rounded-pill bg-s3 text-sm font-bold text-ink-2">
+        <!-- big enough to read as a person, not a bullet (review 2026-10-06) -->
+        <span v-else aria-hidden="true" class="grid h-14 w-14 flex-none place-items-center rounded-pill text-lg font-bold text-white" :style="{ background: nomineeTint(n) }">
           {{ nomineeInitials(n) }}
         </span>
         <span class="min-w-0">

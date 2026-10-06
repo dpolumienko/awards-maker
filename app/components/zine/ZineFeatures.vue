@@ -25,7 +25,7 @@ const channels = [
           <div class="zf-art" aria-hidden="true">
             <p class="zf-fill"><span>Nominee</span><i>stint</i></p>
             <ul class="zf-list">
-              <li v-for="c in channels" :key="c.name"><PlatformDot :platform="c.platform" :label="false" :size="14" /><b>{{ c.name }}</b><span>{{ c.meta }}</span></li>
+              <li v-for="c in channels" :key="c.name"><PlatformDot :platform="c.platform" :label="false" :size="14" /><b>{{ c.name }}</b><span class="zf-meta">{{ c.meta }}</span></li>
             </ul>
             <p class="zf-add">+ Add "the 3am raid" as text</p>
           </div>
@@ -71,7 +71,7 @@ const channels = [
 .zf { padding: 72px 0; border-top: 2px solid rgb(var(--ink)); }
 .zf-h { max-width: 16ch; font-size: clamp(40px, 6vw, 72px); line-height: 0.88; text-transform: uppercase; color: rgb(var(--gold)); text-wrap: balance; }
 .zf-intro { margin-top: 18px; max-width: 58ch; font-size: 19px; line-height: 1.55; color: rgb(var(--ink-2)); }
-.zf-grid { display: grid; gap: 22px; margin-top: 44px; align-items: start; }
+.zf-grid { display: grid; gap: 22px; margin-top: 44px; }
 @media (min-width: 1024px) { .zf-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } .zf-clip:nth-child(1) { transform: rotate(-1deg); } .zf-clip:nth-child(3) { transform: rotate(0.8deg); } }
 .zf-clip { padding: 20px 20px 22px; border: 2.5px solid rgb(var(--ink)); background: rgb(var(--canvas)); }
 .zf-clip h3 { font: 900 21px/1.05 var(--font-display), sans-serif; font-stretch: 120%; text-transform: uppercase; }
@@ -81,7 +81,7 @@ const channels = [
 .zf-fill i { flex: 1; border-bottom: 2px solid rgb(var(--ink)); font: 700 17px/1.3 var(--font-body), sans-serif; font-style: normal; color: rgb(var(--gold-text)); }
 .zf-list { margin: 10px 0 0; padding: 0; list-style: none; }
 .zf-list li { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1.5px dashed rgb(var(--hair)); font-size: 14px; }
-.zf-list span { margin-left: auto; color: rgb(var(--ink-2)); font-size: 13px; }
+.zf-meta { margin-left: auto; color: rgb(var(--ink-2)); font-size: 13px; }
 .zf-add { margin-top: 10px; padding: 8px 10px; border: 2px dashed rgb(var(--ink)); font-size: 14px; color: rgb(var(--ink-2)); }
 .zf-slip { position: relative; padding: 4px 12px; border: 2px solid rgb(var(--ink)); }
 .zf-slip p { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1.5px dashed rgb(var(--hair)); font: 800 16px/1 var(--font-display), sans-serif; font-stretch: 112%; }
