@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // The closing ask on the Fanzine landing: a coupon to cut out. Same words as
-// sections/CtaBand.vue; "favorites" gets the blue marker, the pink pen stays for
-// what was actually chosen.
+// sections/CtaBand.vue; "favorites" is printed in the press blue, the pink pen
+// stays for what was actually chosen.
 import UiButton from '~/components/ui/UiButton.vue'
 
 const SCISSORS = 'M6 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM6 15a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM20 4L8.1 15.9M14.5 14.5L20 20M8.1 8.1L12 12'
@@ -26,8 +26,6 @@ const SCISSORS = 'M6 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM6 15a3 3 0 1 0 0 6 3 3 0 0 0
 .zc-cut { position: absolute; top: -13px; left: 28px; display: flex; align-items: center; gap: 6px; padding: 0 8px; background: rgb(var(--canvas)); font: 800 12px/1 var(--font-display), sans-serif; font-stretch: 115%; letter-spacing: 0.06em; text-transform: uppercase; }
 .zc-cut svg { width: 18px; height: 18px; fill: none; stroke: rgb(var(--ink)); stroke-width: 2; stroke-linecap: round; }
 .zc-h { max-width: 16ch; font-size: clamp(36px, 5.5vw, 68px); line-height: 0.9; text-transform: uppercase; color: rgb(var(--ink)); text-wrap: balance; }
-/* the marker pass, as a static highlight behind one word */
-.zc-mark { position: relative; z-index: 0; color: rgb(var(--gold)); white-space: nowrap; }
-.zc-mark::before { content: ''; position: absolute; z-index: -1; inset: 55% -0.12em 0; background: rgb(var(--gold) / 0.22); -webkit-mask: var(--brush) center / 100% 100% no-repeat; mask: var(--brush) center / 100% 100% no-repeat; }
+.zc-mark { color: rgb(var(--gold)); white-space: nowrap; }
 .zc-p { max-width: 46ch; font-size: 19px; line-height: 1.55; color: rgb(var(--ink-2)); }
 </style>

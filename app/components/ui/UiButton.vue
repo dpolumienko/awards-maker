@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed } from 'vue'
 import { NuxtLink } from '#components'
 interface Props {
   variant?: 'primary' | 'ghost' | 'text'
@@ -11,12 +11,6 @@ const { variant = 'primary', size = 'md', to } = defineProps<Props>()
 // An internal route goes through the router - an <a href> here meant every
 // "Create your awards" click reloaded the whole app and lost the draft in flight.
 const internal = computed(() => !!to && to.startsWith('/'))
-
-// Which of the Fanzine's five marker strokes this button gets on hover
-// (assets/css/zine.css). Picked after mount: a random attribute rendered on the
-// server would not match the browser's and break hydration.
-const brush = ref<number>()
-onMounted(() => (brush.value = Math.floor(Math.random() * 5)))
 
 const base =
   'relative inline-flex items-center justify-center gap-2.5 overflow-hidden rounded-btn font-bold uppercase tracking-button transition-[background-color,border-color,color,transform] duration-200 active:translate-y-px disabled:pointer-events-none disabled:opacity-40'
@@ -34,7 +28,6 @@ const variants = {
     :is="internal ? NuxtLink : to ? 'a' : 'button'"
     :to="internal ? to : undefined"
     :href="internal ? undefined : to"
-    :data-brush="brush"
     :class="['ui-btn', `ui-btn-${variant}`, base, sizes[size], variants[variant], variant === 'primary' && 'group']"
   >
     <span class="relative z-10"><slot /></span>

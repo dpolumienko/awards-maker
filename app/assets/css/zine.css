@@ -57,6 +57,59 @@
   --canvas: 250 250 247;
 }
 
+/* Fanzine Night (review 2026-10-06): the same press on black stock, under a
+   follow-spot (components/zine/ZineSpotlight.vue). The inks swap places - the
+   paper is black, the type is paper - and the blue and pink are pulled light
+   enough to read as type on black. */
+:root[data-version='zine'][data-ink='night'],
+:root[data-version='zine'][data-ink='night'] body,
+:root[data-version='zine'][data-ink='night'] body[data-stage] {
+  --canvas: 17 17 19;
+  --s1: 17 17 19;
+  --s2: 30 30 33;
+  --s3: 44 44 48;
+  --hair: 64 64 70;
+  --hair2: 242 242 236;
+  --ink: 242 242 236;
+  --ink-2: 196 196 190;
+  --ink-muted: 160 160 158;
+  --ink-disabled: 112 112 116;
+  --live: 92 172 232;
+  --warn: 240 168 64;
+  --danger: 255 112 112;
+  --gold-text: 92 172 232;
+  --ivory: 242 242 236;
+  --pink-ink: 255 122 200;
+  --bar: 160 160 158;
+}
+:root[data-version='zine'][data-ink='night'] input,
+:root[data-version='zine'][data-ink='night'] textarea,
+:root[data-version='zine'][data-ink='night'] select {
+  color-scheme: dark !important;
+}
+/* On black, multiply would print nothing: the pen adds light instead, and the
+   pink plate goes under the blue one, so the headline still reads blue with a
+   pink misregister, as it does on paper. */
+:root[data-ink='night'] .zine-pen-line {
+  mix-blend-mode: screen;
+}
+:root[data-ink='night'] .zine-plate {
+  color: rgb(var(--gold-text));
+}
+:root[data-ink='night'] .zine-plate-2 {
+  z-index: -1;
+  mix-blend-mode: normal;
+}
+/* blue type on black takes the lighter blue, so it reads under the dimmed room too */
+:root[data-ink='night'] :is(.zl-h2, .zl-issue-h.is-blue, .zl-n, .zf-h, .zf-claim, .zi-h, .zp-h, .zp-title, .zc-mark, .idea-title),
+:root[data-ink='night'] .zp-rules li::before {
+  color: rgb(var(--gold-text));
+}
+/* a Twitch name in chat: Twitch's own lighter purple, as its dark mode prints it */
+:root[data-ink='night'] .zl-chat b {
+  color: #a970ff;
+}
+
 :root[data-version='zine'] input,
 :root[data-version='zine'] textarea,
 :root[data-version='zine'] select {
@@ -94,12 +147,11 @@
 :root[data-version='zine'] .btn-primary {
   background-color: rgb(var(--ink));
   background-image: none;
-  color: #fff;
+  color: rgb(var(--canvas));
   box-shadow: none;
   text-shadow: none;
 }
 :root[data-version='zine'] .btn-primary:hover {
-  background-color: #000;
   background-image: none;
 }
 :root[data-version='zine'] .btn-primary:disabled,
@@ -208,94 +260,48 @@
   backdrop-filter: none;
 }
 
-/* ---------------------------------------------------------------- the marker
+/* ---------------------------------------------------------------- hovers
 
-   The pen's sibling: a blue marker. It underlines the link you point at and
-   swipes across the button you are about to press - drawn in from the left,
-   like a hand doing it. Pink stays the pen's and only marks what was chosen. */
-:root[data-version='zine'] {
-  /* five strokes, so no two buttons in a row look stamped from one die: a plain
-     swipe, a dry brush that leaves streaks, a wobbly one, a slanted one that
-     starts in a blob, and a double pass. UiButton picks one at random on mount
-     (data-brush), menu items take them in turn. */
-  --brush-0: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'%3E%3Cpath d='M4 9C40 3 92 7 140 4s50 1 56 4l3 6-4 5 4 6-3 7c-38 4-90 1-136 5S10 36 3 33L1 26l3-5-3-6z'/%3E%3C/svg%3E");
-  --brush-1: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'%3E%3Cpath d='M2 12C50 6 120 10 196 7l2 9-3 6 2 8c-60 4-130 0-194 6L1 28l3-6-3-5z'/%3E%3Cpath d='M10 35c60-3 120-1 182-4l-1 3c-60 3-120 1-180 4z'/%3E%3Cpath d='M22 4c50-2 110 0 160-1v2c-50 1-110-1-160 1z'/%3E%3C/svg%3E");
-  --brush-2: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'%3E%3Cpath d='M3 10c20-6 40 4 60-2s40-6 60 0 40 4 70-3l5 9-5 6 6 7-6 6c-30-5-50 5-70 0s-40-6-60 0-40 6-60 1L0 28l4-7-3-6z'/%3E%3C/svg%3E");
-  --brush-3: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'%3E%3Cpath d='M12 6c60-2 120-4 186-1l-8 30c-60 4-120 2-186 4z'/%3E%3Cpath d='M16 4C4 7 0 22 6 36c5 2 10 1 12-2z'/%3E%3C/svg%3E");
-  --brush-4: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'%3E%3Cpath d='M3 15c50-5 120-3 194-6l1 14c-70 4-130 6-194 8z'/%3E%3Cpath fill-opacity='.55' d='M6 5c60-3 120-1 190 2l-2 10c-70 1-130-1-187 3z'/%3E%3C/svg%3E");
-  --brush: var(--brush-0);
-  --squiggle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 12' preserveAspectRatio='none'%3E%3Cpath d='M3 7C31 2 62 10 101 6s69-5 96 0' fill='none' stroke='black' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E");
-}
-/* each stroke also lands with its own tilt, speed and direction */
-:root[data-version='zine'] [data-brush='1'] { --brush: var(--brush-1); --brush-tilt: -1.2deg; --brush-dur: 0.2s; }
-:root[data-version='zine'] [data-brush='2'] { --brush: var(--brush-2); --brush-tilt: 0.8deg; --brush-dur: 0.26s; }
-:root[data-version='zine'] [data-brush='3'] { --brush: var(--brush-3); --brush-tilt: -0.6deg; --brush-dur: 0.22s; --brush-from: inset(0 0 0 100%); }
-:root[data-version='zine'] [data-brush='4'] { --brush: var(--brush-4); --brush-tilt: 1.4deg; --brush-dur: 0.18s; }
-:root[data-version='zine'] .account-item:nth-of-type(2n) { --brush: var(--brush-2); --brush-tilt: 0.6deg; }
-:root[data-version='zine'] .account-item:nth-of-type(3n) { --brush: var(--brush-4); --brush-tilt: -0.8deg; }
-
-/* the nav: a hand-drawn underline instead of a ruler-straight bar */
-:root[data-version='zine'] .nav-link .nav-bar {
-  height: 7px;
-  bottom: -3px;
-  transform: none;
-  background: rgb(var(--gold));
-  -webkit-mask: var(--squiggle) center / 100% 100% no-repeat;
-  mask: var(--squiggle) center / 100% 100% no-repeat;
-  clip-path: inset(0 100% 0 0);
-  transition: clip-path 0.24s cubic-bezier(0.45, 0.05, 0.25, 1);
-}
-:root[data-version='zine'] .nav-link:hover .nav-bar,
-:root[data-version='zine'] .nav-link:focus-visible .nav-bar,
-:root[data-version='zine'] .nav-link.router-link-active .nav-bar {
-  clip-path: inset(0 0 0 0);
-}
-
-/* buttons: the black one gets inked over in blue, the outlined one gets a
-   highlighter pass - the type stays on top and stays readable either way */
+   One rule per kind of control, the same on every page (review 2026-10-06: five
+   random marker strokes read as noise, and a highlighter belongs to homework,
+   not to an awards night). Print has two moves and the site uses only those:
+   ink turns press blue, an outline fills with ink. */
 :root[data-version='zine'] .ui-btn-sheen {
   display: none;
 }
-:root[data-version='zine'] .ui-btn::before,
-:root[data-version='zine'] .account-item::before {
-  content: '';
-  position: absolute;
-  /* inside the button, so the ragged ends of the stroke show */
-  inset: 5px 4px;
-  z-index: 0;
-  pointer-events: none;
-  background: var(--marker, rgb(var(--gold)));
-  -webkit-mask: var(--brush) center / 100% 100% no-repeat;
-  mask: var(--brush) center / 100% 100% no-repeat;
-  transform: rotate(var(--brush-tilt, 0deg));
-  clip-path: var(--brush-from, inset(0 100% 0 0));
-  transition: clip-path var(--brush-dur, 0.24s) cubic-bezier(0.45, 0.05, 0.25, 1);
+/* the main action: black ink that turns press blue */
+:root[data-version='zine'] .btn-primary:hover,
+:root[data-version='zine'] .btn-primary:focus-visible {
+  background-color: rgb(var(--gold));
+  color: #fff;
 }
-:root[data-version='zine'] .ui-btn-ghost::before,
-:root[data-version='zine'] .account-item::before {
-  --marker: rgb(var(--gold) / 0.22);
+/* the second action, and every row of the account slip: an outline that fills with ink */
+:root[data-version='zine'] .ui-btn-ghost {
+  border: 2px solid rgb(var(--ink));
 }
-:root[data-version='zine'] .ui-btn-text::before {
-  inset: auto -2px -2px;
-  height: 0.55em;
-  --marker: rgb(var(--gold) / 0.3);
+:root[data-version='zine'] .ui-btn-ghost:hover,
+:root[data-version='zine'] .ui-btn-ghost:focus-visible,
+:root[data-version='zine'] .account-item:hover,
+:root[data-version='zine'] .account-item:focus-visible {
+  background-color: rgb(var(--ink));
+  border-color: rgb(var(--ink));
+  color: rgb(var(--canvas));
 }
-:root[data-version='zine'] .ui-btn:hover::before,
-:root[data-version='zine'] .ui-btn:focus-visible::before,
-:root[data-version='zine'] .account-item:hover::before,
-:root[data-version='zine'] .account-item:focus-visible::before {
-  clip-path: inset(0 0 0 0);
+/* a text action: the underline thickens and goes to ink */
+:root[data-version='zine'] .ui-btn-text:hover,
+:root[data-version='zine'] .ui-btn-text:focus-visible {
+  color: rgb(var(--ink));
+  text-decoration-thickness: 3px;
 }
-:root[data-version='zine'] .ui-btn:disabled::before,
-:root[data-version='zine'] .ui-btn[aria-disabled='true']::before {
-  display: none;
+/* the nav: a straight press-blue rule under the page you are on, as in a printed programme */
+:root[data-version='zine'] .nav-link .nav-bar {
+  height: 3px;
 }
-@media (prefers-reduced-motion: reduce) {
-  :root[data-version='zine'] .ui-btn::before,
-  :root[data-version='zine'] .account-item::before,
-  :root[data-version='zine'] .nav-link .nav-bar {
-    transition: none;
-  }
+:root[data-version='zine'] .nav-link.router-link-active {
+  color: rgb(var(--ink));
+}
+:root[data-version='zine'] .nav-link.router-link-active .nav-bar {
+  transform: scaleX(1);
 }
 
 /* ---------------------------------------------------------------- the account */
@@ -352,9 +358,6 @@
 }
 :root[data-version='zine'] .account-who + .account-item {
   border-top: 0;
-}
-:root[data-version='zine'] .account-item:hover {
-  background: none;
 }
 :root[data-version='zine'] .account-item > * {
   position: relative;
