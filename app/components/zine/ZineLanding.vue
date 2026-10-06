@@ -8,6 +8,7 @@
 import { computed } from 'vue'
 import UiButton from '~/components/ui/UiButton.vue'
 import UiIcon from '~/components/ui/UiIcon.vue'
+import InteractiveAccordion from '~/components/ui/InteractiveAccordion.vue'
 import ZinePen from './ZinePen.vue'
 // the Current landing's other sections, each with its Fanzine print
 import ZinePageProof from './ZinePageProof.vue'
@@ -193,15 +194,12 @@ const SCISSORS = 'M6 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM6 15a3 3 0 1 0 0 6 3 3 0 0 0
       </div>
     </section>
 
-    <!-- letters page: the FAQ, answered by the editor -->
+    <!-- letters page: the FAQ, the same accordion as on /create -->
     <section class="zl-sec zl-last">
       <div class="shell">
         <h2 class="zl-h2 zine-display">Letters</h2>
-        <div class="zl-letters">
-          <article v-for="f in faq" :key="f.q" class="zl-letter">
-            <h3>{{ f.q }}</h3>
-            <p>{{ f.a }}<span class="zl-ed">- Ed.</span></p>
-          </article>
+        <div class="mt-10 border-t border-hair">
+          <InteractiveAccordion :items="faq" />
         </div>
         <p class="zl-end">
           <UiIcon name="chevron-right" :size="14" />
@@ -322,12 +320,6 @@ const SCISSORS = 'M6 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM6 15a3 3 0 1 0 0 6 3 3 0 0 0
 .zl-rk p { margin-top: 6px; font-size: 14px; color: rgb(var(--ink-2)); }
 
 /* letters */
-.zl-letters { margin-top: 40px; columns: 1; }
-@media (min-width: 1024px) { .zl-letters { columns: 2; column-gap: 56px; column-rule: 1.5px solid var(--rule); } }
-.zl-letter { break-inside: avoid; margin-bottom: 32px; }
-.zl-letter h3 { font-size: 19px; line-height: 1.4; font-weight: 700; font-style: italic; }
-.zl-letter p { margin-top: 10px; padding-left: 18px; border-left: 3px solid rgb(var(--gold)); font-size: 16px; line-height: 1.6; color: rgb(var(--ink-2)); }
-.zl-ed { display: block; margin-top: 6px; font-family: var(--font-display), sans-serif; font-weight: 800; font-stretch: 118%; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: rgb(var(--gold-text)); }
 .zl-end { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-weight: 700; }
 .zl-end a { color: rgb(var(--ink)); text-underline-offset: 4px; }
 </style>

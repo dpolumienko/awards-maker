@@ -1,18 +1,27 @@
 <script setup lang="ts">
 // The Fanzine's light: a follow-spot hung under the masthead, throwing a warm
-// beam down to a pool where the pointer is. It only adds light - the page reads
-// as it does without it (review 2026-10-06: a dimmed room made everything outside
-// the pool unreadable). Multiplied into the paper, added to Night's black
-// (.zine-spot in assets/css/zine.css). Fixed to the viewport, so the lamp rides
-// along as the page scrolls; with no pointer (touch, or a still mouse) it sweeps
-// on its own. Chosen from the backdrop board, outputs/fanzine-backgrounds-2026-10-06.
+// beam down to a pool where the pointer is. It only adds light, and only a
+// little - the page reads as it does without it (review 2026-10-06). Fixed to the
+// viewport, so the lamp rides along as the page scrolls; with no pointer (touch,
+// or a still mouse) it sweeps on its own. Chosen from the backdrop board,
+// outputs/fanzine-backgrounds-2026-10-06.
+//
+// Two layers. The light is drawn solid on the canvas and made faint by the
+// canvas's own opacity and blend (.zine-spot in assets/css/zine.css), so the beam
+// and the pool merge without a seam where they overlap. The lamp is an SVG on
+// top, never blended, so it stays a solid object.
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 const canvas = ref<HTMLCanvasElement | null>(null)
-// tungsten: the beam's warm yellow, and how strong the pool is at its centre
+const lamp = ref<SVGSVGElement | null>(null)
+const head = ref<SVGGElement | null>(null)
+// tungsten: the beam's warm yellow
 const WARM = '255,196,72'
-const POOL = 0.3
 const IDLE_AFTER = 4 // seconds without a pointer move before the spot sweeps
+const PIVOT = 24 // px below the masthead where the lamp turns
+// It hangs in the right-hand margin, not over the middle of the page: the lamp is
+// solid, and in the middle it covered whatever text scrolled under it.
+const FROM_RIGHT = 56
 let stop = () => {}
 
 onMounted(() => {
@@ -33,12 +42,13 @@ onMounted(() => {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     // the masthead is sticky, so its bottom edge is where the rig hangs on every scroll
     top = document.querySelector('.site-header')?.getBoundingClientRect().height ?? 0
+    lamp.value!.style.top = `${top}px`
   }
 
   function draw(t: number) {
     const idle = mx < 0 || t - moved > IDLE_AFTER
     const tx = still ? W * 0.62 : idle ? W * (0.5 + 0.34 * Math.sin(t * 0.45)) : mx
-    const ty = still ? top + (H - top) * 0.42 : idle ? top + (H - top) * (0.5 + 0.18 * Math.sin(t * 0.7)) : Math.max(top + 90, my)
+    const ty = still ? top + (H - top) * 0.42 : idle ? top + (H - top) * (0.5 + 0.18 * Math.sin(t * 0.7)) : Math.max(top + 120, my)
     if (x < 0 || still) {
       x = tx
       y = ty
@@ -48,59 +58,41 @@ onMounted(() => {
 
     const R = Math.min(170, W * 0.24)
     const ry = R * 0.42
-    const sx = W / 2
-    const sy = top + 30
-    const dx = x - sx, dy = y - sy
-    const d = Math.hypot(dx, dy) || 1
-    const nx = -dy / d, ny = dx / d
+    const px = W - FROM_RIGHT, py = top + PIVOT
+    const a = Math.atan2(y - py, x - px)
+    // the beam leaves from the lens, a little way down the can
+    const sx = px + Math.cos(a) * 10, sy = py + Math.sin(a) * 10
 
     ctx.clearRect(0, 0, W, H)
-    // the beam, fading in from the lens to the pool
-    const cone = ctx.createLinearGradient(sx, sy, x, y)
-    cone.addColorStop(0, `rgba(${WARM},0.04)`)
-    cone.addColorStop(1, `rgba(${WARM},${POOL * 0.5})`)
-    ctx.fillStyle = cone
-    ctx.beginPath()
-    ctx.moveTo(sx + nx * 12, sy + ny * 12)
-    ctx.lineTo(sx - nx * 12, sy - ny * 12)
-    ctx.lineTo(x - nx * R, y - ny * ry)
-    ctx.lineTo(x + nx * R, y + ny * ry)
-    ctx.closePath()
-    ctx.fill()
-    // the pool of light
+    // the pool: solid in the middle, soft at the rim
     ctx.save()
     ctx.translate(x, y)
     ctx.scale(1, ry / R)
-    const pool = ctx.createRadialGradient(0, 0, 0, 0, 0, R * 1.25)
-    pool.addColorStop(0, `rgba(${WARM},${POOL})`)
-    pool.addColorStop(0.7, `rgba(${WARM},${POOL * 0.7})`)
+    const pool = ctx.createRadialGradient(0, 0, R * 0.55, 0, 0, R * 1.2)
+    pool.addColorStop(0, `rgba(${WARM},1)`)
     pool.addColorStop(1, `rgba(${WARM},0)`)
     ctx.fillStyle = pool
     ctx.beginPath()
-    ctx.arc(0, 0, R * 1.25, 0, Math.PI * 2)
+    ctx.arc(0, 0, R * 1.2, 0, Math.PI * 2)
     ctx.fill()
     ctx.restore()
-
-    // the lamp, turning to follow its beam
-    ctx.fillStyle = '#3a3a40'
-    ctx.fillRect(sx - 2, top, 4, 22)
-    ctx.save()
-    ctx.translate(sx, sy - 6)
-    ctx.rotate(Math.atan2(dy, dx) - Math.PI / 2)
-    ctx.fillStyle = '#26262b'
-    ctx.strokeStyle = '#f2f2ec'
-    ctx.lineWidth = 1.5
+    // the beam, fainter than the pool and ending inside its solid middle, drawn
+    // under it - so the two read as one light and the pool never brightens twice
+    ctx.globalCompositeOperation = 'destination-over'
+    const cone = ctx.createLinearGradient(sx, sy, x, y)
+    cone.addColorStop(0, `rgba(${WARM},0.15)`)
+    cone.addColorStop(1, `rgba(${WARM},0.45)`)
+    ctx.fillStyle = cone
     ctx.beginPath()
-    ctx.moveTo(-13, -22)
-    ctx.lineTo(13, -22)
-    ctx.lineTo(17, 8)
-    ctx.lineTo(-17, 8)
+    ctx.moveTo(sx - 9, sy)
+    ctx.lineTo(sx + 9, sy)
+    ctx.lineTo(x + R * 0.55, y)
+    ctx.lineTo(x - R * 0.55, y)
     ctx.closePath()
     ctx.fill()
-    ctx.stroke()
-    ctx.fillStyle = `rgb(${WARM})`
-    ctx.fillRect(-15, 6, 30, 5)
-    ctx.restore()
+    ctx.globalCompositeOperation = 'source-over'
+
+    head.value!.setAttribute('transform', `rotate(${(a * 180) / Math.PI - 90})`)
   }
 
   function frame(ms: number) {
@@ -138,4 +130,13 @@ onBeforeUnmount(() => stop())
 <template>
   <!-- under the masthead and every sticky bar that comes later in the page, over the content -->
   <canvas ref="canvas" aria-hidden="true" class="zine-spot pointer-events-none fixed inset-0 z-30 h-full w-full" />
+  <!-- the lamp: the hanger stays put, the can turns to follow its beam -->
+  <svg ref="lamp" aria-hidden="true" class="zine-lamp pointer-events-none fixed z-30" viewBox="-30 -24 60 60" width="60" height="60">
+    <rect class="zine-lamp-rig" x="-2" y="-24" width="4" height="22" />
+    <g ref="head">
+      <path class="zine-lamp-can" d="M-13 -22H13L17 8H-17Z" />
+      <rect class="zine-lamp-lens" x="-15" y="6" width="30" height="5" />
+    </g>
+    <circle class="zine-lamp-rig" r="4" />
+  </svg>
 </template>

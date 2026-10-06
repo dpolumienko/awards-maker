@@ -61,9 +61,33 @@
    ink multiplied into the paper, warm light added to the black */
 .zine-spot {
   mix-blend-mode: multiply;
+  opacity: 0.2;
 }
 :root[data-ink='night'] .zine-spot {
   mix-blend-mode: screen;
+  opacity: 0.16;
+}
+/* the lamp itself is solid metal: never blended, never see-through */
+.zine-lamp {
+  /* centred on FROM_RIGHT in ZineSpotlight.vue */
+  right: 26px;
+}
+/* a phone has no margin to hang it in: the beam comes from offstage */
+@media (max-width: 767px) {
+  .zine-lamp {
+    display: none;
+  }
+}
+.zine-lamp-can {
+  fill: #26262b;
+  stroke: rgb(var(--ink));
+  stroke-width: 1.5;
+}
+.zine-lamp-lens {
+  fill: rgb(255 196 72);
+}
+.zine-lamp-rig {
+  fill: rgb(var(--ink));
 }
 
 /* Fanzine Night (review 2026-10-06): the same press on black stock, under a
