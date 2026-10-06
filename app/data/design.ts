@@ -21,6 +21,22 @@ export const BUTTONS = [
 export const DESIGN_KEYS = { palette: 'am-palette', button: 'am-button' } as const
 
 /**
+ * Two whole versions of the site, review 2026-10-02: today's dark stage and
+ * Concept C, the Fanzine (outputs/awards-maker-concepts-2026-10-01). Same pages,
+ * same logic; the Fanzine is a token set (assets/css/zine.css) plus the
+ * components in components/zine/. Kept in a cookie, not localStorage: the
+ * landing and the awards pages render on the server, and a version only the
+ * browser knows would hydrate into the other one. `?version=zine` sets it.
+ */
+export const VERSIONS = [
+  { id: 'stage', label: 'Current' },
+  { id: 'zine', label: 'Fanzine' },
+] as const
+export type Version = (typeof VERSIONS)[number]['id']
+export const VERSION_COOKIE = 'am-version'
+export const isVersion = (v: unknown): v is Version => VERSIONS.some((x) => x.id === v)
+
+/**
  * Runs inline in <head>, before first paint, so a returning viewer never sees
  * the default palette flash. `?palette=sc&button=warm` in a link sets and keeps
  * the choice - that is how a variant gets sent to someone.

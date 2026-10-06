@@ -18,8 +18,10 @@ import { nomineeImage, nomineeInitials, nomineeName } from '~/utils/nominee'
 import CeremonySetup from '~/components/ui/CeremonySetup.vue'
 import { COVER, useCeremony } from '~/composables/useCeremony'
 import { themeCss } from '~/data/themes'
-import { accentText, accentOf, onAccent, tint } from '~/utils/accent'
+import { accentText, accentOf, inkOnFlood, onAccent, tint } from '~/utils/accent'
+import ZinePen from '~/components/zine/ZinePen.vue'
 import { DISPLAY_FONTS, useDisplayFonts } from '~/composables/useDisplayFonts'
+import { useVersion } from '~/composables/useVersion'
 
 // ceremony typefaces and share cards draw in any of the headline faces
 useDisplayFonts(DISPLAY_FONTS)
@@ -34,7 +36,14 @@ const { data, refresh } = await useAwardPage(() => slug.value)
 const award = computed(() => data.value?.award ?? null)
 const tally = computed(() => data.value?.tally ?? emptyTally())
 const accent = computed(() => accentOf(award.value?.look))
-const ink = computed(() => accentText(accent.value))
+const { isZine } = useVersion()
+const ink = computed(() => accentText(accent.value, isZine.value))
+// The Fanzine's ceremony floods the stage with the show's accent (blue by default)
+// and prints on it in white or black ink, whichever reads.
+const floodFg = computed(() => inkOnFlood(accent.value))
+// On the host's own cover the stage stays a dark photo under a veil, so type takes
+// the light version of the accent, as on the Current stage.
+const stageInk = computed(() => (!isZine.value ? ink.value : onCover.value ? accentText(accent.value) : floodFg.value))
 // The ceremony has its own stage, face and reveal - set once, kept per awards.
 const { settings, update, configured } = useCeremony(() => slug.value, () => award.value)
 const setupOpen = ref(false)
@@ -47,9 +56,24 @@ async function onStart() {
 }
 const headlineFont = computed(() => `'${settings.value.font}', Archivo, sans-serif`)
 
+const onCover = computed(() => settings.value.stage === COVER && !!award.value?.look?.coverUrl)
+const stageCss = computed(() =>
+  isZine.value && !onCover.value
+    ? `background:radial-gradient(circle, rgba(255,255,255,.08) 40%, transparent 44%) 0 0/8px 8px, ${accent.value}`
+    : themeCss(
+        settings.value.stage === COVER ? undefined : settings.value.stage,
+        accent.value,
+        settings.value.stage === COVER ? award.value?.look?.coverUrl : undefined,
+      ),
+)
+
 /** A nominee plate: everyone in the house colour, the winner filled and lit. */
 const plate = (won: boolean) =>
-  won
+  isZine.value
+    ? won
+      ? { background: floodFg.value, color: accent.value, boxShadow: 'none' }
+      : { background: 'transparent', color: stageInk.value, border: `0.25cqw solid ${stageInk.value}` }
+    : won
     ? { background: accent.value, color: onAccent(accent.value), boxShadow: `0 0 0 0.5cqw ${tint(accent.value, '33')}, 0 0 7cqw ${tint(accent.value, '55')}` }
     : { background: 'rgba(255,255,255,.07)', color: ink.value, border: `1px solid ${tint(accent.value, '55')}` }
 
@@ -219,7 +243,7 @@ watch(
 const obsLink = ref('')
 const copied = ref(false)
 async function copyObs() {
-  obsLink.value = `${location.origin}/my-awards/${slug.value}/reveal?bare=1`
+  obsLink.value = `${location.origin}${asset(`/my-awards/${slug.value}/reveal`)}?bare=1`
   try {
     await navigator.clipboard.writeText(obsLink.value)
     copied.value = true
@@ -254,26 +278,22 @@ definePageMeta({ chrome: false })
 <template>
   <!-- pinned to true black rather than the site canvas: this screen is a captured
        stage, and in OBS anything behind the host's own background is a light leak -->
-  <div class="min-h-screen bg-black text-ink" @mousemove="wake">
+  <div class="min-h-screen text-ink" :class="isZine ? 'bg-canvas' : 'bg-black'" @mousemove="wake">
     <template v-if="award && categories.length">
       <!-- THE STAGE - everything in this box is what the stream sees -->
       <div
         ref="stage"
         class="stage relative mx-auto flex w-full flex-col items-center justify-center overflow-hidden text-center"
-        :class="bare ? 'h-screen w-screen' : 'mt-4 aspect-video max-w-[1600px] rounded-card'"
-        :style="themeCss(
-          settings.stage === COVER ? undefined : settings.stage,
-          accent,
-          settings.stage === COVER ? award.look?.coverUrl : undefined,
-        )"
+        :class="[bare ? 'h-screen w-screen' : 'mt-4 aspect-video max-w-[1600px] rounded-card', isZine && 'is-zine']"
+        :style="[stageCss, isZine ? { color: stageInk } : {}]"
       >
-        <span aria-hidden="true" class="absolute inset-0 bg-black/50" />
+        <span v-if="!isZine || onCover" aria-hidden="true" class="absolute inset-0 bg-black/50" />
 
         <div class="stage-body relative flex w-full flex-col items-center" role="status" aria-live="polite">
           <!-- title card: the same letter-by-letter arrival as the publish curtain,
                so the show opens in the language the product already speaks -->
           <template v-if="slide.kind === 'title'">
-            <p class="s-kicker" :style="{ color: ink }">{{ award.host.name }} presents</p>
+            <p class="s-kicker" :style="{ color: stageInk }">{{ award.host.name }} presents</p>
             <h1 class="s-title max-w-[16ch]" :style="{ fontFamily: headlineFont }">
               <span class="sr-only">{{ award.name }}</span>
               <span aria-hidden="true" class="flex flex-wrap justify-center gap-x-[0.26em]">
@@ -292,7 +312,7 @@ definePageMeta({ chrome: false })
 
           <!-- one category: nominees first, winner on the next click -->
           <template v-else-if="slide.kind === 'category' && current">
-            <p class="s-kicker" :style="{ color: ink }">{{ award.name }}</p>
+            <p class="s-kicker" :style="{ color: stageInk }">{{ award.name }}</p>
             <h2 class="s-title max-w-[18ch]" :style="{ fontFamily: headlineFont }">
               {{ current.nomination.title || 'Untitled category' }}
             </h2>
@@ -309,7 +329,7 @@ definePageMeta({ chrome: false })
                 class="s-nom flex flex-col items-center transition-[opacity,transform] duration-500 ease-gala"
                 :class="[
                   slide.shown && current.winners.includes(row) ? 'js-winner s-nom-win' : '',
-                  slide.shown && !current.winners.includes(row) ? 'opacity-25' : '',
+                  slide.shown && !current.winners.includes(row) ? (isZine ? 'opacity-80' : 'opacity-25') : '',
                 ]"
               >
                 <span
@@ -338,10 +358,10 @@ definePageMeta({ chrome: false })
                 class="s-line flex items-center transition-[opacity,transform] duration-500 ease-gala"
                 :class="[
                   slide.shown && current.winners.includes(row) ? 'js-winner s-line-win' : '',
-                  slide.shown && !current.winners.includes(row) ? 'opacity-25' : '',
+                  slide.shown && !current.winners.includes(row) ? (isZine ? 'opacity-80' : 'opacity-25') : '',
                 ]"
               >
-                <span class="s-line-i tnum" :style="{ color: ink }">{{ String(i + 1).padStart(2, '0') }}</span>
+                <span class="s-line-i tnum" :style="{ color: stageInk }">{{ String(i + 1).padStart(2, '0') }}</span>
                 <img
                   v-if="nomineeImage(row.nominee)"
                   :src="nomineeImage(row.nominee)"
@@ -353,19 +373,19 @@ definePageMeta({ chrome: false })
                 <span
                   v-if="slide.shown"
                   class="s-line-pct tnum"
-                  :style="{ color: current.winners.includes(row) ? ink : undefined }"
+                  :style="{ color: current.winners.includes(row) ? stageInk : undefined }"
                 >{{ row.pct }}%</span>
               </li>
             </ol>
 
-            <p class="js-winner-line s-win" :style="{ color: ink, fontFamily: headlineFont }">
+            <p class="js-winner-line s-win" :style="{ color: stageInk, fontFamily: headlineFont }">
               <template v-if="!slide.shown">And the winner is...</template>
               <template v-else-if="!current.winners.length">No votes in this category</template>
               <template v-else-if="current.tied">
                 {{ current.winners.map((w) => nomineeName(w.nominee)).join(' & ') }} · tied
               </template>
               <template v-else>
-                {{ nomineeName(current.winners[0]!.nominee) }}
+                <ZinePen>{{ nomineeName(current.winners[0]!.nominee) }}</ZinePen>
               </template>
             </p>
             <p v-if="slide.shown && current.winners.length && !current.tied" class="s-win-sub tnum">
@@ -375,13 +395,13 @@ definePageMeta({ chrome: false })
 
           <!-- closing card: the whole list, for the outro talk -->
           <template v-else>
-            <p class="s-kicker" :style="{ color: ink }">{{ award.name }}</p>
+            <p class="s-kicker" :style="{ color: stageInk }">{{ award.name }}</p>
             <h2 class="s-title" :style="{ fontFamily: headlineFont }">That is the show</h2>
             <ul class="s-list m-0 grid list-none p-0 text-left sm:grid-cols-2">
               <li v-for="c in categories" :key="c.nomination.id">
                 <span class="text-ink-2">{{ c.nomination.title }}</span>
                 <span class="mx-2 text-ink-muted">-</span>
-                <span class="font-semibold" :style="{ color: ink }">
+                <span class="font-semibold" :style="{ color: stageInk }">
                   {{ c.winners.length ? c.winners.map((w) => nomineeName(w.nominee)).join(' & ') : 'no votes' }}
                 </span>
               </li>
@@ -394,7 +414,7 @@ definePageMeta({ chrome: false })
           v-if="slide.kind === 'category'"
           aria-hidden="true"
           class="s-index absolute"
-          :style="{ color: accent, fontFamily: headlineFont }"
+          :style="{ color: isZine ? stageInk : accent, fontFamily: headlineFont }"
         >{{ String(slide.index + 1).padStart(2, '0') }}</span>
 
         <span class="s-mark tnum absolute text-ink-muted" style="bottom: 2.4cqh; left: 2cqw">
@@ -405,7 +425,7 @@ definePageMeta({ chrome: false })
         <span aria-hidden="true" class="absolute inset-x-0 bottom-0 h-[0.5cqh] bg-white/10">
           <span
             class="block h-full origin-left transition-transform duration-700 ease-gala"
-            :style="{ background: accent, transform: `scaleX(${(step + 1) / slides.length})` }"
+            :style="{ background: isZine ? stageInk : accent, transform: `scaleX(${(step + 1) / slides.length})` }"
           />
         </span>
       </div>
@@ -620,6 +640,23 @@ definePageMeta({ chrome: false })
 .s-line-pct {
   font-size: 1.8cqw;
   color: #a5a5ac;
+}
+
+/* the Fanzine: one ink on a flooded page; the quiet greys become the same ink */
+.is-zine .s-meta,
+.is-zine .s-win-sub,
+.is-zine .s-line-pct,
+.is-zine .text-ink-2,
+.is-zine .text-ink-muted {
+  color: inherit;
+  opacity: 0.85;
+}
+.is-zine .s-plate {
+  border-radius: 0;
+}
+.is-zine :deep(.zine-pen-line) {
+  mix-blend-mode: normal;
+  stroke-width: 6;
 }
 
 /* the category number, behind everything */

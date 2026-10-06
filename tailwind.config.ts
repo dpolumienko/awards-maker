@@ -43,15 +43,23 @@ export default <Config>{
         'on-gold': 'rgb(var(--on-gold) / <alpha-value>)',
         silver: '#C9CCD1',
         bronze: '#B87333',
-        ink: { DEFAULT: '#FFFFFF', 2: '#A5A5AC', muted: '#8A8A93', disabled: '#6E6E76' },
-        live: '#3DD68C',
+        // variables too since the Fanzine version prints dark ink on paper (assets/css/zine.css)
+        ink: {
+          DEFAULT: 'rgb(var(--ink) / <alpha-value>)',
+          2: 'rgb(var(--ink-2) / <alpha-value>)',
+          muted: 'rgb(var(--ink-muted) / <alpha-value>)',
+          disabled: 'rgb(var(--ink-disabled) / <alpha-value>)',
+        },
+        // state colours are variables for the same reason as ink: a neon green
+        // that reads on black is 1.9:1 on the Fanzine's paper
+        live: 'rgb(var(--live) / <alpha-value>)',
         onair: '#FF4E45',
-        warn: '#FFB020',
+        warn: 'rgb(var(--warn) / <alpha-value>)',
         ...PLATFORM_COLORS,
-        danger: '#FF5C5C',
+        danger: 'rgb(var(--danger) / <alpha-value>)',
       },
       fontFamily: {
-        sans: ['Archivo', 'Helvetica Neue', 'Arial', 'sans-serif'],
+        sans: ['var(--font-body, Archivo)', 'Helvetica Neue', 'Arial', 'sans-serif'],
       },
       letterSpacing: {
         display: '-0.02em',

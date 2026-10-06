@@ -41,3 +41,13 @@ export function themeCss(theme: string | undefined, accent: string, img?: string
       return `background:linear-gradient(135deg, ${hex(accent, '26')}, ${BASE})`
   }
 }
+
+/**
+ * The cover band in the Fanzine version: the show's accent printed as a halftone
+ * on paper. The gradients above are lights in a dark room and do not exist on a
+ * printed page. A cover image is still the streamer's own and wins.
+ */
+export function zineCoverCss(accent: string, img?: string) {
+  if (img) return `background-image:url(${img});background-size:cover;background-position:center`
+  return `background:radial-gradient(circle, ${accent} 44%, transparent 47%) 0 0/8px 8px, rgb(var(--canvas))`
+}

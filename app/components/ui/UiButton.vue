@@ -18,7 +18,7 @@ const sizes = { md: 'h-12 px-6 text-[15px]', sm: 'h-11 px-4 text-[13px]' }
 const variants = {
   // colours in assets/css/palettes.css, which has the treatments under review
   primary: 'btn-primary',
-  ghost: 'border border-white/50 text-ink hover:border-white hover:bg-white/[0.06]',
+  ghost: 'border border-ink/50 text-ink hover:border-ink hover:bg-ink/[0.06]',
   text: 'px-1 text-gold-text underline underline-offset-4 hover:text-ink',
 }
 </script>

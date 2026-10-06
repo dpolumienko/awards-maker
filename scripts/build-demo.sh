@@ -1,17 +1,16 @@
 #!/bin/bash
 # The static demo on GitHub Pages (https://dpolumienko.github.io/awards-maker/).
 #
-# Needs a database with the shows to show - the award pages are rendered from
-# it at build time, then served as files. Nothing that writes works on Pages:
-# sign-in, voting and publishing all need the server.
+# No database: every page renders in the browser (nuxt.config.ts turns ssr off
+# for the demo) and /api/* is answered from localStorage by app/demo/api.ts, so
+# sign-in, building, voting and the ceremony all work on Pages.
 #
-#   DEMO_USER=admin DEMO_PASS=... PRERENDER_ROUTES=/a/some-show,/a/other \
-#     MYSQL_HOST=... MYSQL_PORT=... MYSQL_USERNAME=... MYSQL_PASSWORD=... MYSQL_DATABASE=... \
-#     scripts/build-demo.sh
+#   DEMO_USER=admin DEMO_PASS=... scripts/build-demo.sh
+#   DEMO_DIGEST=<sha256 of user:pass> scripts/build-demo.sh   (the live demo's sign-in)
 # Output: .output/public, ready to be the gh-pages branch.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-: "${DEMO_USER:?set DEMO_USER}" "${DEMO_PASS:?set DEMO_PASS}"
+if [ -z "${DEMO_DIGEST:-}" ]; then : "${DEMO_USER:?set DEMO_USER or DEMO_DIGEST}" "${DEMO_PASS:?set DEMO_PASS}"; fi
 # `nuxi generate` finishes its work and then does not exit - something the
 # prerendered pages open (the database, most likely) keeps it alive. Wait for
 # its last line and stop it.
@@ -28,4 +27,4 @@ kill "$GEN" 2>/dev/null || true
 pkill -P "$GEN" 2>/dev/null || true
 grep -E '/a/|Generated' "$LOG" | grep -v _payload || true
 rm -f "$LOG"
-node scripts/demo-gate.mjs .output/public "$DEMO_USER" "$DEMO_PASS"
+node scripts/demo-gate.mjs .output/public "${DEMO_USER:-}" "${DEMO_PASS:-}"

@@ -9,6 +9,10 @@ import CategoryIdeas from '~/components/sections/CategoryIdeas.vue'
 import PlansSection from '~/components/sections/PlansSection.vue'
 import CatalogSection from '~/components/sections/CatalogSection.vue'
 import FaqSection, { type FaqItem } from '~/components/sections/FaqSection.vue'
+import ZineLanding from '~/components/zine/ZineLanding.vue'
+import { useVersion } from '~/composables/useVersion'
+
+const { isZine } = useVersion()
 
 // Copy is frozen in outputs/awards-landing-copy-2026-09-13.md - change it there first.
 const faq: FaqItem[] = [
@@ -48,6 +52,9 @@ useSchemaOrg([
        The catalog sits low but not last: it is discovery and every card in it
        leads off this page, so it goes after the ask - and the FAQ closes the
        page, which is where a reader expects to find the remaining objections. -->
+  <!-- the Fanzine version prints the same promise its own way (components/zine) -->
+  <ZineLanding v-if="isZine" :faq="faq" />
+  <template v-else>
   <HeroSection />
   <AwardPagePreview />
   <StepsSection />
@@ -58,4 +65,5 @@ useSchemaOrg([
   <CtaBand />
   <CatalogSection />
   <FaqSection :items="faq" />
+  </template>
 </template>

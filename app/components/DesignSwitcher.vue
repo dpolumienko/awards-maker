@@ -3,12 +3,15 @@
 // treatments on the real pages (review 2026-09-24, items 1 and 14). Temporary by
 // design: once a winner is picked, delete this, data/design.ts and the losing
 // blocks in assets/css/palettes.css.
-import { onMounted, ref, watch } from 'vue'
-import { BUTTONS, DESIGN_KEYS, PALETTES } from '~/data/design'
+import { computed, onMounted, ref, watch } from 'vue'
+import { BUTTONS, DESIGN_KEYS, PALETTES, VERSIONS } from '~/data/design'
+import { useVersion } from '~/composables/useVersion'
 
 const palette = ref<string>('gold')
 const button = ref<string>('solid')
 const copied = ref(false)
+// the whole-site version; palettes and buttons belong to the Current one only
+const { version, isZine, setVersion } = useVersion()
 // collapsed to a pill by default: open, it covered the ballot's sticky submit bar
 const open = ref(false)
 
@@ -36,8 +39,11 @@ watch(button, (v) => {
 
 async function share() {
   const url = new URL(location.href)
-  url.searchParams.set('palette', palette.value)
-  url.searchParams.set('button', button.value)
+  url.searchParams.set('version', version.value)
+  if (!isZine.value) {
+    url.searchParams.set('palette', palette.value)
+    url.searchParams.set('button', button.value)
+  }
   try {
     await navigator.clipboard.writeText(url.toString())
     copied.value = true
@@ -46,6 +52,12 @@ async function share() {
     /* no clipboard: nothing to say */
   }
 }
+
+const summary = computed(() =>
+  isZine.value
+    ? 'Fanzine'
+    : `${PALETTES.find((p) => p.id === palette.value)?.label} · ${BUTTONS.find((b) => b.id === button.value)?.label} button`,
+)
 
 const seg = (active: boolean) =>
   [
@@ -69,8 +81,8 @@ const seg = (active: boolean) =>
         class="grid h-11 w-11 place-items-center rounded-pill border border-hair2 bg-s1/95 text-base shadow-modal backdrop-blur"
         :aria-expanded="false"
         aria-controls="design-preview"
-        :aria-label="`Design preview: ${PALETTES.find((p) => p.id === palette)?.label}, ${BUTTONS.find((b) => b.id === button)?.label} button`"
-        :title="`Design: ${PALETTES.find((p) => p.id === palette)?.label} · ${BUTTONS.find((b) => b.id === button)?.label}`"
+        :aria-label="`Design preview: ${summary}`"
+        :title="`Design: ${summary}`"
         @click="open = true"
       >
         <span aria-hidden="true">🎨</span>
@@ -84,7 +96,19 @@ const seg = (active: boolean) =>
       >
         <div class="flex flex-wrap items-center gap-x-5 gap-y-2 px-4 py-2">
           <span class="micro text-ink-muted">Design preview</span>
-          <div class="flex flex-wrap items-center gap-1" role="radiogroup" aria-label="Palette">
+          <div class="flex flex-wrap items-center gap-1" role="radiogroup" aria-label="Version">
+            <span class="mr-1 text-ink-muted">Version</span>
+            <button
+              v-for="v in VERSIONS"
+              :key="v.id"
+              type="button"
+              role="radio"
+              :aria-checked="version === v.id"
+              :class="seg(version === v.id)"
+              @click="setVersion(v.id)"
+            >{{ v.label }}</button>
+          </div>
+          <div v-if="!isZine" class="flex flex-wrap items-center gap-1" role="radiogroup" aria-label="Palette">
             <span class="mr-1 text-ink-muted">Palette</span>
             <button
               v-for="p in PALETTES"
@@ -96,7 +120,7 @@ const seg = (active: boolean) =>
               @click="palette = p.id"
             >{{ p.label }}</button>
           </div>
-          <div class="flex flex-wrap items-center gap-1" role="radiogroup" aria-label="Main button">
+          <div v-if="!isZine" class="flex flex-wrap items-center gap-1" role="radiogroup" aria-label="Main button">
             <span class="mr-1 text-ink-muted">Button</span>
             <button
               v-for="b in BUTTONS"

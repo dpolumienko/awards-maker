@@ -51,7 +51,7 @@ const width = (v: number) => (v <= 0 ? 0 : Math.max(2, Math.round((v / ceiling.v
       >
         <span
           class="js-rank-bar block h-full rounded-[0_4px_4px_0] transition-[width] duration-500 ease-gala"
-          :style="{ width: `${width(item.value)}%`, background: item.highlight ? accent : '#3A3A40' }"
+          :style="{ width: `${width(item.value)}%`, background: item.highlight ? accent : 'rgb(var(--bar, var(--s3)))' }"
         />
       </span>
 
