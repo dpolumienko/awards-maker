@@ -38,6 +38,7 @@ const shown = groups.reduce((n, g) => n + Math.min(g.items.length, SHOWN), 0)
 @media (min-width: 768px) { .zi-cols { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .zi-col h3 { padding-bottom: 10px; border-bottom: 2.5px solid rgb(var(--ink)); font: 900 21px/1.05 var(--font-display), sans-serif; font-stretch: 120%; text-transform: uppercase; }
 .zi-col ol { margin: 0; padding: 0; list-style: none; counter-reset: i; }
+.zi-col li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 8px; padding: 9px 0; border-bottom: 1.5px dashed rgb(var(--hair)); font-size: 16px; counter-increment: i; }
 .zi-col li::before { content: counter(i, decimal-leading-zero); font: 800 12px/1.9 var(--font-display), sans-serif; color: rgb(var(--gold-text)); }
 .zi-more { margin-top: 28px; }
 </style>

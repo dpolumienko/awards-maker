@@ -92,14 +92,14 @@
 .zine-lamp-rig {
   fill: rgb(var(--ink));
 }
-/* the switch hangs just left of the lamp, on the same rail */
+/* the switch: small, right of the lamp, on the same rail */
 .zine-spot-switch {
-  right: 76px;
+  right: 6px;
   display: grid;
   place-items: center;
-  width: 30px;
-  height: 30px;
-  border: 2px solid rgb(var(--ink));
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid rgb(var(--ink));
   border-radius: 50%;
   background: rgb(var(--canvas));
   color: rgb(var(--ink));
@@ -107,7 +107,7 @@
 .zine-spot-switch svg {
   fill: none;
   stroke: currentColor;
-  stroke-width: 2.5;
+  stroke-width: 3;
   stroke-linecap: round;
 }
 .zine-spot-switch[aria-pressed='false'] {

@@ -6,9 +6,11 @@ import UiIcon from '../ui/UiIcon.vue'
 
 // Bento, not three equal text boxes: each card shows the thing it describes.
 const channels = [
-  { name: 'ishowspeed', meta: 'YouTube · 41.2M', platform: 'youtube' as const },
-  { name: 'dzvin_tv', meta: 'Kick · 88K', platform: 'kick' as const },
-  { name: 'maryana', meta: 'YouTube · 402K', platform: 'youtube' as const },
+  // channels a viewer knows; no follower counts - an invented number next to a
+  // real name would be a claim about that channel
+  { name: 'KaiCenat', meta: 'Twitch', platform: 'twitch' as const },
+  { name: 'ishowspeed', meta: 'YouTube', platform: 'youtube' as const },
+  { name: 'adinross', meta: 'Kick', platform: 'kick' as const },
 ]
 </script>
 
@@ -17,8 +19,9 @@ const channels = [
     heading="Run your own streamer awards for your community"
     intro="You bring the categories and the community. Everything else is here."
   >
-    <div class="mt-6 grid gap-6 lg:grid-cols-3">
-      <!-- three across: the old 2+1 over a full-width third stretched the page -->
+    <div class="mt-6 grid gap-6 md:grid-cols-2">
+      <!-- two by two: the ceremony joined as a fourth point (review 2026-10-06),
+           and four across left each card too narrow for its example -->
       <!-- nominee search -->
       <SpotlightCard class="js-reveal">
         <template #mark>
@@ -29,7 +32,7 @@ const channels = [
 
         <div class="mt-5 border-t border-hair pt-4">
           <div class="flex items-center gap-2 rounded-btn border border-gold-24 bg-s2 px-3 py-2 text-sm text-ink-2">
-            <span aria-hidden="true" class="text-gold">⌕</span> stint
+            <span aria-hidden="true" class="text-gold">⌕</span> search any channel
             <span aria-hidden="true" class="ml-auto h-4 w-px animate-pulse bg-gold" />
           </div>
           <ul class="mt-2 list-none space-y-1 p-0">
@@ -77,7 +80,7 @@ const channels = [
           <div class="flex gap-3">
             <div class="min-w-0 flex-1 rounded-card bg-canvas p-4">
               <p class="micro text-gold-text">Nominated</p>
-              <p class="mt-2 text-lg font-bold leading-tight">maryana</p>
+              <p class="mt-2 text-lg font-bold leading-tight">QTCinderella</p>
               <p class="mt-1 text-sm text-ink-2">Best moment of the year</p>
               <span class="mt-4 block h-px w-full bg-gradient-to-r from-gold to-transparent" />
               <p class="micro mt-3">Chat Awards 2026</p>
@@ -90,6 +93,21 @@ const channels = [
               <p class="micro mt-3">Revealed 20 Dec</p>
             </div>
           </div>
+        </div>
+      </SpotlightCard>
+
+      <!-- the ceremony -->
+      <SpotlightCard class="js-reveal">
+        <template #mark>
+          <span class="tnum text-sm font-semibold tracking-micro text-gold-text">04</span>
+        </template>
+        <h3 class="text-xl font-semibold">Run the ceremony live on stream</h3>
+        <p class="m-0 max-w-[60ch] text-sm leading-relaxed text-ink-2">Close voting, open the ceremony screen and reveal the winners on your stream, one category at a time. It goes into OBS as a browser source.</p>
+        <div class="mt-5 rounded-card bg-canvas p-5 text-center">
+          <p class="micro text-ink-muted">Streamer of the year</p>
+          <p class="mt-3 text-sm text-ink-2">And the winner is</p>
+          <p class="mt-1 text-2xl font-bold text-gold-text">KaiCenat</p>
+          <p class="tnum mt-3 text-xs text-ink-muted">Category 1 of 6 · OBS browser source</p>
         </div>
       </SpotlightCard>
     </div>

@@ -4,7 +4,7 @@
 // real ballot. Used by the "How an awards gets made" strip and the ballot slip.
 import ZinePen from './ZinePen.vue'
 
-const { names, label, ruled = false } = defineProps<{ names: string[]; label: string; ruled?: boolean }>()
+const { names, label, ruled = false, seed } = defineProps<{ names: string[]; label: string; ruled?: boolean; seed?: number }>()
 const picked = defineModel<number>({ default: 0 })
 </script>
 
@@ -20,7 +20,7 @@ const picked = defineModel<number>({ default: 0 })
       @click="picked = i"
     >
       <span class="zb-box" :class="picked === i && 'is-on'" aria-hidden="true" />
-      <ZinePen :on="picked === i">{{ n }}</ZinePen>
+      <ZinePen :on="picked === i" :seed="seed">{{ n }}</ZinePen>
     </button>
   </div>
 </template>

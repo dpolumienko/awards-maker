@@ -5,7 +5,7 @@
 // data/plans, steps from data/steps, shows from the catalog. What changes is how
 // it is printed: covers on a rack, a three-panel strip, a ballot slip marked with
 // a pen, a cut-out coupon and a letters page.
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import UiButton from '~/components/ui/UiButton.vue'
 import UiIcon from '~/components/ui/UiIcon.vue'
 import InteractiveAccordion from '~/components/ui/InteractiveAccordion.vue'
@@ -31,8 +31,13 @@ const rack = computed(() => (data.value?.awards ?? []).slice(0, 3))
 // the two covers on the stand are examples, built from two of the real packs
 const covers = [TEMPLATES[2]!, TEMPLATES[1]!]
 // the strip's ballot and its winner panel share one pick
-const STRIP = ['forsenE', 'OMEGALUL', 'Pog']
+// examples are channels a viewer knows, not made-up handles (review 2026-10-06)
+const STRIP = ['KaiCenat', 'ishowspeed', 'QTCinderella']
 const stripPick = ref(0)
+// one seed for the ballot's pen and the winner panel's, so both circles match
+const stripSeed = ref<number>()
+watch(stripPick, () => (stripSeed.value = Math.floor(Math.random() * 1000)))
+onMounted(() => (stripSeed.value = Math.floor(Math.random() * 1000)))
 // the slip arrives half filled in: one pick made, one still to make
 const slipPicks = ref([1, -1])
 // A pack is a kind of show, not a list - the ideas section below is the list
@@ -63,7 +68,7 @@ const PACK_LINES: Record<string, string> = {
             <UiButton v-if="catalogOpen" to="/catalog" variant="ghost">Browse the catalog</UiButton>
             <UiButton v-else to="/ideas" variant="ghost">Category ideas</UiButton>
           </div>
-          <p class="zl-small">Free. You'll log in with Twitch to create awards.</p>
+          <p class="zl-small">Free. You'll log in with Twitch or Kick to create awards.</p>
         </div>
         <div class="zl-stand" role="img" aria-label="Example: two awards on a rack, built from the ready-made packs">
           <article v-for="(c, i) in covers" :key="c.id" class="zl-issue" :class="i ? 'zl-issue-2' : 'zl-issue-1'">
@@ -74,7 +79,7 @@ const PACK_LINES: Record<string, string> = {
               <li v-for="n in c.nominations.slice(0, i ? 5 : 2)" :key="n">{{ n }}</li>
             </ul>
           </article>
-          <p class="zl-price">Free<small>with a Twitch login</small></p>
+          <p class="zl-price">Free<small>with a Twitch or Kick login</small></p>
         </div>
       </div>
     </section>
@@ -90,9 +95,9 @@ const PACK_LINES: Record<string, string> = {
             <div class="zl-scene zl-dots">
               <div class="zl-form">
                 <p><span>Awards</span><i>Chat Awards 2026</i></p>
-                <p><span>Category</span><i>Best emote</i></p>
-                <p><span>Nominee</span><i>forsenE</i></p>
-                <p><span>Nominee</span><i>OMEGALUL</i></p>
+                <p><span>Category</span><i>Streamer of the year</i></p>
+                <p><span>Nominee</span><i>KaiCenat</i></p>
+                <p><span>Nominee</span><i>ishowspeed</i></p>
               </div>
             </div>
             <div class="zl-cap"><h3>{{ STEPS[0]!.title }}</h3><p>{{ STEPS[0]!.body }}</p></div>
@@ -100,15 +105,15 @@ const PACK_LINES: Record<string, string> = {
           <div class="zl-panel">
             <div class="zl-scene zl-grey">
               <p class="zl-chat"><b>ishowspeed:</b> ballot's up, one pick per category</p>
-              <ZineBallotRows v-model="stripPick" class="zl-mini" :names="STRIP" label="Best emote" />
+              <ZineBallotRows v-model="stripPick" class="zl-mini" :names="STRIP" :seed="stripSeed" label="Streamer of the year" />
             </div>
             <div class="zl-cap"><h3>{{ STEPS[1]!.title }}</h3><p>{{ STEPS[1]!.body }}</p></div>
           </div>
           <div class="zl-panel">
             <div class="zl-scene zl-flood">
               <div>
-                <ZinePen :key="stripPick" class="zl-flood-name">{{ STRIP[stripPick] }}</ZinePen>
-                <p>Best emote · winner</p>
+                <ZinePen :key="stripPick" :seed="stripSeed" class="zl-flood-name">{{ STRIP[stripPick] }}</ZinePen>
+                <p>Streamer of the year · winner</p>
               </div>
             </div>
             <div class="zl-cap"><h3>{{ STEPS[2]!.title }}</h3><p>{{ STEPS[2]!.body }}</p></div>
@@ -129,10 +134,10 @@ const PACK_LINES: Record<string, string> = {
           <div class="zl-slip">
             <div class="zl-slip-hd"><b>Ballot</b><span class="ui-badge" data-tone="live">Voting open</span></div>
             <h4>Streamer of the year</h4>
-            <ZineBallotRows v-model="slipPicks[0]" ruled :names="['forsen', 'maryana', 'nightcrew']" label="Streamer of the year" />
-            <h4>Best emote</h4>
-            <ZineBallotRows v-model="slipPicks[1]" ruled :names="['forsenE', 'OMEGALUL']" label="Best emote" />
-            <p class="zl-sign">One ballot per Twitch account, signed at submit.</p>
+            <ZineBallotRows v-model="slipPicks[0]" ruled :names="['xQc', 'KaiCenat', 'ishowspeed']" label="Streamer of the year" />
+            <h4>Breakout of the year</h4>
+            <ZineBallotRows v-model="slipPicks[1]" ruled :names="['TheBurntPeanut', 'Jynxzi']" label="Breakout of the year" />
+            <p class="zl-sign">One ballot per Twitch or Kick account, signed at submit.</p>
           </div>
           <div class="zl-notes zl-notes-r">
             <article><h3>The vote is counted</h3><p>Tied to a real account, so the result holds up.</p></article>

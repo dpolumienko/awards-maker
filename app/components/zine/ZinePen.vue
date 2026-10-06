@@ -14,7 +14,9 @@
 import { nextTick, onMounted, ref, watch } from 'vue'
 import { useVersion } from '~/composables/useVersion'
 
-const { on = true, as = 'span' } = defineProps<{ on?: boolean; as?: string }>()
+// `seed` makes the pick shared: two pens given the same seed draw the same loop
+// in the same ink - the landing's ballot and its winner panel (review 2026-10-06)
+const { on = true, as = 'span', seed } = defineProps<{ on?: boolean; as?: string; seed?: number }>()
 const { isZine } = useVersion()
 const box = ref<HTMLElement | null>(null)
 const len = ref(0)
@@ -34,9 +36,18 @@ const loop = ref(0)
 const ink = ref(INKS[0]!)
 const mounted = ref(false)
 function pick() {
-  loop.value = Math.floor(Math.random() * LOOPS.length)
-  ink.value = INKS[Math.floor(Math.random() * INKS.length)]!
+  const n = seed ?? Math.floor(Math.random() * LOOPS.length * INKS.length)
+  loop.value = n % LOOPS.length
+  ink.value = INKS[Math.floor(n / LOOPS.length) % INKS.length]!
 }
+watch(
+  () => seed,
+  () => {
+    if (!mounted.value) return
+    pick()
+    nextTick(measure)
+  },
+)
 onMounted(() => {
   mounted.value = true
   pick()

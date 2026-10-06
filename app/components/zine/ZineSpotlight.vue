@@ -11,7 +11,8 @@
 // and the pool merge without a seam where they overlap. The lamp is an SVG on
 // top, never blended, so it stays a solid object.
 //
-// A switch by the lamp turns it off; off, the lamp still hangs there, dark. The
+// A switch right of the lamp turns it off; off, the lamp still hangs there,
+// dark and still. The
 // choice is kept in this browser. Phones get no spotlight: no pointer to follow,
 // and no margin to hang the lamp in.
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
@@ -73,7 +74,7 @@ onMounted(() => {
     // the masthead is sticky, so its bottom edge is where the rig hangs on every scroll
     top = document.querySelector('.site-header')?.getBoundingClientRect().height ?? 0
     lamp.value!.style.top = `${top}px`
-    toggle.value!.style.top = `${top + 12}px`
+    toggle.value!.style.top = `${top + 16}px`
     readLight()
   }
 
@@ -96,7 +97,8 @@ onMounted(() => {
     const sx = px + Math.cos(a) * 10, sy = py + Math.sin(a) * 10
 
     ctx.clearRect(0, 0, W, H)
-    head.value!.setAttribute('transform', `rotate(${(a * 180) / Math.PI - 90})`)
+    // off, the lamp hangs still, pointing straight down
+    head.value!.setAttribute('transform', lit.value ? `rotate(${(a * 180) / Math.PI - 90})` : 'rotate(0)')
     if (!lit.value || phone.matches) return
     const beam = light.split(/\s+/).join(',')
     // the pool: solid in the middle, soft at the rim
@@ -182,6 +184,6 @@ onBeforeUnmount(() => stop())
     :title="lit ? 'Turn the spotlight off' : 'Turn the spotlight on'"
     @click="lit = !lit"
   >
-    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 3v8M6.4 6.6a8 8 0 1 0 11.2 0" /></svg>
+    <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path d="M12 3v8M6.4 6.6a8 8 0 1 0 11.2 0" /></svg>
   </button>
 </template>

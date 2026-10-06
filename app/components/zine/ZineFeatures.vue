@@ -1,14 +1,17 @@
 <script setup lang="ts">
-// "Run your own streamer awards for your community", printed: three clippings
-// pasted on the page, each showing the thing it describes. Same three points as
-// sections/FeatureGrid.vue - any nominee, one vote each, share cards.
+// "Run your own streamer awards for your community", printed: four clippings
+// pasted on the page, each showing the thing it describes. Same points as
+// sections/FeatureGrid.vue - any nominee, one vote each, share cards, and the
+// live ceremony on stream.
 import ZinePen from './ZinePen.vue'
 import PlatformDot from '~/components/ui/PlatformDot.vue'
 
+// channels a viewer knows; no follower counts - an invented number next to a
+// real name would be a claim about that channel
 const channels = [
-  { name: 'ishowspeed', meta: 'YouTube · 41.2M', platform: 'youtube' as const },
-  { name: 'dzvin_tv', meta: 'Kick · 88K', platform: 'kick' as const },
-  { name: 'maryana', meta: 'YouTube · 402K', platform: 'youtube' as const },
+  { name: 'KaiCenat', meta: 'Twitch', platform: 'twitch' as const },
+  { name: 'ishowspeed', meta: 'YouTube', platform: 'youtube' as const },
+  { name: 'adinross', meta: 'Kick', platform: 'kick' as const },
 ]
 </script>
 
@@ -23,7 +26,7 @@ const channels = [
           <h3>Nominate any channel, or type in anything</h3>
           <p>Every channel we track, or plain text when the nominee is a mod, a clip or a running joke.</p>
           <div class="zf-art" aria-hidden="true">
-            <p class="zf-fill"><span>Nominee</span><i>stint</i></p>
+            <p class="zf-fill"><span>Nominee</span><i>search any channel</i></p>
             <ul class="zf-list">
               <li v-for="c in channels" :key="c.name"><PlatformDot :platform="c.platform" :label="false" :size="14" /><b>{{ c.name }}</b><span class="zf-meta">{{ c.meta }}</span></li>
             </ul>
@@ -52,13 +55,26 @@ const channels = [
           <div class="zf-art zf-flyers" aria-hidden="true">
             <div class="zf-fly">
               <span class="zf-claim">Nominated</span>
-              <b>maryana</b>
+              <b>QTCinderella</b>
               <small>Best moment of the year</small>
             </div>
             <div class="zf-fly">
               <span class="zf-claim">Winner</span>
               <b><ZinePen>ishowspeed</ZinePen></b>
               <small class="tnum">612 of 1 284 votes</small>
+            </div>
+          </div>
+        </article>
+
+        <article class="zf-clip">
+          <h3>Run the ceremony live on stream</h3>
+          <p>Close voting, open the ceremony screen and reveal the winners on your stream, one category at a time. It goes into OBS as a browser source.</p>
+          <div class="zf-art" aria-hidden="true">
+            <div class="zf-stage">
+              <span class="zf-claim">Streamer of the year</span>
+              <small>And the winner is</small>
+              <b><ZinePen>KaiCenat</ZinePen></b>
+              <small class="tnum">Category 1 of 6 · OBS browser source</small>
             </div>
           </div>
         </article>
@@ -72,7 +88,7 @@ const channels = [
 .zf-h { max-width: 16ch; font-size: clamp(40px, 6vw, 72px); line-height: 0.88; text-transform: uppercase; color: rgb(var(--gold)); text-wrap: balance; }
 .zf-intro { margin-top: 18px; max-width: 58ch; font-size: 19px; line-height: 1.55; color: rgb(var(--ink-2)); }
 .zf-grid { display: grid; gap: 22px; margin-top: 44px; }
-@media (min-width: 1024px) { .zf-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } .zf-clip:nth-child(1) { transform: rotate(-1deg); } .zf-clip:nth-child(3) { transform: rotate(0.8deg); } }
+@media (min-width: 768px) { .zf-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .zf-clip:nth-child(1) { transform: rotate(-1deg); } .zf-clip:nth-child(4) { transform: rotate(0.8deg); } }
 .zf-clip { padding: 20px 20px 22px; border: 2.5px solid rgb(var(--ink)); background: rgb(var(--canvas)); }
 .zf-clip h3 { font: 900 21px/1.05 var(--font-display), sans-serif; font-stretch: 120%; text-transform: uppercase; }
 .zf-clip > p { margin-top: 8px; font-size: 15px; line-height: 1.5; color: rgb(var(--ink-2)); }
@@ -97,4 +113,10 @@ const channels = [
 .zf-claim { font: 900 15px/1 var(--font-display), sans-serif; font-stretch: 125%; text-transform: uppercase; color: rgb(var(--gold)); }
 .zf-fly b { margin-top: 4px; font: 900 17px/1.1 var(--font-display), sans-serif; font-stretch: 100%; }
 .zf-fly small { font-size: 12px; color: rgb(var(--ink-2)); }
+/* the ceremony: a dark stage on either paper - on Night's black too, so it keeps an edge */
+.zf-stage { display: grid; justify-items: center; gap: 8px; padding: 22px 16px; border: 2px solid rgb(var(--ink)); background: #0b0b0d; color: #f2f2ec; text-align: center; }
+.zf-stage .zf-claim { color: #5cace8; }
+.zf-stage small { font-size: 13px; opacity: 0.8; }
+.zf-stage b { margin: 6px 0; font: 900 34px/1 var(--font-display), sans-serif; font-stretch: 120%; }
+.zf-stage :deep(.zine-pen-line) { mix-blend-mode: normal; }
 </style>
