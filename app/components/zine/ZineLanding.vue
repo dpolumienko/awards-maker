@@ -9,8 +9,6 @@ import { computed } from 'vue'
 import UiButton from '~/components/ui/UiButton.vue'
 import UiIcon from '~/components/ui/UiIcon.vue'
 import ZinePen from './ZinePen.vue'
-import ZinePlate from './ZinePlate.vue'
-import ZineStamps from './ZineStamps.vue'
 // the Current landing's other sections, each with its Fanzine print
 import ZinePageProof from './ZinePageProof.vue'
 import ZineFeatures from './ZineFeatures.vue'
@@ -38,12 +36,11 @@ const SCISSORS = 'M6 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM6 15a3 3 0 1 0 0 6 3 3 0 0 0
   <div class="zl">
     <!-- the cover -->
     <section class="zl-cover">
-      <ZineStamps />
       <div class="shell zl-cover-grid">
         <div>
           <h1>
             <span class="zl-kicker">Awards Maker for streamers:</span>
-            <ZinePlate as="span" class="zl-h1 zine-display" text="Run your own awards show" />
+            <span class="zl-h1 zine-display">Run your own awards show</span>
           </h1>
           <p class="zl-lead">
             Run your own streamer awards: pick the categories, nominate channels from Twitch, Kick and YouTube or your
@@ -223,13 +220,12 @@ const SCISSORS = 'M6 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM6 15a3 3 0 1 0 0 6 3 3 0 0 0
 .zl-intro { margin-top: 18px; max-width: 58ch; font-size: 19px; line-height: 1.55; color: rgb(var(--ink-2)); }
 
 /* cover */
-.zl-cover { position: relative; padding: 48px 0 72px; overflow-x: clip; }
-.zl-cover-grid { position: relative; z-index: 1; }
+.zl-cover { padding: 48px 0 72px; overflow-x: clip; }
 @media (max-width: 639px) { .zl-issue-h { font-size: 32px; } .zl-issue-lines li { font-size: 15px; } }
 .zl-cover-grid { display: grid; gap: 48px; grid-template-columns: minmax(0, 1fr); }
 @media (min-width: 1024px) { .zl-cover-grid { grid-template-columns: minmax(0, 1fr) 500px; } }
 .zl-kicker { display: block; margin-bottom: 14px; font-size: clamp(18px, 2.4vw, 28px); font-weight: 700; color: rgb(var(--ink-2)); }
-.zl-h1 { display: block; font-size: clamp(54px, 9vw, 116px); line-height: 0.84; text-transform: uppercase; }
+.zl-h1 { display: block; max-width: 11ch; font-size: clamp(42px, 6.2vw, 84px); line-height: 0.9; text-transform: uppercase; color: rgb(var(--gold)); }
 .zl-lead { margin-top: 30px; max-width: 46ch; font-size: 20px; line-height: 1.5; color: rgb(var(--ink-2)); }
 .zl-ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
 .zl-small { margin-top: 12px; font-size: 15px; color: rgb(var(--ink-muted)); }

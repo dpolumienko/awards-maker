@@ -57,8 +57,17 @@
   --canvas: 250 250 247;
 }
 
+/* the follow-spot (components/zine/ZineSpotlight.vue) only ever adds light: warm
+   ink multiplied into the paper, warm light added to the black */
+.zine-spot {
+  mix-blend-mode: multiply;
+}
+:root[data-ink='night'] .zine-spot {
+  mix-blend-mode: screen;
+}
+
 /* Fanzine Night (review 2026-10-06): the same press on black stock, under a
-   follow-spot (components/zine/ZineSpotlight.vue). The inks swap places - the
+   follow-spot. The inks swap places - the
    paper is black, the type is paper - and the blue and pink are pulled light
    enough to read as type on black. */
 :root[data-version='zine'][data-ink='night'],
@@ -101,7 +110,7 @@
   mix-blend-mode: normal;
 }
 /* blue type on black takes the lighter blue, so it reads under the dimmed room too */
-:root[data-ink='night'] :is(.zl-h2, .zl-issue-h.is-blue, .zl-n, .zf-h, .zf-claim, .zi-h, .zp-h, .zp-title, .zc-mark, .idea-title),
+:root[data-ink='night'] :is(.zl-h1, .zl-h2, .zl-issue-h.is-blue, .zl-n, .zf-h, .zf-claim, .zi-h, .zp-h, .zp-title, .zc-mark, .idea-title),
 :root[data-ink='night'] .zp-rules li::before {
   color: rgb(var(--gold-text));
 }

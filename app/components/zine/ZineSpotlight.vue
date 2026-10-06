@@ -1,14 +1,17 @@
 <script setup lang="ts">
-// Fanzine Night's light: a follow-spot hung under the masthead. The room is
-// dimmed and the beam cuts the dark away down to a pool where the pointer is, so
-// whatever you point at is lit. Fixed to the viewport, so the lamp rides along
-// as the page scrolls; with no pointer (touch, or a still mouse) it sweeps the
-// stage on its own. Chosen from the backdrop board, outputs/fanzine-backgrounds-2026-10-06.
+// The Fanzine's light: a follow-spot hung under the masthead, throwing a warm
+// beam down to a pool where the pointer is. It only adds light - the page reads
+// as it does without it (review 2026-10-06: a dimmed room made everything outside
+// the pool unreadable). Multiplied into the paper, added to Night's black
+// (.zine-spot in assets/css/zine.css). Fixed to the viewport, so the lamp rides
+// along as the page scrolls; with no pointer (touch, or a still mouse) it sweeps
+// on its own. Chosen from the backdrop board, outputs/fanzine-backgrounds-2026-10-06.
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 const canvas = ref<HTMLCanvasElement | null>(null)
-// how dark the room is outside the beam: Night's body type keeps >4.5:1 under it
-const VEIL = 0.45
+// tungsten: the beam's warm yellow, and how strong the pool is at its centre
+const WARM = '255,196,72'
+const POOL = 0.3
 const IDLE_AFTER = 4 // seconds without a pointer move before the spot sweeps
 let stop = () => {}
 
@@ -52,15 +55,10 @@ onMounted(() => {
     const nx = -dy / d, ny = dx / d
 
     ctx.clearRect(0, 0, W, H)
-    // the dimmed room
-    ctx.fillStyle = `rgba(0,0,0,${VEIL})`
-    ctx.fillRect(0, top, W, H - top)
-
-    // the beam: the dark cut away from the lens to the pool
-    ctx.globalCompositeOperation = 'destination-out'
+    // the beam, fading in from the lens to the pool
     const cone = ctx.createLinearGradient(sx, sy, x, y)
-    cone.addColorStop(0, 'rgba(0,0,0,0.5)')
-    cone.addColorStop(1, 'rgba(0,0,0,0.95)')
+    cone.addColorStop(0, `rgba(${WARM},0.04)`)
+    cone.addColorStop(1, `rgba(${WARM},${POOL * 0.5})`)
     ctx.fillStyle = cone
     ctx.beginPath()
     ctx.moveTo(sx + nx * 12, sy + ny * 12)
@@ -69,36 +67,19 @@ onMounted(() => {
     ctx.lineTo(x + nx * R, y + ny * ry)
     ctx.closePath()
     ctx.fill()
+    // the pool of light
     ctx.save()
     ctx.translate(x, y)
     ctx.scale(1, ry / R)
     const pool = ctx.createRadialGradient(0, 0, 0, 0, 0, R * 1.25)
-    pool.addColorStop(0, 'rgba(0,0,0,1)')
-    pool.addColorStop(0.7, 'rgba(0,0,0,0.95)')
-    pool.addColorStop(1, 'rgba(0,0,0,0)')
+    pool.addColorStop(0, `rgba(${WARM},${POOL})`)
+    pool.addColorStop(0.7, `rgba(${WARM},${POOL * 0.7})`)
+    pool.addColorStop(1, `rgba(${WARM},0)`)
     ctx.fillStyle = pool
     ctx.beginPath()
     ctx.arc(0, 0, R * 1.25, 0, Math.PI * 2)
     ctx.fill()
-    ctx.globalCompositeOperation = 'source-over'
-    // a little warm light in the pool, and its edge printed in the press blue
-    const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, R)
-    glow.addColorStop(0, 'rgba(255,248,230,0.07)')
-    glow.addColorStop(1, 'rgba(255,248,230,0)')
-    ctx.fillStyle = glow
-    ctx.beginPath()
-    ctx.arc(0, 0, R, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.strokeStyle = 'rgba(92,172,232,0.45)'
-    ctx.lineWidth = 2
-    ctx.setLineDash([3, 6])
-    ctx.beginPath()
-    ctx.arc(0, 0, R * 1.05, 0, Math.PI * 2)
-    ctx.stroke()
-    ctx.setLineDash([])
-    // restore() would bring back the erasing mode that was set before save()
     ctx.restore()
-    ctx.globalCompositeOperation = 'source-over'
 
     // the lamp, turning to follow its beam
     ctx.fillStyle = '#3a3a40'
@@ -117,7 +98,7 @@ onMounted(() => {
     ctx.closePath()
     ctx.fill()
     ctx.stroke()
-    ctx.fillStyle = '#5cace8'
+    ctx.fillStyle = `rgb(${WARM})`
     ctx.fillRect(-15, 6, 30, 5)
     ctx.restore()
   }
@@ -156,5 +137,5 @@ onBeforeUnmount(() => stop())
 
 <template>
   <!-- under the masthead and every sticky bar that comes later in the page, over the content -->
-  <canvas ref="canvas" aria-hidden="true" class="pointer-events-none fixed inset-0 z-30 h-full w-full" />
+  <canvas ref="canvas" aria-hidden="true" class="zine-spot pointer-events-none fixed inset-0 z-30 h-full w-full" />
 </template>
