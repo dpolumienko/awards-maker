@@ -1,10 +1,14 @@
 <script setup lang="ts">
 // The landing's cover scene: a category being voted on, live. Chat types its
-// votes, the bars climb, the leader gets the pen. Says "your chat votes" without
+// votes, the bars climb, the latest vote gets the pen. Says "your chat votes" without
 // a sentence (review 2026-10-06: the landing read as a wall of text).
 // The nominees are well-known channels; the chatters are made-up handles.
+//
+// The pen follows the vote (review 2026-10-08: the bars changed colour while the
+// circle sat on one name): whoever chat just voted for gets circled, each time
+// in another loop and ink, and their bar takes the same ink.
 import { computed, ref } from 'vue'
-import ZinePen from './ZinePen.vue'
+import ZinePen, { PEN_LOOKS, penOf } from './ZinePen.vue'
 import PlatformDot from '~/components/ui/PlatformDot.vue'
 import { useLiveLoop } from '~/composables/useLiveLoop'
 
@@ -22,12 +26,14 @@ const chat = ref([
 ])
 let seq = 3
 const flash = ref(-1)
+const pen = ref(0)
+const penInk = computed(() => penOf(pen.value).ink)
 
 const total = computed(() => nominees.value.reduce((n, x) => n + x.votes, 0))
 const top = computed(() => Math.max(...nominees.value.map((x) => x.votes)))
 const leader = computed(() => nominees.value.findIndex((x) => x.votes === top.value))
 
-useLiveLoop(root, 1100, () => {
+useLiveLoop(root, 1400, () => {
   // a close race: the trailing two get a little more luck
   const w = nominees.value.map((x) => 1 + (top.value - x.votes) / 40)
   let r = Math.random() * w.reduce((a, b) => a + b, 0)
@@ -35,6 +41,8 @@ useLiveLoop(root, 1100, () => {
   const pick = i < 0 ? 0 : i
   nominees.value[pick]!.votes += 1 + Math.floor(Math.random() * 3)
   flash.value = pick
+  // a different look from the last one, so a repeat vote still redraws
+  pen.value = (pen.value + 1 + Math.floor(Math.random() * (PEN_LOOKS - 1))) % PEN_LOOKS
   const user = CHATTERS[Math.floor(Math.random() * CHATTERS.length)]!
   const text = Math.random() < 0.25 ? ASIDES[Math.floor(Math.random() * ASIDES.length)]! : `!vote ${pick + 1}`
   chat.value = [...chat.value.slice(-4), { id: seq++, user, text }]
@@ -49,9 +57,9 @@ useLiveLoop(root, 1100, () => {
     </div>
     <p class="zv-cat zine-display">Streamer of the year</p>
     <ul class="zv-rows">
-      <li v-for="(n, i) in nominees" :key="n.name" :class="flash === i && 'is-flash'">
+      <li v-for="(n, i) in nominees" :key="n.name" :class="flash === i && 'is-flash'" :style="flash === i ? { '--hit': penInk } : undefined">
         <span class="zv-n tnum">{{ i + 1 }}</span>
-        <span class="zv-name"><ZinePen :on="i === leader" :seed="i * 7">{{ n.name }}</ZinePen></span>
+        <span class="zv-name"><ZinePen :on="i === (flash < 0 ? leader : flash)" :seed="flash < 0 ? i * 7 : pen">{{ n.name }}</ZinePen></span>
         <PlatformDot :platform="n.platform" :label="false" :size="14" />
         <span class="zv-bar"><span :style="{ width: `${(n.votes / top) * 100}%` }" /></span>
       </li>
@@ -77,7 +85,7 @@ useLiveLoop(root, 1100, () => {
 .zv-name { font: 800 19px/1.1 var(--font-display), sans-serif; font-stretch: 112%; }
 .zv-bar { height: 12px; border: 1.5px solid rgb(var(--ink)); }
 .zv-bar span { display: block; height: 100%; background: rgb(var(--gold)); transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
-.is-flash .zv-bar span { background: rgb(var(--pink)); }
+.is-flash .zv-bar span { background: rgb(var(--hit, var(--pink))); }
 .zv-chat { height: 150px; overflow: hidden; padding: 10px 16px 12px; border-top: 2.5px solid rgb(var(--ink)); background: rgb(var(--s2)); -webkit-mask: linear-gradient(transparent, #000 35%); mask: linear-gradient(transparent, #000 35%); }
 .zv-chat ol { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; justify-content: flex-end; height: 100%; gap: 4px; font-size: 14px; }
 .zv-chat b { color: rgb(var(--gold-text)); }

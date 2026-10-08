@@ -1,3 +1,22 @@
+<script lang="ts">
+// each loop with how far past one lap its path runs, for the dash length below
+const LOOPS = [
+  { d: 'M14 52 C 10 20, 140 4, 262 16 C 300 22, 302 66, 236 76 C 150 88, 26 82, 10 54 C 4 38, 36 20, 96 14', laps: 1.3 },
+  { d: 'M280 30 C 250 6, 60 4, 18 30 C -6 52, 40 84, 150 84 C 250 84, 300 64, 288 36 C 282 22, 250 14, 200 12', laps: 1.3 },
+  { d: 'M20 50 C 14 18, 150 6, 270 18 C 306 26, 296 70, 230 78 C 140 90, 18 84, 12 56 C 8 30, 90 10, 180 10 C 280 12, 304 44, 270 66 C 240 86, 120 88, 40 74', laps: 2.3 },
+  { d: 'M30 66 C 10 40, 110 2, 240 6 C 300 8, 300 40, 262 60 C 200 90, 60 96, 22 72 C 6 60, 30 36, 80 24', laps: 1.4 },
+  { d: 'M16 18 C 100 8, 200 8, 284 14 C 292 40, 290 60, 282 78 C 200 84, 100 86, 18 80 C 10 60, 10 40, 22 14 L 60 12', laps: 1.35 },
+]
+// riso Fluorescent Pink, Orange and Green. Not blue: that is the press's own, and
+// a circle in it vanished on the blue winner panel - as did purple.
+const INKS = ['255 72 176', '255 108 47', '0 169 92']
+export const PEN_LOOKS = LOOPS.length * INKS.length
+/** Which loop and ink a seed draws - shared, so a scene can paint other things in the pen's ink. */
+export function penOf(seed: number) {
+  return { loop: seed % LOOPS.length, ink: INKS[Math.floor(seed / LOOPS.length) % INKS.length]! }
+}
+</script>
+
 <script setup lang="ts">
 // The Fanzine's pen: a hand circle drawn around whatever was chosen - your pick
 // on the ballot, the winner on stream and on the results. Outside the Fanzine,
@@ -21,24 +40,13 @@ const { isZine } = useVersion()
 const box = ref<HTMLElement | null>(null)
 const len = ref(0)
 
-// each loop with how far past one lap its path runs, for the dash length below
-const LOOPS = [
-  { d: 'M14 52 C 10 20, 140 4, 262 16 C 300 22, 302 66, 236 76 C 150 88, 26 82, 10 54 C 4 38, 36 20, 96 14', laps: 1.3 },
-  { d: 'M280 30 C 250 6, 60 4, 18 30 C -6 52, 40 84, 150 84 C 250 84, 300 64, 288 36 C 282 22, 250 14, 200 12', laps: 1.3 },
-  { d: 'M20 50 C 14 18, 150 6, 270 18 C 306 26, 296 70, 230 78 C 140 90, 18 84, 12 56 C 8 30, 90 10, 180 10 C 280 12, 304 44, 270 66 C 240 86, 120 88, 40 74', laps: 2.3 },
-  { d: 'M30 66 C 10 40, 110 2, 240 6 C 300 8, 300 40, 262 60 C 200 90, 60 96, 22 72 C 6 60, 30 36, 80 24', laps: 1.4 },
-  { d: 'M16 18 C 100 8, 200 8, 284 14 C 292 40, 290 60, 282 78 C 200 84, 100 86, 18 80 C 10 60, 10 40, 22 14 L 60 12', laps: 1.35 },
-]
-// riso Fluorescent Pink, Orange and Green. Not blue: that is the press's own, and
-// a circle in it vanished on the blue winner panel - as did purple.
-const INKS = ['255 72 176', '255 108 47', '0 169 92']
 const loop = ref(0)
 const ink = ref(INKS[0]!)
 const mounted = ref(false)
 function pick() {
-  const n = seed ?? Math.floor(Math.random() * LOOPS.length * INKS.length)
-  loop.value = n % LOOPS.length
-  ink.value = INKS[Math.floor(n / LOOPS.length) % INKS.length]!
+  const p = penOf(seed ?? Math.floor(Math.random() * PEN_LOOKS))
+  loop.value = p.loop
+  ink.value = p.ink
 }
 watch(
   () => seed,

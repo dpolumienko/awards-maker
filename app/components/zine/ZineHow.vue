@@ -18,7 +18,9 @@ const CATEGORY = 'Streamer of the year'
 // panel filling in over them (review 2026-10-08: the scene showed typing
 // nominees, then too little of each step)
 const BUILD = ['Setup', 'Categories', 'Schedule', 'Customize', 'Publish'] as const
-const PER_STEP = 4
+// six beats a step: four to fill the panel in, two to read it (review
+// 2026-10-08: the tabs went by before they could be read)
+const PER_STEP = 6
 // nominees as the faces they would be: one dot each, in the inks
 const CATS = [
   { name: 'Streamer of the year', who: 3 },
@@ -39,12 +41,12 @@ const step = ref(0)
 const beat = ref(99)
 // beats per step: the ceremony gets the longest, each count a full second and
 // more (review 2026-10-08: 3-2-1 went by too fast to read)
-const BEATS = [BUILD.length * PER_STEP - 1, 9, 14]
+const BEATS = [BUILD.length * PER_STEP - 1, 12, 16]
 const URL = 'awards.streamscharts.com/a/chat-awards-2026'
 
 const buildAt = computed(() => Math.min(BUILD.length - 1, Math.floor(beat.value / PER_STEP)))
 /** how far the current panel has filled in, 0..3 - all of it at rest */
-const sub = computed(() => (beat.value >= BUILD.length * PER_STEP ? PER_STEP - 1 : beat.value % PER_STEP))
+const sub = computed(() => (beat.value >= BUILD.length * PER_STEP ? 3 : Math.min(3, beat.value % PER_STEP)))
 const count = computed(() => Math.max(0, 3 - Math.floor(beat.value / 2)))
 const link = computed(() => URL.slice(0, beat.value * 12))
 
@@ -53,7 +55,7 @@ function go(i: number) {
   beat.value = 0
 }
 // plays only once it is mostly on screen: one moving scene at a time
-const { running } = useLiveLoop(root, 550, () => {
+const { running } = useLiveLoop(root, 600, () => {
   beat.value += 1
   if (beat.value > BEATS[step.value]!) go((step.value + 1) % STEPS.length)
 }, 0.5)
@@ -71,7 +73,7 @@ watch(running, (on) => (beat.value = on ? 0 : 99))
           <li v-for="(s, i) in STEPS" :key="s.id">
             <button type="button" :aria-pressed="step === i" @click="go(i)">
               <span><b>{{ s.title }}</b><span>{{ s.line }}</span></span>
-              <span v-if="step === i && running" class="zh-tape" :style="{ animationDuration: `${(BEATS[i]! + 1) * 0.55}s` }" />
+              <span v-if="step === i && running" class="zh-tape" :style="{ animationDuration: `${(BEATS[i]! + 1) * 0.6}s` }" />
             </button>
           </li>
         </ol>

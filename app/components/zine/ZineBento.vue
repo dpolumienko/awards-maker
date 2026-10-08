@@ -4,7 +4,9 @@
 // nominee search types and its results land - and the other two hold still: the
 // share card turns over when you point at it, the platforms just sit there.
 // The search's results area has a fixed height, so nothing below it shifts
-// while it types (it used to grow by a row and push the page).
+// while it types (it used to grow by a row and push the page). Then one result is
+// pointed at and picked (review 2026-10-08: the scene stopped at the results),
+// and the platforms get the pen when pointed at.
 import { computed, ref } from 'vue'
 import ZinePen from './ZinePen.vue'
 import PlatformDot from '~/components/ui/PlatformDot.vue'
@@ -18,17 +20,21 @@ useLiveLoop(root, 370, () => (t.value += 1))
 // a channel, a clip, an image - every kind of nominee shows up in turn
 // (review 2026-10-08: clips and images were not visible as options)
 type Hit = { name: string; kind: string; p?: 'twitch' | 'kick' | 'youtube'; thumb?: 'clip' | 'image' }
-const QUERIES: { q: string; hits: Hit[] }[] = [
-  { q: 'the 3am raid', hits: [{ name: 'The 3am raid', kind: 'Clip', thumb: 'clip' }, { name: 'the 3am raid', kind: 'Text' }] },
-  { q: 'kai', hits: [{ name: 'KaiCenat', kind: 'Twitch', p: 'twitch' }, { name: 'kai_clutch.png', kind: 'Image', thumb: 'image' }] },
-  { q: 'pogfrog', hits: [{ name: 'PogFrog', kind: 'Image', thumb: 'image' }, { name: 'PogFrog moment', kind: 'Clip', thumb: 'clip' }] },
+const QUERIES: { q: string; hits: Hit[]; pick: number }[] = [
+  { q: 'the 3am raid', hits: [{ name: 'The 3am raid', kind: 'Clip', thumb: 'clip' }, { name: 'the 3am raid', kind: 'Text' }], pick: 0 },
+  { q: 'kai', hits: [{ name: 'KaiCenat', kind: 'Twitch', p: 'twitch' }, { name: 'kai_clutch.png', kind: 'Image', thumb: 'image' }], pick: 1 },
+  { q: 'pogfrog', hits: [{ name: 'PogFrog', kind: 'Image', thumb: 'image' }, { name: 'PogFrog moment', kind: 'Clip', thumb: 'clip' }], pick: 0 },
 ]
-const qi = computed(() => Math.floor(t.value / 14) % QUERIES.length)
-const qt = computed(() => t.value % 14)
-const query = computed(() => (t.value === 0 ? QUERIES[0]!.q : QUERIES[qi.value]!.q.slice(0, qt.value * 2)))
-const hits = computed(() => (t.value === 0 ? QUERIES[0]!.hits : qt.value >= 8 ? QUERIES[qi.value]!.hits : []))
+// one query a cycle: types (0-7), results land (8), one is pointed at (11), picked (13), held
+const CYCLE = 20
+const qi = computed(() => Math.floor(t.value / CYCLE) % QUERIES.length)
+const qt = computed(() => (t.value === 0 ? CYCLE - 1 : t.value % CYCLE))
+const query = computed(() => QUERIES[qi.value]!.q.slice(0, qt.value * 2))
+const hits = computed(() => (qt.value >= 8 ? QUERIES[qi.value]!.hits : []))
+const hitState = (k: number) => (k !== QUERIES[qi.value]!.pick ? '' : qt.value >= 13 ? 'is-picked' : qt.value >= 11 ? 'is-pointed' : '')
 
 const PLATS = ['twitch', 'kick', 'youtube'] as const
+const hovered = ref<string | null>(null)
 </script>
 
 <template>
@@ -42,10 +48,10 @@ const PLATS = ['twitch', 'kick', 'youtube'] as const
           <div class="zb2-art" aria-hidden="true">
             <p class="zb2-search"><span>&#8981;</span>{{ query }}<i class="zb2-caret" /></p>
             <TransitionGroup name="zb2-drop" tag="ul" class="zb2-hits">
-              <li v-for="h in hits" :key="qi + h.kind">
+              <li v-for="(h, k) in hits" :key="qi + h.kind" :class="hitState(k)">
                 <span v-if="h.thumb" class="zb2-thumb" :class="`is-${h.thumb}`" />
                 <PlatformDot v-else-if="h.p" :platform="h.p" :label="false" :size="14" />
-                <b>{{ h.name }}</b><small>{{ h.kind }}</small>
+                <b>{{ h.name }}</b><small>{{ hitState(k) === 'is-picked' ? 'Nominated' : h.kind }}</small>
               </li>
             </TransitionGroup>
           </div>
@@ -66,7 +72,9 @@ const PLATS = ['twitch', 'kick', 'youtube'] as const
           <h3>Twitch, Kick, YouTube</h3>
           <p>Nominees from all three. Voters sign in with Twitch or Kick.</p>
           <div class="zb2-art zb2-plats zb2-ink" aria-hidden="true">
-            <span v-for="p in PLATS" :key="p" class="zb2-plat"><PlatformDot :platform="p" /></span>
+            <span v-for="p in PLATS" :key="p" class="zb2-plat" @mouseenter="hovered = p" @mouseleave="hovered = null">
+              <ZinePen :on="hovered === p"><PlatformDot :platform="p" /></ZinePen>
+            </span>
           </div>
         </article>
       </div>
@@ -101,6 +109,11 @@ const PLATS = ['twitch', 'kick', 'youtube'] as const
 .zb2-thumb.is-clip { display: grid; place-items: center; background: #0b0b0d; }
 .zb2-thumb.is-clip::after { content: ''; border-left: 8px solid #f2f2ec; border-block: 5px solid transparent; }
 .zb2-hits small { margin-left: auto; font-size: 13px; color: rgb(var(--ink-muted)); }
+.zb2-hits li { transition: background-color 0.2s, color 0.2s, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+.zb2-hits li.is-pointed { outline: 3px solid rgb(var(--gold)); outline-offset: -1px; transform: translateX(4px); }
+.zb2-hits li.is-picked { background: rgb(var(--ink)); color: rgb(var(--canvas)); transform: translateX(4px); }
+.zb2-hits li.is-picked small { color: rgb(var(--canvas)); font-weight: 800; }
+.zb2-hits li.is-picked small::before { content: 'OK'; margin-right: 8px; padding: 1px 5px; border: 3px double currentColor; font: 800 10px/1.2 var(--font-display), sans-serif; }
 .zb2-drop-enter-from { opacity: 0; transform: translateY(-8px); }
 .zb2-drop-enter-active { transition: opacity 0.25s, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
 .zb2-drop-leave-active { display: none; }
@@ -117,7 +130,8 @@ const PLATS = ['twitch', 'kick', 'youtube'] as const
 .zb2-card:hover .zb2-back { transform: rotateY(0); }
 
 .zb2-plats { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
-.zb2-plat { display: grid; place-items: center; padding: 12px 18px; border: 2px solid rgb(var(--canvas)); background: rgb(var(--canvas)); }
+.zb2-plat { display: grid; place-items: center; padding: 12px 18px; border: 2px solid rgb(var(--canvas)); background: rgb(var(--canvas)); transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
+.zb2-plat:hover { transform: translateY(-4px) rotate(-2deg); }
 .zb2-plat :deep(span) { font-size: 16px; font-weight: 800; }
-@media (prefers-reduced-motion: reduce) { .zb2-face { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .zb2-face, .zb2-plat, .zb2-hits li { transition: none; } .zb2-plat:hover { transform: none; } }
 </style>
