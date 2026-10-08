@@ -6,10 +6,12 @@ import { computed, nextTick, ref, watch } from 'vue'
 import UiButton from './UiButton.vue'
 import UiIcon from './UiIcon.vue'
 import { THEMES, themeCss } from '~/data/themes'
-import { CEREMONY_FONTS, COVER, REVEALS, type CeremonySettings } from '~/composables/useCeremony'
+import { CEREMONY_FONTS, COVER, IMAGE, REVEALS, stageImage, type CeremonySettings } from '~/composables/useCeremony'
 import { prefersReducedMotion, useGsap } from '~/composables/useReveal'
+import { playRevealMotion } from '~/utils/revealMotion'
+import { ImageError, fileToStoredImage } from '~/utils/image'
 
-const { open, settings, accent, name, cover = '' } = defineProps<{
+const { open, settings, accent, name, cover = '', hasPartners = false } = defineProps<{
   open: boolean
   settings: CeremonySettings
   accent: string
@@ -17,6 +19,8 @@ const { open, settings, accent, name, cover = '' } = defineProps<{
   name: string
   /** The uploaded cover, if this show has one - then it is a stage of its own. */
   cover?: string
+  /** the switch for the partners' corner only shows when there are partners */
+  hasPartners?: boolean
 }>()
 const emit = defineEmits<{ close: []; update: [Partial<CeremonySettings>]; start: [] }>()
 
@@ -50,14 +54,29 @@ async function playPreview() {
   if (!el || prefersReducedMotion()) return
   const { gsap } = useGsap()
   const letters = el.querySelectorAll('.js-p-cut')
-  gsap.killTweensOf([el, letters])
+  gsap.killTweensOf([el, letters, el.parentElement])
+  gsap.set([el, letters], { clearProps: 'all' })
+  playRevealMotion(gsap, settings.reveal, { line: el, letters, stage: el.parentElement })
+}
 
-  if (settings.reveal === 'cut') {
-    gsap.fromTo(letters, { yPercent: 115 }, { yPercent: 0, duration: 0.8, ease: 'expo.out', stagger: { each: 0.03, from: 'center' } })
-  } else if (settings.reveal === 'spotlight') {
-    gsap.fromTo(el, { opacity: 0.15, scale: 0.94, filter: 'blur(6px)' }, { opacity: 1, scale: 1, filter: 'blur(0px)', duration: 0.9, ease: 'expo.out' })
-  } else {
-    gsap.fromTo(el, { rotateX: -92, opacity: 0 }, { rotateX: 0, opacity: 1, duration: 0.8, ease: 'back.out(1.4)', transformPerspective: 700 })
+// The stage can be a picture of the host's own, uploaded right here (review
+// 2026-10-08: "the setup lost the way to put an image behind the stage")
+const picture = computed(() => stageImage(settings, cover))
+const uploading = ref(false)
+const pictureError = ref('')
+async function pickPicture(e: Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file) return
+  pictureError.value = ''
+  uploading.value = true
+  try {
+    emit('update', { stage: IMAGE, image: await fileToStoredImage(file, 1920) })
+  } catch (err) {
+    pictureError.value = err instanceof ImageError ? err.message : 'That image could not be read. Try a PNG or a JPG.'
+  } finally {
+    uploading.value = false
   }
 }
 
@@ -78,7 +97,7 @@ const sample = computed(() => [...(name.trim().split(/\s+/)[0] ?? 'Winner')])
       @keydown="onKey"
       @click.self="emit('close')"
     >
-      <div ref="dialog" class="w-full max-w-2xl overflow-hidden rounded-card border border-hair bg-s1">
+      <div ref="dialog" class="max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto rounded-card border border-hair bg-s1">
         <div class="flex items-center gap-4 border-b border-hair px-6 py-4">
           <p class="font-semibold">Set up the ceremony</p>
           <ol class="ml-auto flex list-none items-center gap-2 p-0">
@@ -98,7 +117,7 @@ const sample = computed(() => [...(name.trim().split(/\s+/)[0] ?? 'Winner')])
         <!-- what the choice does, at the size it will be seen -->
         <div
           class="grid aspect-[16/7] place-items-center overflow-hidden border-b border-hair"
-          :style="themeCss(settings.stage === COVER ? undefined : settings.stage, accent, settings.stage === COVER ? cover : undefined)"
+          :style="themeCss(picture ? undefined : settings.stage, accent, picture)"
         >
           <p
             ref="preview"
@@ -115,7 +134,8 @@ const sample = computed(() => [...(name.trim().split(/\s+/)[0] ?? 'Winner')])
           <p class="mb-4 text-sm text-ink-2">{{ STEPS[step]!.note }}</p>
 
           <!-- 1. stage: one row, however many there are -->
-          <div v-if="step === 0" class="grid grid-cols-4 gap-3 sm:grid-cols-7">
+          <div v-if="step === 0">
+          <div class="grid grid-cols-4 gap-3 sm:grid-cols-8">
             <!-- a show with a cover keeps it unless the host picks otherwise -->
             <button
               v-if="cover"
@@ -132,6 +152,27 @@ const sample = computed(() => [...(name.trim().split(/\s+/)[0] ?? 'Winner')])
               </span>
               <span class="text-xs" :class="settings.stage === COVER ? 'text-ink' : 'text-ink-muted'">Your cover</span>
             </button>
+            <!-- a picture of the host's own: uploaded here, kept with the ceremony -->
+            <button
+              v-if="settings.image"
+              type="button"
+              class="group flex flex-col gap-2 text-left"
+              :aria-pressed="settings.stage === IMAGE"
+              @click="emit('update', { stage: IMAGE })"
+            >
+              <span
+                class="block h-12 overflow-hidden rounded-btn border transition-colors"
+                :class="settings.stage === IMAGE ? 'border-ink' : 'border-hair group-hover:border-hair2'"
+              >
+                <img :src="settings.image" alt="" class="h-full w-full object-cover" />
+              </span>
+              <span class="text-xs" :class="settings.stage === IMAGE ? 'text-ink' : 'text-ink-muted'">Your picture</span>
+            </button>
+            <label v-else class="group flex cursor-pointer flex-col gap-2 text-left">
+              <span class="grid h-12 place-items-center rounded-btn border border-dashed border-hair2 text-xl leading-none text-ink-muted transition-colors group-hover:border-ink-muted group-hover:text-ink">+</span>
+              <span class="text-xs text-ink-muted">{{ uploading ? 'Uploading…' : 'Upload' }}</span>
+              <input type="file" accept="image/*" class="sr-only" @change="pickPicture" />
+            </label>
             <button
               v-for="t in THEMES"
               :key="t.id"
@@ -147,6 +188,25 @@ const sample = computed(() => [...(name.trim().split(/\s+/)[0] ?? 'Winner')])
               />
               <span class="text-xs" :class="settings.stage === t.id ? 'text-ink' : 'text-ink-muted'">{{ t.name }}</span>
             </button>
+          </div>
+          <p v-if="pictureError" class="mt-3 text-sm text-danger">{{ pictureError }}</p>
+          <label v-else-if="settings.image" class="mt-3 inline-block cursor-pointer text-sm text-ink-muted underline underline-offset-4 hover:text-ink">
+            {{ uploading ? 'Uploading…' : 'Replace your picture' }}
+            <input type="file" accept="image/*" class="sr-only" @change="pickPicture" />
+          </label>
+          <!-- sponsors on stream: a corner of every slide, the host's to switch off -->
+          <label v-if="hasPartners" class="mt-5 flex cursor-pointer items-start gap-3 border-t border-hair pt-4 text-sm">
+            <input
+              type="checkbox"
+              :checked="settings.partners"
+              class="mt-0.5 h-5 w-5 flex-none rounded-btn border border-hair2 bg-s2 accent-gold focus:shadow-focus focus:outline-none"
+              @change="emit('update', { partners: ($event.target as HTMLInputElement).checked })"
+            />
+            <span>
+              <b class="font-semibold">Show the partners</b>
+              <span class="block text-ink-muted">Their names and logos sit in the bottom right corner of every slide.</span>
+            </span>
+          </label>
           </div>
 
           <!-- 2. type -->
@@ -166,22 +226,34 @@ const sample = computed(() => [...(name.trim().split(/\s+/)[0] ?? 'Winner')])
           </div>
 
           <!-- 3. reveal -->
-          <div v-else class="grid gap-3 sm:grid-cols-3">
+          <!-- seven ways in: one row each, so none wraps and no cell sits empty -->
+          <div v-else class="grid gap-2">
             <button
               v-for="r in REVEALS"
               :key="r.id"
               type="button"
-              class="flex h-full flex-col rounded-btn border p-4 text-left transition-colors"
+              class="grid grid-cols-[8.5rem_minmax(0,1fr)_14px] items-baseline gap-3 rounded-btn border px-4 py-2.5 text-left transition-colors"
               :class="settings.reveal === r.id ? 'border-ink' : 'border-hair hover:border-hair2'"
               :aria-pressed="settings.reveal === r.id"
               @click="emit('update', { reveal: r.id })"
             >
-              <span class="grid grid-cols-[minmax(0,1fr)_14px] items-center gap-2 font-semibold">
-                <span class="min-w-0">{{ r.label }}</span>
-                <UiIcon v-show="settings.reveal === r.id" name="check" :size="14" />
-              </span>
-              <span class="mt-1 text-sm text-ink-2">{{ r.note }}</span>
+              <span class="font-semibold">{{ r.label }}</span>
+              <span class="text-sm text-ink-2">{{ r.note }}</span>
+              <UiIcon v-show="settings.reveal === r.id" name="check" :size="14" class="self-center" />
             </button>
+            <!-- the numbers are the host's to say or not (review 2026-10-08) -->
+            <label class="col-span-full mt-2 flex cursor-pointer items-start gap-3 border-t border-hair pt-4 text-sm">
+              <input
+                type="checkbox"
+                :checked="settings.counts"
+                class="mt-0.5 h-5 w-5 flex-none rounded-btn border border-hair2 bg-s2 accent-gold focus:shadow-focus focus:outline-none"
+                @change="emit('update', { counts: ($event.target as HTMLInputElement).checked })"
+              />
+              <span>
+                <b class="font-semibold">Show the votes</b>
+                <span class="block text-ink-muted">The winner's screen says how many votes and what share, and the rest get their %.</span>
+              </span>
+            </label>
           </div>
         </div>
 
