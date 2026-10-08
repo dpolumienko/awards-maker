@@ -111,6 +111,7 @@ function summary(s: Show) {
     status: a.status,
     closedAt: a.closedAt,
     resultsAt: a.resultsAt,
+    offline: a.offline,
     publishedAt: a.publishedAt,
     voters: s.ballots.length,
     categories: a.nominations.length,
@@ -228,7 +229,7 @@ export async function demoApi(url: string, opts: { method?: string; body?: unkno
     needUser()
     return { awards: Object.values(db.shows).map(summary).reverse() }
   }
-  if (path === '/api/awards') return { awards: Object.values(db.shows).map(summary).reverse() }
+  if (path === '/api/awards') return { awards: Object.values(db.shows).filter((s) => !s.award.offline).map(summary).reverse() }
 
   const m = /^\/api\/awards\/([^/]+)(?:\/([a-z]+))?$/.exec(path)
   if (m) {
@@ -245,6 +246,8 @@ export async function demoApi(url: string, opts: { method?: string; body?: unkno
       return { ok: true }
     }
     if (!action) {
+      // offline: only the host sees it, as on the real site
+      if (show.award.offline && !isHost) fail(404, 'No such awards')
       const t = tally(show)
       return {
         award: show.award,
@@ -257,6 +260,7 @@ export async function demoApi(url: string, opts: { method?: string; body?: unkno
     if (action === 'ballot') {
       const u2 = needUser()
       const a = show.award
+      if (a.offline) fail(404, 'No such awards')
       if (a.closedAt || (a.closesAt && Date.parse(a.closesAt) < Date.now())) fail(409, 'Voting is closed')
       if (a.opensAt && Date.parse(a.opensAt) > Date.now()) fail(409, 'Voting has not opened yet')
       if (mine) fail(409, 'You have already voted here')
@@ -267,6 +271,12 @@ export async function demoApi(url: string, opts: { method?: string; body?: unkno
       return { picks: Object.keys(picks).length }
     }
     if (action === 'tally') return { tally: tally(show), isHost }
+    if (action === 'offline') {
+      needUser()
+      show.award.offline = !!(body ?? {}).offline
+      save(db)
+      return { ok: true, offline: show.award.offline }
+    }
     if (action === 'close') {
       needUser()
       show.award.closedAt = show.award.closedAt || now()

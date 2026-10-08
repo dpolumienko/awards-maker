@@ -261,6 +261,25 @@ const seg = (active: boolean) =>
   background: #ff48b0;
   mix-blend-mode: screen;
 }
+.ds-swatch-night2 {
+  background: #111113;
+  border-radius: 0;
+  box-shadow: inset 0 0 0 1px #3a3a42;
+}
+.ds-swatch-night2 i {
+  left: 6px;
+  top: 7px;
+  width: 26px;
+  height: 14px;
+  border: 1.5px dashed #f2f2ec;
+}
+.ds-swatch-night2 b {
+  left: 12px;
+  top: 12px;
+  width: 14px;
+  height: 4px;
+  background: #5cace8;
+}
 .ds-more {
   display: grid;
   place-items: center;

@@ -20,7 +20,9 @@ export function useVersion() {
     version,
     // Night is the Fanzine on black: every Fanzine template and rule applies to it too
     isZine: computed(() => version.value !== 'stage'),
-    isNight: computed(() => version.value === 'night'),
+    isNight: computed(() => version.value === 'night' || version.value === 'night2'),
+    // Night v2: the reworked builder (ticket steps) and dashboard (show desk)
+    isV2: computed(() => version.value === 'night2'),
     // light paper: an accent's text is darkened to read on it, not lightened (utils/accent.ts)
     onPaper: computed(() => version.value === 'zine'),
     setVersion,

@@ -42,12 +42,14 @@ export interface AwardRow {
   host_platform: 'twitch' | 'kick' | 'youtube'
   closed_at: string | null
   results_at: string | null
+  /** set while the host has taken the show offline */
+  offline_at: string | null
   published_at: string | null
 }
 
 const AWARD_COLUMNS = `id, owner_id, slug, status, tier, name, description, template_id,
   opens_at, closes_at, ceremony_at, timezone, look, host_name, host_platform,
-  closed_at, results_at, published_at`
+  closed_at, results_at, offline_at, published_at`
 
 /** mysql2 hands JSON back parsed on some server versions and as text on others. */
 function readLook(value: AwardRow['look']): Record<string, unknown> {
@@ -127,6 +129,7 @@ export async function hydrate(row: AwardRow) {
     status: row.status,
     closedAt: fromDbDateTime(row.closed_at) || undefined,
     resultsAt: fromDbDateTime(row.results_at) || undefined,
+    offline: !!row.offline_at,
     publishedAt: fromDbDateTime(row.published_at) || undefined,
     partners: partners.map((p) => ({ id: String(p.id), name: p.name, url: p.url })),
     nominations: nominations.map((m) => ({
@@ -137,13 +140,14 @@ export async function hydrate(row: AwardRow) {
   }
 }
 
-export function awardBySlug(slug: string, status: 'published' | 'any' = 'published') {
-  return queryOne<AwardRow>(
-    `SELECT ${AWARD_COLUMNS} FROM awards
-      WHERE slug = ?${status === 'published' ? ` AND status = 'published'` : ''}
-      LIMIT 1`,
-    [slug],
-  )
+/**
+ * `published` is what the public may see: published and online. `host` adds the
+ * shows their host took offline - the page answers those to the host only.
+ * `any` is everything, drafts included.
+ */
+export function awardBySlug(slug: string, status: 'published' | 'host' | 'any' = 'published') {
+  const where = { published: ` AND status = 'published' AND offline_at IS NULL`, host: ` AND status = 'published'`, any: '' }[status]
+  return queryOne<AwardRow>(`SELECT ${AWARD_COLUMNS} FROM awards WHERE slug = ?${where} LIMIT 1`, [slug])
 }
 
 export function awardById(id: number) {
@@ -178,6 +182,7 @@ export async function awardSummaries(where: string, params: (string | number)[] 
     status: r.status,
     closedAt: fromDbDateTime(r.closed_at) || undefined,
     resultsAt: fromDbDateTime(r.results_at) || undefined,
+    offline: !!r.offline_at,
     publishedAt: fromDbDateTime(r.published_at) || undefined,
     voters: Number(r.voters),
     categories: Number(r.categories),
@@ -328,6 +333,11 @@ export async function publishAward(awardId: number, slug: string, tier: 'free' |
     `UPDATE awards SET status = 'published', slug = ?, tier = ?, published_at = NOW() WHERE id = ?`,
     [slug, tier, awardId],
   )
+}
+
+/** Pulls a published show off the web, or puts it back. Nothing else changes. */
+export async function setOffline(awardId: number, offline: boolean) {
+  await query(`UPDATE awards SET offline_at = ${offline ? 'NOW()' : 'NULL'} WHERE id = ?`, [awardId])
 }
 
 export async function deleteAward(awardId: number) {

@@ -8,6 +8,8 @@ import UiDateTimeField from '~/components/ui/UiDateTimeField.vue'
 import UiTextarea from '~/components/ui/UiTextarea.vue'
 import UiButton from '~/components/ui/UiButton.vue'
 import SignInButtons from '~/components/ui/SignInButtons.vue'
+import BuilderTickets from '~/components/zine/BuilderTickets.vue'
+import { useVersion } from '~/composables/useVersion'
 import NominationCard from '~/components/ui/NominationCard.vue'
 import AwardPreview from '~/components/ui/AwardPreview.vue'
 import PublishPanel from '~/components/ui/PublishPanel.vue'
@@ -60,6 +62,7 @@ async function createDemoAward() {
     await useUserSession().fetch()
     draft.value = demoAward(DEMO_USER.name)
     await nextTick()
+    if (isV2.value) return goStep('cats')
     document.getElementById('nominations')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   } finally {
     demoBusy.value = false
@@ -118,6 +121,42 @@ async function onAddNomination() {
   cards.value[cards.value.length - 1]?.focusTitle()
 }
 
+// Night v2: the same form, one ticket at a time (components/zine/BuilderTickets).
+// Every section stays mounted - v-show, not v-if - so nothing typed is lost when
+// a step is left, and the other versions keep the single long page.
+const { isV2 } = useVersion()
+const STEPS = [
+  { id: 'show', title: 'The show', sub: 'Name and a pack' },
+  { id: 'cats', title: 'Categories', sub: 'And who is nominated' },
+  { id: 'when', title: 'Schedule', sub: 'Voting and the ceremony' },
+  { id: 'look', title: 'Look', sub: 'Style and partners' },
+  { id: 'go', title: 'Publish', sub: 'Check and go live' },
+] as const
+type StepId = (typeof STEPS)[number]['id']
+const step = ref<StepId>('show')
+const visited = ref(new Set<StepId>(['show']))
+const ok = (id: string) => !!checks.value.find((c) => c.id === id)?.ok
+const tickets = computed(() =>
+  STEPS.map((s) => ({
+    ...s,
+    done: {
+      show: ok('name') && ok('description'),
+      cats: ok('nominations') && ok('nominees'),
+      when: ok('dates') && visited.value.has('when'),
+      look: visited.value.has('look') && step.value !== 'look',
+      go: false,
+    }[s.id],
+  })),
+)
+const stepIndex = computed(() => STEPS.findIndex((s) => s.id === step.value))
+/** Shown in this version's current step - always true outside v2. */
+const at = (...ids: StepId[]) => !isV2.value || ids.includes(step.value)
+function goStep(id: string) {
+  step.value = id as StepId
+  visited.value.add(id as StepId)
+  if (import.meta.client) document.getElementById('builder')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
 /** Free publish: strip the paid bits first, then go. */
 async function onPublishFree() {
   downgradeToFree()
@@ -157,6 +196,7 @@ function applyIdeasFromQuery() {
   // the whole set, not the free slice: a set that runs past the ceiling is how the
   // page said it would behave, and the paywall note explains the rest
   group.items.slice(0, group.set).forEach(addIdea)
+  if (isV2.value) step.value = 'cats'
   // once applied, drop it from the URL so a reload does not add the set twice
   navigateTo({ query: { ...route.query, ideas: undefined } }, { replace: true })
 }
@@ -297,21 +337,26 @@ useSeoMeta({
       </button>
     </div>
 
+    <!-- Night v2: the steps, as tickets -->
+    <BuilderTickets v-if="isV2" id="builder" class="mt-8 scroll-mt-24" :steps="tickets" :current="step" @go="goStep" />
+
     <!-- the form is where the work is; the preview is read-only and can be narrower -->
     <div class="mt-8 grid items-start gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
       <!-- FORM -->
       <div :class="tab === 'preview' && 'hidden lg:block'" class="space-y-8">
         <TemplatePicker
+          v-show="at('show')"
           :used="nominationsUsed"
           :active="draft.templateId"
           @apply="applyTemplate"
           @add-idea="addIdea"
         />
 
-        <section class="rounded-card border border-hair bg-s1 p-6">
-          <h2 class="text-xl font-semibold">The basics</h2>
+        <section v-show="at('show', 'when')" class="rounded-card border border-hair bg-s1 p-6">
+          <h2 class="text-xl font-semibold">{{ isV2 && step === 'when' ? 'Schedule' : 'The basics' }}</h2>
           <div class="mt-5 space-y-5">
             <UiField
+              v-show="at('show')"
               v-model="draft.name"
               label="Awards name"
               placeholder="Chat Awards 2026"
@@ -321,6 +366,7 @@ useSeoMeta({
               helper="Shown as the page title and on every share image."
             />
             <UiTextarea
+              v-show="at('show')"
               v-model="draft.description"
               label="Description"
               placeholder="What these awards are for, and who votes."
@@ -328,6 +374,7 @@ useSeoMeta({
               helper="A description is required before publishing. Two sentences is plenty."
             />
             <!-- dates are moments in the show's zone, not whole days (review 2026-09-24) -->
+            <div v-show="at('when')" class="space-y-5">
             <div>
               <label for="show-zone" class="label mb-2 block">Time zone</label>
               <select
@@ -349,10 +396,12 @@ useSeoMeta({
               <UiDateTimeField v-model="draft.closesAt" label="Voting closes" :time-zone="draft.timezone" default-time="21:00" />
               <UiDateTimeField v-model="draft.ceremonyAt" label="Ceremony" :time-zone="draft.timezone" default-time="20:00" />
             </div>
+            </div>
           </div>
         </section>
 
         <LookSection
+          v-show="at('look')"
           :look="draft.look"
           :signed-in="signedIn"
           :channel="draft.host.name"
@@ -360,7 +409,7 @@ useSeoMeta({
           @sign-in="signInAsHost"
         />
 
-        <section id="nominations">
+        <section v-show="at('cats')" id="nominations">
           <div class="flex items-end justify-between gap-4">
             <h2 class="text-xl font-semibold">Nominations</h2>
             <!-- past the free five this is a paid feature in use, not an error:
@@ -404,7 +453,7 @@ useSeoMeta({
           </div>
         </section>
 
-        <section class="rounded-card border border-hair bg-s1 p-6">
+        <section v-show="at('look')" class="rounded-card border border-hair bg-s1 p-6">
           <div class="flex items-end justify-between gap-4">
             <h2 class="text-xl font-semibold">Partners</h2>
             <span class="text-sm text-ink-muted">Optional</span>
@@ -435,6 +484,7 @@ useSeoMeta({
         </section>
 
         <PublishPanel
+          v-show="at('go')"
           :checks="checks"
           :can-publish="canPublish"
           :nominations-used="nominationsUsed"
@@ -446,6 +496,13 @@ useSeoMeta({
         />
         <!-- the payment goes straight to checkout from here; Stripe off answers 503 and says so -->
         <p v-if="checkoutError" class="mt-3 text-sm text-danger" role="alert">{{ checkoutError }}</p>
+
+        <!-- Night v2: back and next under every step -->
+        <div v-if="isV2" class="flex justify-between gap-3 border-t-2 border-ink pt-5">
+          <UiButton v-if="stepIndex > 0" variant="ghost" @click="goStep(STEPS[stepIndex - 1]!.id)">Back</UiButton>
+          <span v-else />
+          <UiButton v-if="stepIndex < STEPS.length - 1" @click="goStep(STEPS[stepIndex + 1]!.id)">Next: {{ STEPS[stepIndex + 1]!.title }}</UiButton>
+        </div>
       </div>
 
       <!-- PREVIEW -->

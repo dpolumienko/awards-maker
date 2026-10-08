@@ -26,13 +26,14 @@ import { nomineeName, nomineeSub } from '~/utils/nominee'
 import { FREE, type Nomination } from '~/types/award'
 import { DISPLAY_FONTS, useDisplayFonts } from '~/composables/useDisplayFonts'
 import { useVersion } from '~/composables/useVersion'
+import ShowDesk, { type DeskAction } from '~/components/zine/ShowDesk.vue'
 
 // ceremony typefaces and share cards draw in any of the headline faces
 useDisplayFonts(DISPLAY_FONTS)
 
 const route = useRoute()
 const slug = computed(() => String(route.params.slug))
-const { closeVoting, publishResults } = useVoting()
+const { closeVoting, publishResults, setOffline } = useVoting()
 const { data, refresh } = await useAwardPage(() => slug.value)
 
 const root = ref<HTMLElement | null>(null)
@@ -42,7 +43,7 @@ const award = computed(() => data.value?.award ?? null)
 const tally = computed(() => data.value?.tally ?? emptyTally())
 const phase = computed(() => (award.value ? phaseOf(award.value, data.value?.voters ?? 0) : 'open'))
 const accent = computed(() => accentOf(award.value?.look))
-const { isZine, onPaper } = useVersion()
+const { isZine, onPaper, isV2 } = useVersion()
 const ink = computed(() => accentText(accent.value, onPaper.value))
 
 const voters = computed(() => data.value?.voters ?? 0)
@@ -123,6 +124,28 @@ const badges = {
 
 // Both host actions are one-way, so both ask twice. What changed afterwards is
 // marked on the panel itself, not announced over the page.
+// Night v2: the show desk at the top (components/zine/ShowDesk) asks, this does
+const desk = ref<InstanceType<typeof ShowDesk> | null>(null)
+const deskBusy = ref(false)
+async function onDesk(a: DeskAction) {
+  deskBusy.value = true
+  try {
+    if (a === 'close') await closeVoting(slug.value)
+    else if (a === 'publish') await publishResults(slug.value)
+    else if (a === 'offline' || a === 'online') await setOffline(slug.value, a === 'offline')
+    else if (a === 'delete') {
+      await $fetch(`/api/awards/${encodeURIComponent(slug.value)}`, { method: 'DELETE' })
+      return navigateTo('/my-awards')
+    }
+    await refresh()
+  } finally {
+    deskBusy.value = false
+  }
+}
+
+// taken offline outranks the phase: it is what a viewer would run into
+const badge = computed(() => (award.value?.offline ? { tone: 'ended' as const, text: 'Offline' } : badges[phase.value]))
+
 const movePanel = ref<HTMLElement | null>(null)
 const { isArmed, arm: armAction } = useArm()
 async function arm(action: 'close' | 'publish', run: () => Promise<unknown>) {
@@ -155,7 +178,7 @@ useSeoMeta({
 
       <div class="flex flex-wrap items-start justify-between gap-x-8 gap-y-4">
         <div class="min-w-0">
-          <UiBadge :tone="badges[phase].tone">{{ badges[phase].text }}</UiBadge>
+          <UiBadge :tone="badge.tone">{{ badge.text }}</UiBadge>
           <h1 class="heading mt-2">{{ award.name }}</h1>
           <p class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-2">
             <span class="flex items-center gap-2">
@@ -171,10 +194,22 @@ useSeoMeta({
           </p>
         </div>
         <div class="flex flex-wrap gap-3">
-          <UiButton :to="`/a/${award.slug}`" variant="ghost" size="sm">Open public page</UiButton>
+          <UiButton v-if="!isV2" :to="`/a/${award.slug}`" variant="ghost" size="sm">Open public page</UiButton>
           <UiButton to="/create" variant="ghost" size="sm">Edit</UiButton>
         </div>
       </div>
+
+      <!-- Night v2: the controls come first, above the numbers -->
+      <ShowDesk
+        v-if="isV2"
+        ref="desk"
+        v-model:busy="deskBusy"
+        :phase="phase"
+        :offline="!!award.offline"
+        :slug="award.slug ?? slug"
+        :closes-label="fmt(award.closesAt)"
+        @act="onDesk"
+      />
 
       <!-- nothing to chart yet: say it once and hand over the link -->
       <div v-if="!voters" class="js-reveal mt-10 rounded-card border border-dashed border-hair2 p-8">
@@ -282,7 +317,7 @@ useSeoMeta({
 
       <!-- the two one-way moves, and the paywall note when the ceiling is close -->
       <section class="mt-12 grid gap-6 lg:grid-cols-2">
-        <div ref="movePanel" class="js-reveal relative rounded-card border border-gold-24 bg-gold/[0.06] p-5 sm:p-6">
+        <div v-if="!isV2" ref="movePanel" class="js-reveal relative rounded-card border border-gold-24 bg-gold/[0.06] p-5 sm:p-6">
           <p class="micro text-gold-text">Your move</p>
           <p class="mt-3 max-w-copy text-sm text-ink-2">
             <template v-if="phase === 'open' || phase === 'soon'">
@@ -352,6 +387,15 @@ useSeoMeta({
       </section>
 
       <PaywallNote v-if="award.tier !== 'paid' && voters / FREE.maxVoters >= 0.8" class="mt-6" reason="voters" />
+
+      <!-- Night v2: deleting is apart from everything else, and says what offline keeps -->
+      <section v-if="isV2" class="mt-10 flex flex-wrap items-center justify-between gap-4 border-2 border-dashed border-danger p-5">
+        <div>
+          <h2 class="font-bold">Delete awards</h2>
+          <p class="mt-1 text-sm text-ink-2">The page and every ballot, for good. Taking it offline keeps everything.</p>
+        </div>
+        <UiButton variant="ghost" :disabled="deskBusy" @click="desk?.ask('delete')">Delete</UiButton>
+      </section>
 
       <div class="mt-10 flex flex-wrap gap-3">
         <UiButton to="/my-awards" variant="ghost">All your awards</UiButton>

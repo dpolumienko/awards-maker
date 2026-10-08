@@ -59,6 +59,8 @@ export interface Award {
   look: AwardLook
   host: { name: string; platform: Platform }
   publishedAt?: string
+  /** taken offline by its host: kept, but answered to the host only */
+  offline?: boolean
 }
 
 /**

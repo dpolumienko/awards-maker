@@ -34,6 +34,10 @@ export const VERSIONS = [
   { id: 'stage', label: 'Current' },
   { id: 'zine', label: 'Fanzine' },
   { id: 'night', label: 'Fanzine Night' },
+  // Night v2 (review 2026-10-08): Night's palette with the reworked flows - the
+  // builder in ticket steps, the dashboard's show desk with take-offline. Same
+  // routes and API; only the builder and the dashboard lay out differently.
+  { id: 'night2', label: 'Night v2' },
 ] as const
 export type Version = (typeof VERSIONS)[number]['id']
 export const VERSION_COOKIE = 'am-version'

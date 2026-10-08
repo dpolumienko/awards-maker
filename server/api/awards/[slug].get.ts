@@ -9,12 +9,14 @@ import { currentUser } from '../../utils/users'
  */
 export default defineEventHandler(async (event) => {
   const slug = getRouterParam(event, 'slug') ?? ''
-  const row = await awardBySlug(slug)
+  // a show taken offline is still there for its host, and nobody else
+  const row = await awardBySlug(slug, 'host')
   if (!row) throw createError({ statusCode: 404, statusMessage: 'No such awards' })
-
-  const award = await hydrate(row)
   const user = await currentUser(event)
   const isHost = !!user && (user.id === row.owner_id || user.role === 'admin')
+  if (row.offline_at && !isHost) throw createError({ statusCode: 404, statusMessage: 'No such awards' })
+
+  const award = await hydrate(row)
 
   const [ballot, tally] = await Promise.all([
     user ? ballotFor(row.id, user.id) : null,

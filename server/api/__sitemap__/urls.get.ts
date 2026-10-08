@@ -27,7 +27,7 @@ export default defineSitemapEventHandler(async () => {
                   GROUP BY m.award_id, m.id) per_category
           GROUP BY award_id
        ) s ON s.award_id = a.id
-      WHERE a.status = 'published'`,
+      WHERE a.status = 'published' AND a.offline_at IS NULL`,
   )
   return rows
     .filter((r) =>

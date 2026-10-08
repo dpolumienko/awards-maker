@@ -19,6 +19,8 @@ export interface AwardSummary {
   status: 'draft' | 'published'
   closedAt?: string
   resultsAt?: string
+  /** taken offline by the host: the page answers only them */
+  offline?: boolean
   publishedAt?: string
   voters: number
   categories: number
@@ -31,7 +33,7 @@ export interface Tally {
 }
 
 export interface AwardPage {
-  award: Award & { tier: 'free' | 'paid'; closedAt?: string; resultsAt?: string }
+  award: Award & { tier: 'free' | 'paid'; closedAt?: string; resultsAt?: string; offline?: boolean }
   isHost: boolean
   ballot: { at: string; picks: Record<string, string> } | null
   tally: Tally | null

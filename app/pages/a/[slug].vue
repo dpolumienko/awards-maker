@@ -387,6 +387,10 @@ if (award.value && !thin.value) {
 <template>
   <div ref="root" class="pb-24">
     <template v-if="award">
+      <!-- taken offline: only the host gets this far, and should know nobody else does -->
+      <p v-if="award.offline" class="relative z-10 border-b-2 border-warn bg-warn/10 px-4 py-3 text-center text-sm font-semibold text-warn" role="status">
+        This awards is offline. Only you can see it; viewers get "not available". Put it back online from the dashboard.
+      </p>
       <!-- cover band: the streamer's theme or their own cover, full width -->
       <div class="relative h-48 sm:h-64">
         <!-- the band runs up under the transparent header, so the page has no seam
