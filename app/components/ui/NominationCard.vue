@@ -10,6 +10,7 @@ import { fmtFollowers } from '~/data/channels.mock'
 import { FREE, PUBLISH, type Channel, type Nomination } from '~/types/award'
 import UiIcon from './UiIcon.vue'
 import UiMaskIcon from './UiMaskIcon.vue'
+import NomineeThumb from './NomineeThumb.vue'
 
 const { nomination, index, overFreeLimit = false } = defineProps<{
   nomination: Nomination
@@ -131,12 +132,7 @@ const shortMeta = (n: Nomination['nominees'][number]) =>
         :key="n.id"
         class="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-btn border border-hair bg-canvas px-3 py-2.5 text-sm"
       >
-        <img
-          v-if="n.kind === 'media' && n.image"
-          :src="n.image"
-          alt=""
-          class="h-7 w-7 flex-none rounded-pill object-cover"
-        />
+        <NomineeThumb v-if="n.kind === 'media'" :nominee="n" :width="64" />
         <span v-else aria-hidden="true" class="grid h-7 w-7 flex-none place-items-center rounded-pill bg-s3 text-[11px] font-bold text-ink-muted">
           {{ shortMeta(n).slice(0, 2).toUpperCase() }}
         </span>

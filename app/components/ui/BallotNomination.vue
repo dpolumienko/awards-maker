@@ -7,6 +7,7 @@ import { computed, ref } from 'vue'
 import PlatformDot from './PlatformDot.vue'
 import LivePill from './LivePill.vue'
 import MediaLightbox from './MediaLightbox.vue'
+import NomineeThumb from './NomineeThumb.vue'
 import UiIcon from './UiIcon.vue'
 import ZinePen from '~/components/zine/ZinePen.vue'
 import { nomineeInitials, nomineeName, nomineeSub, nomineeTint } from '~/utils/nominee'
@@ -135,12 +136,7 @@ function onKey(e: KeyboardEvent, i: number) {
         @click="mode === 'vote' && emit('pick', n.id)"
         @keydown="onKey($event, i)"
       >
-        <img
-          v-if="n.kind === 'media' && n.image"
-          :src="n.image"
-          alt=""
-          class="h-14 w-20 flex-none rounded-btn object-cover"
-        />
+        <NomineeThumb v-if="n.kind === 'media'" :nominee="n" :width="80" />
         <!-- big enough to read as a person, not a bullet (review 2026-10-06) -->
         <span v-else aria-hidden="true" class="grid h-14 w-14 flex-none place-items-center rounded-pill text-lg font-bold text-white" :style="{ background: nomineeTint(n) }">
           {{ nomineeInitials(n) }}

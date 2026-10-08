@@ -12,6 +12,7 @@ import { FREE, type Award } from '~/types/award'
 import UiIcon from './UiIcon.vue'
 import PartnerChip from './PartnerChip.vue'
 import MediaLightbox from './MediaLightbox.vue'
+import NomineeThumb from './NomineeThumb.vue'
 import { formatInZone } from '#shared/time'
 import { useVersion } from '~/composables/useVersion'
 
@@ -161,7 +162,7 @@ const countdown = computed(() => {
           :style="picked === n.id ? { borderColor: accent } : undefined"
           @click="picked = n.id"
         >
-          <img v-if="n.kind === 'media' && n.image" :src="n.image" alt="" class="h-10 w-14 flex-none rounded-btn object-cover" />
+          <NomineeThumb v-if="n.kind === 'media'" :nominee="n" :width="64" />
           <span v-else aria-hidden="true" class="grid h-8 w-8 flex-none place-items-center rounded-pill bg-s3 text-[13px] font-bold text-ink-muted">
             {{ nomineeName(n).slice(0, 2).toUpperCase() }}
           </span>

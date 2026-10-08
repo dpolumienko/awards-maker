@@ -46,5 +46,16 @@ export function nomineeImage(n: Nominee): string {
   if (clip.poster) return clip.poster
   // YouTube publishes a thumbnail for every video id at a fixed address
   const yt = /youtube\.com\/embed\/([\w-]+)/.exec(clip.embed ?? '')
-  return yt ? `https://i.ytimg.com/vi/${yt[1]}/hqdefault.jpg` : ''
+  if (yt) return `https://i.ytimg.com/vi/${yt[1]}/hqdefault.jpg`
+  // Twitch only tells its API, which our server asks (server/api/clip-poster);
+  // the static demo has no server - NomineeThumb shows the embed there instead
+  return clip.platform === 'twitch' && !isDemo() ? `/api/clip-poster?url=${encodeURIComponent(n.url)}` : ''
+}
+
+function isDemo(): boolean {
+  try {
+    return !!useRuntimeConfig().public.demo
+  } catch {
+    return false
+  }
 }
