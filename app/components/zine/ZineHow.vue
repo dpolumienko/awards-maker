@@ -25,11 +25,15 @@ const root = ref<HTMLElement | null>(null)
 const step = ref(0)
 // each step runs on beats: the stage reads `beat` to know how far its scene is
 const beat = ref(99)
-const BEATS = 9
+// beats per step: the ceremony gets the longest, each count a full second and
+// more (review 2026-10-08: 3-2-1 went by too fast to read)
+const BEATS = [9, 9, 14]
+const URL = 'awards.streamscharts.com/a/chat-awards-2026'
 
 const typed = computed(() => CATEGORY.slice(0, Math.min(CATEGORY.length, beat.value * 4)))
 const shown = computed(() => Math.max(0, Math.min(NOMS.length, beat.value - 4)))
-const count = computed(() => Math.max(0, 3 - beat.value))
+const count = computed(() => Math.max(0, 3 - Math.floor(beat.value / 2)))
+const link = computed(() => URL.slice(0, beat.value * 12))
 
 function go(i: number) {
   step.value = i
@@ -37,7 +41,7 @@ function go(i: number) {
 }
 const { running } = useLiveLoop(root, 550, () => {
   beat.value += 1
-  if (beat.value > BEATS) go((step.value + 1) % STEPS.length)
+  if (beat.value > BEATS[step.value]!) go((step.value + 1) % STEPS.length)
 })
 // with reduced motion (or before the first tick) every scene sits at its last
 // beat; once the block is on screen the step plays from the top
@@ -53,7 +57,7 @@ watch(running, (on) => (beat.value = on ? 0 : 99))
           <li v-for="(s, i) in STEPS" :key="s.id">
             <button type="button" :aria-pressed="step === i" @click="go(i)">
               <span><b>{{ s.title }}</b><span>{{ s.line }}</span></span>
-              <span v-if="step === i && running" class="zh-tape" :style="{ animationDuration: `${(BEATS + 1) * 0.55}s` }" />
+              <span v-if="step === i && running" class="zh-tape" :style="{ animationDuration: `${(BEATS[i]! + 1) * 0.55}s` }" />
             </button>
           </li>
         </ol>
@@ -71,16 +75,15 @@ watch(running, (on) => (beat.value = on ? 0 : 99))
           <p class="zh-add">+ Add a nominee</p>
         </div>
 
-        <!-- 02: the link in chat, and chat answering -->
-        <div v-else-if="step === 1" class="zh-scene zh-chat">
-          <p class="zh-msg"><b>you</b> vote for the Chat Awards</p>
-          <div v-if="beat >= 1" class="zh-card zh-in">
+        <!-- 02: the link is pasted and unfolds into its card. Not a chat: the
+             cover scene is already a chat (review 2026-10-08) -->
+        <div v-else-if="step === 1" class="zh-scene zh-share">
+          <p class="zh-label">Paste anywhere</p>
+          <p class="zh-paste">{{ link }}<i v-if="link.length < URL.length" class="zh-caret" /></p>
+          <div v-if="link.length >= URL.length" class="zh-card zh-in">
             <span class="zh-card-band" />
-            <span class="zh-card-body"><b class="zine-display">Chat Awards 2026</b><small>awards.streamscharts.com/a/chat-awards-2026</small></span>
+            <span class="zh-card-body"><b class="zine-display">Chat Awards 2026</b><small>Vote for the winners · 6 categories</small></span>
           </div>
-          <p v-if="beat >= 3" class="zh-msg zh-in"><b>pixelgoblin</b> voted, mods deserve it</p>
-          <p v-if="beat >= 5" class="zh-msg zh-in"><b>mod_kira</b> pinned it</p>
-          <p v-if="beat >= 7" class="zh-msg zh-in"><b>lurker_2006</b> first time voting in anything</p>
         </div>
 
         <!-- 03: the ceremony counts down to a winner -->
@@ -126,10 +129,9 @@ watch(running, (on) => (beat.value = on ? 0 : 99))
 .zh-pop-enter-from { opacity: 0; transform: translateX(-14px); }
 .zh-pop-enter-active { transition: opacity 0.3s, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
 
-.zh-chat { display: flex; flex-direction: column; justify-content: flex-end; gap: 10px; background: rgb(var(--s2)); }
-.zh-msg { font-size: 15px; }
-.zh-msg b { color: rgb(var(--gold-text)); margin-right: 4px; }
-.zh-card { display: grid; grid-template-columns: 90px minmax(0, 1fr); border: 2px solid rgb(var(--ink)); background: rgb(var(--canvas)); }
+.zh-share { display: flex; flex-direction: column; justify-content: center; gap: 12px; }
+.zh-paste { min-height: 46px; padding: 12px 14px; border: 2px solid rgb(var(--ink)); background: rgb(var(--s2)); font: 600 15px/1.3 ui-monospace, Menlo, monospace; overflow-wrap: anywhere; }
+.zh-card { display: grid; grid-template-columns: 120px minmax(0, 1fr); min-height: 120px; border: 2px solid rgb(var(--ink)); background: rgb(var(--canvas)); }
 .zh-card-band { background: radial-gradient(circle, rgb(var(--pink)) 46%, transparent 48%) 0 0 / 7px 7px, rgb(var(--gold)); border-right: 2px solid rgb(var(--ink)); }
 .zh-card-body { display: grid; gap: 4px; padding: 12px; }
 .zh-card-body b { font-size: 20px; text-transform: uppercase; color: rgb(var(--gold)); }
