@@ -33,16 +33,19 @@ const total = computed(() => nominees.value.reduce((n, x) => n + x.votes, 0))
 const top = computed(() => Math.max(...nominees.value.map((x) => x.votes)))
 const leader = computed(() => nominees.value.findIndex((x) => x.votes === top.value))
 
-useLiveLoop(root, 1400, () => {
-  // a close race: the trailing two get a little more luck
-  const w = nominees.value.map((x) => 1 + (top.value - x.votes) / 40)
+// a vote every two seconds: room to read the circle before it moves (review 2026-10-08)
+useLiveLoop(root, 2000, () => {
+  // a close race: the trailing two get a little more luck - not so much that one
+  // name takes every vote and the circle never moves
+  const w = nominees.value.map((x) => 1 + (top.value - x.votes) / 200)
   let r = Math.random() * w.reduce((a, b) => a + b, 0)
   const i = w.findIndex((x) => (r -= x) < 0)
   const pick = i < 0 ? 0 : i
   nominees.value[pick]!.votes += 1 + Math.floor(Math.random() * 3)
+  // a new circle only when the vote goes to someone else: a second vote in a row
+  // for the same name read as the pen drawing twice (review 2026-10-08)
+  if (pick !== flash.value) pen.value = (pen.value + 1 + Math.floor(Math.random() * (PEN_LOOKS - 1))) % PEN_LOOKS
   flash.value = pick
-  // a different look from the last one, so a repeat vote still redraws
-  pen.value = (pen.value + 1 + Math.floor(Math.random() * (PEN_LOOKS - 1))) % PEN_LOOKS
   const user = CHATTERS[Math.floor(Math.random() * CHATTERS.length)]!
   const text = Math.random() < 0.25 ? ASIDES[Math.floor(Math.random() * ASIDES.length)]! : `!vote ${pick + 1}`
   chat.value = [...chat.value.slice(-4), { id: seq++, user, text }]
