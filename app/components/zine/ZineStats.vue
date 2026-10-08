@@ -1,7 +1,8 @@
 <script setup lang="ts">
-// A still strip of numbers between the cover's live scene and the how-it-works
-// scene (review 2026-10-08: two moving scenes on the first screen at once; the
-// Current landing has the same strip). Every number is the product's own - the
+// A still strip of numbers under the cover, below the fold (review 2026-10-08:
+// two moving scenes on the first screen at once; the Current landing has the same
+// strip). Quiet on purpose - ink, not the accent, and room around it - so it is a
+// rest between two loud blocks, not a third one. Every number is the product's own - the
 // platforms we nominate from, the ideas on /ideas, the free plan's limits - no
 // invented growth figures. It does not count up: the point is a rest.
 import { IDEA_TOTAL } from '~/data/ideas'
@@ -28,15 +29,15 @@ const STATS = [
 </template>
 
 <style scoped>
-.zs { border-top: 2px solid rgb(var(--ink)); }
+.zs { padding: 72px 0; }
 .zs-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-block: 0; }
 @media (min-width: 1024px) { .zs-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-.zs-cell { display: flex; flex-direction: column; padding: 28px 20px 26px; border-left: 2px solid rgb(var(--ink)); }
+.zs-cell { display: flex; flex-direction: column; padding: 4px 24px; border-left: 1px solid rgb(var(--hair)); }
 .zs-cell:first-child, .zs-cell:nth-child(3) { border-left: 0; padding-left: 0; }
-@media (min-width: 1024px) { .zs-cell:nth-child(3) { border-left: 2px solid rgb(var(--ink)); padding-left: 20px; } }
-@media (max-width: 1023px) { .zs-cell:nth-child(n + 3) { border-top: 2px solid rgb(var(--ink)); } }
+@media (min-width: 1024px) { .zs-cell:nth-child(3) { border-left: 1px solid rgb(var(--hair)); padding-left: 24px; } }
+@media (max-width: 1023px) { .zs-cell:nth-child(n + 3) { margin-top: 32px; } }
 .zs-cell dt { order: 2; margin-top: 8px; font-weight: 800; font-size: 15px; }
 .zs-cell dd { margin: 0; }
-.zs-cell .zine-display { order: 1; font-size: clamp(48px, 6vw, 80px); line-height: 0.85; color: rgb(var(--gold)); }
+.zs-cell .zine-display { order: 1; font-size: clamp(36px, 3.6vw, 48px); line-height: 0.9; color: rgb(var(--ink)); }
 .zs-sub { order: 3; margin-top: 4px; font-size: 13px; color: rgb(var(--ink-muted)); }
 </style>

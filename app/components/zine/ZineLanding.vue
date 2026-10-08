@@ -52,7 +52,7 @@ const rack = computed(() => (data.value?.awards ?? []).slice(0, 3))
       </div>
     </section>
 
-    <!-- a still strip of numbers, so the cover's scene is the only thing moving on the first screen -->
+    <!-- below the fold: a quiet strip of numbers between the cover and the next scene -->
     <ZineStats />
     <ZineHow />
     <ZineBento />
@@ -110,8 +110,9 @@ const rack = computed(() => (data.value?.awards ?? []).slice(0, 3))
 .zl-h2 { font-size: clamp(36px, 5vw, 60px); line-height: 0.9; text-transform: uppercase; color: rgb(var(--gold)); max-width: 14ch; text-wrap: balance; }
 .zl-intro { margin-top: 16px; max-width: 58ch; font-size: 18px; line-height: 1.5; color: rgb(var(--ink-2)); }
 
-/* cover */
-.zl-cover { padding: 48px 0 80px; overflow-x: clip; }
+/* cover: the whole first screen and nothing else on it (review 2026-10-08: the
+   numbers right under it made the first screen feel packed) - 77px is the header */
+.zl-cover { display: grid; align-content: center; min-height: calc(100dvh - 77px); padding: 48px 0 80px; overflow-x: clip; }
 .zl-cover-grid { display: grid; gap: 48px; align-items: center; grid-template-columns: minmax(0, 1fr); }
 @media (min-width: 1200px) { .zl-cover-grid { grid-template-columns: minmax(0, 1fr) 520px; } }
 .zl-kicker { display: block; margin-bottom: 14px; font-size: clamp(18px, 2.2vw, 26px); font-weight: 700; color: rgb(var(--ink-2)); }
