@@ -7,6 +7,7 @@
 // written for search cannot be behind JavaScript.
 import { ref } from 'vue'
 import UiButton from '~/components/ui/UiButton.vue'
+import ClosingCta from '~/components/ui/ClosingCta.vue'
 import UiIcon from '~/components/ui/UiIcon.vue'
 import InteractiveAccordion from '~/components/ui/InteractiveAccordion.vue'
 import { useReveal } from '~/composables/useReveal'
@@ -80,7 +81,7 @@ useSchemaOrg([
     </p>
 
     <div class="mt-6 flex flex-wrap gap-3">
-      <UiButton to="/create">Start your awards</UiButton>
+      <UiButton to="/create">Create your awards</UiButton>
       <UiButton v-if="catalogOpen" to="/catalog" variant="ghost">See shows running now</UiButton>
     </div>
 
@@ -150,16 +151,12 @@ useSchemaOrg([
       </div>
     </section>
 
-    <div class="mt-12 rounded-card border border-gold-24 bg-gold/[0.06] p-6 sm:p-8">
-      <h2 class="text-2xl font-bold">Take five and run the show</h2>
-      <p class="mt-3 max-w-copy text-ink-2">
-        Start from a draft, nominate any channel Streams Charts tracks, and your awards get a public
-        page your viewers can vote on. Free with a Twitch or Kick login.
-      </p>
-      <div class="mt-6 flex flex-wrap gap-3">
+    <ClosingCta title="Take five and run the show">
+      Start from a draft, nominate any channel, and your viewers vote on a page of its own. Free with a Twitch or Kick login.
+      <template #actions>
         <UiButton to="/create">Create your awards</UiButton>
         <UiButton to="/" variant="ghost">How it works</UiButton>
-      </div>
-    </div>
+      </template>
+    </ClosingCta>
   </div>
 </template>

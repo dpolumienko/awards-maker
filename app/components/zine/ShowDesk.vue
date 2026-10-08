@@ -114,7 +114,7 @@ defineExpose({ ask })
 .sd-key:hover:not(:disabled):not(.is-off), .sd-key:focus-visible { background: rgb(var(--ink)); color: rgb(var(--canvas)); }
 .sd-key:hover:not(:disabled):not(.is-off) span, .sd-key:focus-visible span { color: rgb(var(--canvas) / 0.75); }
 .sd-key.is-main { background: rgb(var(--gold)); color: #fff; }
-.sd-key.is-main span { color: rgb(255 255 255 / 0.85); }
+.sd-key.is-main span { color: #fff; }
 .sd-key:disabled, .sd-key.is-off { cursor: default; color: rgb(var(--ink-muted)); pointer-events: none; }
 .sd-dlg { width: min(480px, calc(100% - 32px)); padding: 24px; border: 3px solid rgb(var(--ink)); background: rgb(var(--canvas)); color: rgb(var(--ink)); }
 .sd-dlg::backdrop { background: rgb(0 0 0 / 0.5); }

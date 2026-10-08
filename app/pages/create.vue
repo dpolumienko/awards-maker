@@ -282,9 +282,8 @@ useSeoMeta({
   <div class="shell py-10">
     <h1 class="heading">Create your own awards show</h1>
     <p class="mt-3 max-w-copy text-lg text-ink-2">
-      Start from a ready-made set of categories or write your own, nominate channels from Twitch, Kick and YouTube or your community's favourite meme,
-      then publish a page your viewers vote on.
-      Free: up to {{ FREE.maxNominations }} nominations, one awards at a time, {{ FREE.maxVoters }} voters.
+      Start from a pack or write your own categories, nominate any channel or meme, and publish a page your viewers
+      vote on.
     </p>
 
     <!-- demo build only: skip Twitch and fill everything in -->

@@ -10,6 +10,7 @@ import { ref } from 'vue'
 import UiButton from '~/components/ui/UiButton.vue'
 import UiIcon from '~/components/ui/UiIcon.vue'
 import PlanCards from '~/components/ui/PlanCards.vue'
+import ClosingCta from '~/components/ui/ClosingCta.vue'
 import InteractiveAccordion from '~/components/ui/InteractiveAccordion.vue'
 import { useReveal } from '~/composables/useReveal'
 import { COMPARISON } from '~/data/plans'
@@ -147,8 +148,9 @@ const cols = [
       </p>
       <div class="mt-6 flex flex-wrap gap-3">
         <!-- one filled button per screen; the address is a plain link, not an upper-case button -->
-        <UiButton to="mailto:sales@streamscharts.com" variant="ghost">Talk to sales</UiButton>
-        <UiButton to="/create" variant="ghost">Or start free yourself</UiButton>
+        <!-- one label per intent across the page (design-taste pre-flight) -->
+        <UiButton to="mailto:sales@streamscharts.com" variant="ghost">Talk to us</UiButton>
+        <UiButton to="/create" variant="ghost">Create your awards</UiButton>
       </div>
     </section>
 
@@ -159,15 +161,12 @@ const cols = [
       </div>
     </section>
 
-    <div class="mt-12 rounded-card border border-gold-24 bg-gold/[0.06] p-6 sm:p-8">
-      <h2 class="text-2xl font-bold">Start on the free plan</h2>
-      <p class="mt-3 max-w-copy text-ink-2">
-        {{ FREE.maxNominations }} categories, {{ FREE.maxVoters }} voters and a public page. Pay only if the show outgrows it.
-      </p>
-      <div class="mt-6 flex flex-wrap gap-3">
+    <ClosingCta title="Start on the free plan">
+      {{ FREE.maxNominations }} categories, {{ FREE.maxVoters }} voters and a public page. Pay only if the show outgrows it.
+      <template #actions>
         <UiButton to="/create">Create your awards</UiButton>
         <UiButton to="/ideas" variant="ghost">Category ideas</UiButton>
-      </div>
-    </div>
+      </template>
+    </ClosingCta>
   </div>
 </template>
