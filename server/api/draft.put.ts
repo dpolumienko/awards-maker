@@ -6,7 +6,7 @@ import { requireUser } from '../utils/users'
 export default defineEventHandler(async (event) => {
   const user = await requireUser(event)
   const input = parseOr400(awardInputSchema, await readBody(event), 'Invalid draft')
-  const row = await draftFor(user.id, { name: user.name, platform: 'twitch' })
+  const row = await draftFor(user.id, { name: user.name, platform: user.platform })
   await saveAward(row.id, input)
   return { ok: true }
 })

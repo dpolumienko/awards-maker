@@ -23,14 +23,15 @@ export const PLANS: Plan[] = [
     id: 'free',
     name: 'Free',
     price: '$0',
-    per: 'with a Twitch login',
+    per: 'with a Twitch or Kick login',
     features: [
       `Up to ${FREE.maxNominations} categories`,
       `${FREE.maxVoters} voters`,
       'One awards at a time',
       'Any channel we track, or plain text',
     ],
-    cta: { label: 'Start free', to: '/create', variant: 'ghost' },
+    // one label per intent across the page: every way into the builder says the same
+    cta: { label: 'Create your awards', to: '/create', variant: 'ghost' },
     featured: false,
   },
   {
@@ -101,7 +102,7 @@ export const COMPARISON: { group: string; rows: CompareRow[] }[] = [
     group: 'Running it',
     rows: [
       { label: 'Host dashboard with live counts', free: true, paid: true, done: true },
-      { label: 'One ballot per Twitch account', free: true, paid: true, done: true },
+      { label: 'One ballot per Twitch or Kick account', free: true, paid: true, done: true },
       { label: 'Moderation watched by our team', free: false, paid: false, done: true },
       { label: 'Categories and nominees set up with you', free: false, paid: false, done: true },
       { label: 'Results and audience report', free: false, paid: false, done: true },

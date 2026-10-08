@@ -22,7 +22,7 @@ export function paidFeaturesOf(input: AwardInputPayload): string[] {
     out.push(`${input.nominations.length} categories`)
   }
   const look = input.look ?? {}
-  if (look.theme || look.accent || look.font || look.coverUrl || look.logoUrl) {
+  if (look.theme || look.accent || look.font || look.coverUrl || look.logoUrl || look.hideLogo) {
     out.push('your own look')
   }
   if (input.nominations.some((n) => n.nominees.some((x) => x.kind === 'media'))) {

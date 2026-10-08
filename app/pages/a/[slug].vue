@@ -8,6 +8,8 @@
 // shell. `?state=` still forces a phase for demos and screenshots.
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import UiButton from '~/components/ui/UiButton.vue'
+import SignInButtons from '~/components/ui/SignInButtons.vue'
+import type { SignInProvider } from '~/composables/useAccount'
 import UiBadge from '~/components/ui/UiBadge.vue'
 import PlatformDot from '~/components/ui/PlatformDot.vue'
 import LimitMeter from '~/components/ui/LimitMeter.vue'
@@ -18,7 +20,6 @@ import ShareCards from '~/components/ui/ShareCards.vue'
 import PartnerChip from '~/components/ui/PartnerChip.vue'
 import CountdownRow from '~/components/ui/CountdownRow.vue'
 import InteractiveAccordion from '~/components/ui/InteractiveAccordion.vue'
-import ZinePlate from '~/components/zine/ZinePlate.vue'
 import { useVersion } from '~/composables/useVersion'
 import { useAwardPage, useCatalogOpen } from '~/composables/useAwards'
 import { emptyTally, phaseOf, resultsOf, useVoting, votesInOf } from '~/composables/useVoting'
@@ -32,6 +33,7 @@ import { awardOgImage } from '~/utils/og'
 import { formatInZone } from '#shared/time'
 import { isIndexable } from '#shared/indexable'
 import { useDisplayFonts } from '~/composables/useDisplayFonts'
+import BallotCounted from '~/components/ui/BallotCounted.vue'
 
 const route = useRoute()
 const slug = computed(() => String(route.params.slug))
@@ -70,19 +72,25 @@ const phase = computed(() =>
     : 'open',
 )
 const accent = computed(() => accentOf(award.value?.look))
-const { isZine } = useVersion()
+const { isZine, onPaper } = useVersion()
 // Fills keep the colour the streamer picked; type takes the readable version.
-const ink = computed(() => accentText(accent.value, isZine.value))
+const ink = computed(() => accentText(accent.value, onPaper.value))
 const headlineFont = computed(() =>
   award.value?.look?.font ? `'${award.value.look.font}', Archivo, sans-serif` : undefined,
 )
 
-// Voting, and the one submit each voter gets.
+// Voting. Each pick is final, but categories skipped the first time stay open
+// until voting closes (review 2026-10-08) - a second submit fills only those.
 const picks = ref<Record<string, string>>({})
 const ballot = computed(() => data.value?.ballot ?? null)
 const voted = computed(() => !!ballot.value)
-const shown = computed(() => ballot.value?.picks ?? picks.value)
-const pickedCount = computed(() => Object.keys(shown.value).length)
+const cast = computed(() => ballot.value?.picks ?? {})
+const shown = computed(() => ({ ...picks.value, ...cast.value }))
+/** picks on screen not yet sent - what the submit button sends */
+const fresh = computed(() => Object.fromEntries(Object.entries(picks.value).filter(([id]) => !cast.value[id])))
+const pickedCount = computed(() => Object.keys(fresh.value).length)
+const castCount = computed(() => Object.keys(cast.value).length)
+const skipped = computed(() => (award.value?.nominations.length ?? 0) - castCount.value)
 const voters = computed(() => data.value?.voters ?? 0)
 const done = ref<HTMLElement | null>(null)
 const voteError = ref('')
@@ -100,7 +108,7 @@ onMounted(() => {
 
 const mode = computed<'vote' | 'locked' | 'results'>(() => {
   if (phase.value === 'revealed') return 'results'
-  if (phase.value === 'open' && !voted.value) return 'vote'
+  if (phase.value === 'open' && (!voted.value || skipped.value > 0)) return 'vote'
   return 'locked'
 })
 
@@ -112,7 +120,7 @@ const mode = computed<'vote' | 'locked' | 'results'>(() => {
  * per account, so the voter presses it.
  */
 const PARKED = (s: string) => `am-picks:${s}`
-async function submit() {
+async function submit(provider?: SignInProvider) {
   if (!pickedCount.value) return
   voteError.value = ''
   if (!signedIn.value) {
@@ -121,11 +129,11 @@ async function submit() {
     } catch {
       /* private mode: the voter picks again */
     }
-    signIn()
+    signIn(provider)
     return
   }
   try {
-    await castBallot(slug.value, { ...picks.value })
+    await castBallot(slug.value, fresh.value)
     await refresh()
     nextTick(() => {
       done.value?.focus()
@@ -263,7 +271,7 @@ const faq = computed(() => {
   return [
     {
       q: `Who can vote in ${a.name}?`,
-      a: `Anyone with a Twitch account. You sign in when you submit, and the account is only used to keep one person to one ballot - we read your email and nothing else. ${a.host.name} does not see who voted for whom.`,
+      a: `Anyone with a Twitch or Kick account. You sign in when you submit, and the account is only used to keep one person to one ballot - we read your email and nothing else. ${a.host.name} does not see who voted for whom.`,
     },
     {
       q: 'How many times can I vote?',
@@ -324,7 +332,7 @@ const seoDescription = computed(() => {
           ]
         : [
           `${a.host.name} is running ${a.name}: ${titles}${more}.`,
-          `${nomineeTotal.value} nominees, and anyone can vote with a Twitch login.`,
+          `${nomineeTotal.value} nominees, and anyone can vote with a Twitch or Kick login.`,
           a.closesAt && `Voting closes ${fmtDate(a.closesAt)}.`,
         ]
   return parts.filter(Boolean).join(' ')
@@ -358,6 +366,7 @@ if (award.value && !thin.value) {
     defineBreadcrumb({
       // a getter: whether the catalog is open is only known once its fetch lands
       itemListElement: computed(() => [
+        { name: 'Streams Charts', item: 'https://streamscharts.com' },
         { name: 'Awards Maker', item: '/' },
         ...(catalogOpen.value ? [{ name: 'Catalog', item: '/catalog' }] : []),
         { name: award.value?.name ?? '' },
@@ -384,6 +393,10 @@ if (award.value && !thin.value) {
 <template>
   <div ref="root" class="pb-24">
     <template v-if="award">
+      <!-- taken offline: only the host gets this far, and should know nobody else does -->
+      <p v-if="award.offline" class="relative z-10 border-b-2 border-warn bg-warn/10 px-4 py-3 text-center text-sm font-semibold text-warn" role="status">
+        This awards is offline. Only you can see it; viewers get "not available". Put it back online from the dashboard.
+      </p>
       <!-- cover band: the streamer's theme or their own cover, full width -->
       <div class="relative h-48 sm:h-64">
         <!-- the band runs up under the transparent header, so the page has no seam
@@ -409,6 +422,7 @@ if (award.value && !thin.value) {
           </nav>
           <div class="flex flex-wrap items-center gap-3">
             <span
+              v-if="!award.look?.hideLogo"
               aria-hidden="true"
               class="grid h-11 w-11 place-items-center rounded-pill text-sm font-bold"
               :style="{ background: accent, color: onAccent(accent) }"
@@ -424,11 +438,8 @@ if (award.value && !thin.value) {
 
       <div class="shell pt-8">
         <!-- the masthead is a display moment: two plates in the Fanzine -->
-        <ZinePlate
-          class="display-2"
-          :style="{ fontFamily: headlineFont }"
-          :text="award.name"
-        />
+        <!-- one ink: the two-plate misprint went with the old Fanzine cover (review 2026-10-08) -->
+        <h1 class="display-2" :class="isZine && 'text-gold-text'" :style="{ fontFamily: headlineFont }">{{ award.name }}</h1>
         <span aria-hidden="true" class="mt-4 block h-0.5 w-20" :style="{ background: accent }" />
         <p class="mt-4 max-w-copy text-lg text-ink-2">{{ award.description }}</p>
 
@@ -496,8 +507,12 @@ if (award.value && !thin.value) {
                   Counted from {{ voters }} {{ voters === 1 ? 'ballot' : 'ballots' }}, announced by
                   {{ award.host.name }}. The page stays up at this address.
                 </template>
+                <template v-else-if="skipped > 0">
+                  Your picks are final. The {{ skipped === 1 ? 'category' : `${skipped} categories` }} you skipped
+                  {{ skipped === 1 ? 'stays' : 'stay' }} open to you until voting closes.
+                </template>
                 <template v-else>
-                  Counted. One ballot per account, so this is your final answer - but you can still send the page on.
+                  Counted, every category. Your picks are final - but you can still send the page on.
                 </template>
               </p>
 
@@ -526,7 +541,7 @@ if (award.value && !thin.value) {
                 :mins="countdown.mins"
                 :ink="ink"
               />
-              <p class="mt-3 text-sm text-ink-2">One vote per category. Twitch login on submit.</p>
+              <p class="mt-3 text-sm text-ink-2">One vote per category. Twitch or Kick login on submit.</p>
             </div>
 
             <div class="mt-6 space-y-4">
@@ -536,9 +551,10 @@ if (award.value && !thin.value) {
                 :nomination="n"
                 :index="i"
                 :accent="accent"
-                :mode="mode"
+                :mode="mode === 'vote' && cast[n.id] ? 'locked' : mode"
                 :picked="shown[n.id] ?? null"
                 :results="mode === 'results' ? resultsOf(tally, n) : []"
+                :numbers="!award.hideCounts"
                 :votes-in="votesInOf(tally, n)"
                 @pick="picks[n.id] = $event"
               />
@@ -551,23 +567,23 @@ if (award.value && !thin.value) {
             >
               <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
                 <p class="text-sm" aria-live="polite">
-                  <b class="tnum">{{ pickedCount }} of {{ award.nominations.length }}</b>
-                  <span class="text-ink-2"> categories picked</span>
+                  <b class="tnum">{{ pickedCount }} of {{ skipped }}</b>
+                  <span class="text-ink-2">{{ voted ? ' remaining categories picked' : ' categories picked' }}</span>
                 </p>
-                <p v-if="pickedCount < award.nominations.length" class="hidden text-sm text-ink-muted sm:block">
-                  You get one submit, so finish the ones you care about first.
+                <p v-if="pickedCount < skipped" class="hidden text-sm text-ink-muted sm:block">
+                  Each pick is final. Skipped ones stay open until voting closes.
                 </p>
-                <button
+                <!-- signed out: submitting is signing in, with either account; a
+                     disabled pair that does not say why reads as broken -->
+                <SignInButtons
                   v-if="!signedIn"
-                  type="button"
-                  class="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-btn bg-twitch px-5 py-2 text-center text-[15px] font-bold uppercase leading-tight tracking-button text-white transition-opacity hover:opacity-90 disabled:opacity-40 sm:ml-auto sm:w-auto"
+                  label="Vote with"
                   :disabled="!pickedCount"
-                  @click="submit"
-                >
-                  <!-- a disabled button that does not say why reads as broken -->
-                  {{ pickedCount ? 'Sign in with Twitch to submit' : 'Pick at least one' }}
-                </button>
-                <UiButton v-else class="w-full sm:ml-auto sm:w-auto" :disabled="!pickedCount" @click="submit">
+                  block
+                  class="sm:ml-auto sm:w-auto"
+                  @choose="submit"
+                />
+                <UiButton v-else class="w-full sm:ml-auto sm:w-auto" :disabled="!pickedCount" @click="submit()">
                   {{ pickedCount ? `Submit ${pickedCount} ${pickedCount === 1 ? 'vote' : 'votes'}` : 'Pick at least one' }}
                 </UiButton>
               </div>
@@ -583,14 +599,15 @@ if (award.value && !thin.value) {
               ref="done"
               tabindex="-1"
               role="status"
-              class="mt-6 rounded-card border p-5"
-              :style="{ borderColor: accent }"
+              class="mt-6 rounded-card focus:outline-none"
             >
-              <p class="font-semibold">Thanks - your ballot is counted.</p>
-              <p class="mt-1 text-sm text-ink-2">
-                <template v-if="award.ceremonyAt">Winners are announced {{ fmtDate(award.ceremonyAt) }}.</template>
-                Send the page to other viewers: every vote after yours changes the result.
-              </p>
+              <BallotCounted
+                :picked="castCount"
+                :total="award.nominations.length"
+                :ceremony="fmtDate(award.ceremonyAt)"
+                :closes="fmtDate(award.closesAt)"
+                :accent="ink"
+              />
             </div>
           </div>
 
@@ -641,7 +658,7 @@ if (award.value && !thin.value) {
               <p class="label">How voting works</p>
               <ul class="mt-3 list-none space-y-2.5 p-0 text-sm text-ink-2">
                 <li v-for="r in [
-                  'Any Twitch account can vote, one ballot each.',
+                  'Any Twitch or Kick account can vote, one ballot each.',
                   'One vote per category, locked once you submit.',
                   'Counts stay hidden until the host announces the winners.',
                   'The host sets the categories and the nominees.',
@@ -735,10 +752,8 @@ if (award.value && !thin.value) {
     <div v-else class="shell py-20 text-center">
       <h1 class="heading">This awards page is not here</h1>
       <p class="mx-auto mt-3 max-w-copy text-ink-2">
-        Nothing has been published under <b class="text-ink">/a/{{ slug }}</b> from this browser. Until the backend
-        lands a show lives in the browser that made it - a plain address from another device opens nothing.
-        The <b class="text-ink">Copy link</b> button on an awards page hands out a link that carries the show with
-        it, and that one opens anywhere.
+        Nothing is published under <b class="text-ink">/a/{{ slug }}</b>. The host may have taken it down, or the
+        link lost a letter on the way.
       </p>
       <div class="mt-6 flex flex-wrap justify-center gap-3">
         <UiButton to="/create">Create your awards</UiButton>

@@ -16,7 +16,17 @@ export function useVersion() {
     version.value = v
     cookie.value = v
   }
-  return { version, isZine: computed(() => version.value === 'zine'), setVersion }
+  return {
+    version,
+    // Night is the Fanzine on black: every Fanzine template and rule applies to it too
+    isZine: computed(() => version.value !== 'stage'),
+    isNight: computed(() => version.value === 'night' || version.value === 'night2'),
+    // Night v2: the reworked builder (ticket steps) and dashboard (show desk)
+    isV2: computed(() => version.value === 'night2'),
+    // light paper: an accent's text is darkened to read on it, not lightened (utils/accent.ts)
+    onPaper: computed(() => version.value === 'zine'),
+    setVersion,
+  }
 }
 
 /**
@@ -25,11 +35,11 @@ export function useVersion() {
  * keeps it. Called by app.vue and error.vue - the error page renders without the app.
  */
 export function useVersionHead() {
-  const { version, isZine, setVersion } = useVersion()
+  const { version, isZine, isNight, setVersion } = useVersion()
   const asked = useRoute().query.version
   if (isVersion(asked) && asked !== version.value) setVersion(asked)
   useHead({
-    htmlAttrs: { 'data-version': () => version.value },
+    htmlAttrs: { 'data-version': () => (isZine.value ? 'zine' : 'stage'), 'data-ink': () => (isNight.value ? 'night' : undefined) },
     link: computed(() => (isZine.value ? [{ rel: 'stylesheet', href: ZINE_FONTS }] : [])),
   })
 }

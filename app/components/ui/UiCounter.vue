@@ -4,7 +4,9 @@ import { useGsap, prefersReducedMotion } from '~/composables/useReveal'
 
 const { value, label } = defineProps<{ value: number; label: string }>()
 const el = ref<HTMLElement | null>(null)
-const shown = ref(0)
+// the real number from the first render: crawlers and AI readers see the HTML,
+// not the count-up (SEO audit 2026-10-06 - the hero said "0 platforms")
+const shown = ref(value)
 const fmt = (n: number) => Math.round(n).toLocaleString('en-US').replace(/,/g, ' ')
 
 onMounted(() => {
@@ -14,8 +16,9 @@ onMounted(() => {
   }
   const { gsap, ScrollTrigger } = useGsap()
   const obj = { n: 0 }
-  gsap.to(obj, {
+  gsap.fromTo(obj, { n: 0 }, {
     n: value,
+    immediateRender: false,
     duration: 1.6,
     ease: 'expo.out',
     onUpdate: () => (shown.value = obj.n),

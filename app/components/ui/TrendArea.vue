@@ -12,11 +12,13 @@ import { useVersion } from '~/composables/useVersion'
 import { computed, ref, useId } from 'vue'
 import type { DayCount } from '~/composables/useVoting'
 
-const { points, accent = DEFAULT_ACCENT, label } = defineProps<{
+const { points, accent = DEFAULT_ACCENT, label, bare = false } = defineProps<{
   points: DayCount[]
   accent?: string
   /** What the curve counts, for the screen-reader table and the hover tooltip. */
   label: string
+  /** no caption: the parent's panel already names the chart (Night v2's ShowStats) */
+  bare?: boolean
 }>()
 
 // one gradient per instance; two charts on a page must not share a fill
@@ -108,7 +110,7 @@ const ticks = computed(() => {
 
 <template>
   <figure v-if="points.length >= 2" class="m-0">
-    <figcaption class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+    <figcaption v-if="!bare" class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
       <span class="label">{{ label }}</span>
       <span class="tnum text-sm text-ink-muted">
         Busiest day {{ day(peak.date) }} · {{ peak.votes }}
@@ -116,7 +118,8 @@ const ticks = computed(() => {
     </figcaption>
 
     <div
-      class="relative mt-4 h-44 w-full"
+      class="relative h-44 w-full"
+      :class="!bare && 'mt-4'"
       @mousemove="onMove"
       @mouseleave="hover = null"
     >

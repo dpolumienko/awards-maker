@@ -32,6 +32,7 @@ const groups = computed(() => [
     title: 'Streams Charts',
     links: [
       { to: SC.home, label: 'Streams Charts' },
+      { to: SC.awardsHub, label: 'Streaming awards calendar' },
       { to: SC.api, label: 'API' },
       { to: SC.contact, label: 'Contact' },
     ],

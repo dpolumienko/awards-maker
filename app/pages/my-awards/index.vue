@@ -100,8 +100,10 @@ useSeoMeta({ title: 'Your awards', robots: 'noindex, follow' })
         <span v-else class="tnum text-sm" :class="a.voters / FREE.maxVoters >= 0.8 ? 'text-warn' : 'text-ink-muted'">
           {{ a.voters }} / {{ FREE.maxVoters }} voters
         </span>
-        <span class="text-sm" :class="waiting(a) ? 'text-gold-text' : 'text-ink-muted'">{{ next(a) }}</span>
-        <span class="ml-auto flex items-center gap-1.5 pr-24 text-sm text-gold-text">
+        <span v-if="a.offline" class="text-sm font-semibold text-warn">Offline</span>
+        <span v-else class="text-sm" :class="waiting(a) ? 'text-gold-text' : 'text-ink-muted'">{{ next(a) }}</span>
+        <!-- room for the Remove link laid over the row, armed label included -->
+        <span class="ml-auto flex items-center gap-1.5 pr-36 text-sm text-gold-text">
           Dashboard
           <UiIcon name="chevron-right" :size="14" />
         </span>

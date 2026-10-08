@@ -8,6 +8,6 @@ import { requireUser } from '../utils/users'
  */
 export default defineEventHandler(async (event) => {
   const user = await requireUser(event)
-  const row = await draftFor(user.id, { name: user.name, platform: 'twitch' })
+  const row = await draftFor(user.id, { name: user.name, platform: user.platform })
   return { draft: await hydrate(row) }
 })

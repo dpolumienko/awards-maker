@@ -7,7 +7,7 @@ import { ref } from 'vue'
 import { motion } from 'motion-v'
 import { prefersReducedMotion } from '~/composables/useReveal'
 
-export interface AccordionItem { q: string; a: string }
+export interface AccordionItem { q: string; a: string; link?: { href: string; text: string } }
 const { items } = defineProps<{ items: AccordionItem[] }>()
 
 const active = ref<number | null>(null)
@@ -110,7 +110,10 @@ const pad = (i: number) => String(i + 1).padStart(2, '0')
         :class="active === i ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'"
       >
         <div class="overflow-hidden" :inert="active !== i || undefined">
-          <p class="max-w-[80ch] py-6 pl-0 pr-0 leading-relaxed text-ink-2 sm:pl-16 sm:pr-12">{{ item.a }}</p>
+          <p class="max-w-[80ch] py-6 pl-0 pr-0 leading-relaxed text-ink-2 sm:pl-16 sm:pr-12">
+            {{ item.a }}
+            <a v-if="item.link" :href="item.link.href" class="text-gold-text underline underline-offset-4">{{ item.link.text }}</a>
+          </p>
         </div>
       </div>
     </div>

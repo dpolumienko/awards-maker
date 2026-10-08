@@ -4,7 +4,11 @@
 // no image files. Goes with the rest of app/demo/.
 import type { Award, Nominee } from '~/types/award'
 
-const CLIP = 'https://www.twitch.tv/dota2_maincast/clip/AverageArtsyGiraffeKeepo-Wce_IdAqsusGR4Ip'
+// Kick clips copied from streamscharts.com/clips: Kick's CDN serves their frame
+// and playlist publicly, so the demo shows real previews (a Twitch frame needs the
+// API, which only the server has)
+const CLIP_FINAL = 'https://streamscharts.com/clips?platform=kick&clip=b9__clip_01M3Z02R2YCX3HS0HAF54HTRPQ'
+const CLIP_IRL = 'https://streamscharts.com/clips?platform=kick&clip=40__clip_01M40A8JRW950YDRJRJREJ2ZE5'
 
 let n = 0
 const id = () => `demo-${Date.now().toString(36)}-${++n}`
@@ -86,8 +90,8 @@ export function demoAward(host: string): Award {
         id: id(),
         title: 'Clip of the Year',
         nominees: [
-          clip('The Maincast moment', CLIP),
-          clip('Same clip, second slot', CLIP),
+          clip('The finals goal', CLIP_FINAL),
+          clip('The street interview', CLIP_IRL),
           image('The 3am raid', picture(1200, 800, '#0f2027', '#2c5364', 'THE 3AM RAID')),
         ],
       },
@@ -113,7 +117,7 @@ export function demoAward(host: string): Award {
       {
         id: id(),
         title: 'Moment of the Year',
-        nominees: [text('The 12-hour charity stream'), clip('The Maincast clip', CLIP), text('Subathon finale')],
+        nominees: [text('The 12-hour charity stream'), clip('The finals goal', CLIP_FINAL), text('Subathon finale')],
       },
     ],
     tier: 'paid',

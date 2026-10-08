@@ -28,6 +28,8 @@ export interface AwardLook {
   font?: string
   coverUrl?: string
   logoUrl?: string
+  /** paid: the page shows the channel name without its avatar (review 2026-10-08) */
+  hideLogo?: boolean
 }
 
 export interface Nomination {
@@ -59,6 +61,10 @@ export interface Award {
   look: AwardLook
   host: { name: string; platform: Platform }
   publishedAt?: string
+  /** taken offline by its host: kept, but answered to the host only */
+  offline?: boolean
+  /** the public page shows the winners without vote counts or percentages */
+  hideCounts?: boolean
 }
 
 /**

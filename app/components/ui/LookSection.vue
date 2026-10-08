@@ -3,8 +3,9 @@
 // Everything here is paid, but nothing is blocked - you set it, the preview
 // follows, and the bill only comes up at publish.
 //
-// The channel logo is not an upload: it is the avatar of the account that signs
-// in, so the control is a sign-in button until there is one.
+// The channel logo is the avatar of the account that signs in; it cannot be
+// swapped, only left off the page (review 2026-10-08) - for a show that is the
+// community's, not the channel's.
 import { THEMES, themeCss } from '~/data/themes'
 import { ref } from 'vue'
 import { ImageError, fileToStoredImage } from '~/utils/image'
@@ -12,12 +13,8 @@ import { DEFAULT_ACCENT, accentReadable, resolveAccent } from '~/utils/accent'
 import type { AwardLook } from '~/types/award'
 import UiMaskIcon from './UiMaskIcon.vue'
 
-const { look, signedIn = false, channel = '' } = defineProps<{
-  look: AwardLook
-  signedIn?: boolean
-  channel?: string
-}>()
-const emit = defineEmits<{ 'update:look': [AwardLook]; signIn: [] }>()
+const { look } = defineProps<{ look: AwardLook }>()
+const emit = defineEmits<{ 'update:look': [AwardLook] }>()
 
 // First swatch is the free default - the site palette's own accent, so it is
 // blue under SC Blue - the rest are the paid palette, plus a custom picker for a
@@ -193,26 +190,18 @@ function clearCover() {
       </div>
     </div>
 
-    <!-- logo comes from the account, not from a file picker -->
-    <div class="mt-6 border-t border-hair pt-5">
-      <p class="label mb-2">Channel logo</p>
-      <div v-if="signedIn" class="flex flex-wrap items-center gap-3">
-        <span aria-hidden="true" class="grid h-10 w-10 place-items-center rounded-pill bg-s3 text-xs font-bold text-ink-muted">
-          {{ channel.slice(0, 2).toUpperCase() }}
-        </span>
-        <span class="text-sm">Taken from <b class="font-semibold">{{ channel }}</b>.</span>
-        <span class="text-sm text-ink-muted">Change it there and the awards page follows.</span>
-      </div>
-      <div v-else class="flex flex-wrap items-center gap-3">
-        <button
-          type="button"
-          class="flex h-11 items-center gap-2 rounded-btn bg-twitch px-4 text-sm font-bold uppercase tracking-button text-white transition-opacity hover:opacity-90"
-          @click="emit('signIn')"
-        >
-          Sign in with Twitch
-        </button>
-        <span class="text-sm text-ink-2">Your channel avatar becomes the logo on the awards page.</span>
-      </div>
-    </div>
+    <!-- the logo is the channel avatar: it can only be left off -->
+    <label class="mt-6 flex cursor-pointer items-start gap-3 border-t border-hair pt-5 text-sm">
+      <input
+        type="checkbox"
+        :checked="!!look.hideLogo"
+        class="mt-0.5 h-5 w-5 flex-none rounded-btn border border-hair2 bg-s2 accent-gold focus:shadow-focus focus:outline-none"
+        @change="set({ hideLogo: ($event.target as HTMLInputElement).checked || undefined })"
+      />
+      <span>
+        <b class="font-semibold">Hide the channel logo</b>
+        <span class="block text-ink-muted">The page shows the channel name without its avatar.</span>
+      </span>
+    </label>
   </section>
 </template>

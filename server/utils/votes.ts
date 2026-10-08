@@ -64,10 +64,14 @@ export async function ballotFor(awardId: number, userId: number) {
 export class AlreadyVoted extends Error {}
 
 /**
- * One ballot, once. `ballots` has UNIQUE (user_id, award_id), so two requests
- * racing each other end with one row and the loser gets told - the check is the
- * database's, not this function's, which is the only version that holds under
+ * One ballot per person, one pick per category, each pick final. `ballots` has
+ * UNIQUE (user_id, award_id) and `ballot_picks` UNIQUE (ballot_id, nomination_id),
+ * so the rules are the database's, which is the only version that holds under
  * concurrency.
+ *
+ * A voter can come back before voting closes and vote in the categories they
+ * skipped (review 2026-10-08): the second submit lands in the same ballot, only
+ * categories without a pick are written, and if none are left it is AlreadyVoted.
  *
  * Picks are validated against the show before anything is written: a nominee id
  * from a different awards, or a second pick in one category, is a 400 rather
@@ -95,25 +99,35 @@ export async function castBallot(
   }
 
   return transaction(async (conn) => {
-    let ballotId: number
+    // the ballot row, new or the one from the first visit (LAST_INSERT_ID(id)
+    // makes insertId the existing row's id on a duplicate)
+    const [res] = (await conn.query(
+      `INSERT INTO ballots (award_id, user_id) VALUES (?, ?)
+         ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)`,
+      [awardId, userId],
+    )) as [{ insertId: number }, unknown]
+    const ballotId = res.insertId
+    const [taken] = (await conn.query(`SELECT nomination_id FROM ballot_picks WHERE ballot_id = ?`, [ballotId])) as [
+      { nomination_id: number }[],
+      unknown,
+    ]
+    const locked = new Set(taken.map((t) => Number(t.nomination_id)))
+    const fresh = pairs.filter(([nomination]) => !locked.has(Number(nomination)))
+    if (!fresh.length) throw new AlreadyVoted()
+
     try {
-      const [res] = (await conn.query(
-        `INSERT INTO ballots (award_id, user_id) VALUES (?, ?)`,
-        [awardId, userId],
-      )) as [{ insertId: number }, unknown]
-      ballotId = res.insertId
+      for (const [nomination, nominee] of fresh) {
+        await conn.query(
+          `INSERT INTO ballot_picks (ballot_id, nomination_id, nominee_id) VALUES (?, ?, ?)`,
+          [ballotId, Number(nomination), Number(nominee)],
+        )
+      }
     } catch (error) {
+      // two tabs submitting the same category at once: the second one lost
       if ((error as { code?: string }).code === 'ER_DUP_ENTRY') throw new AlreadyVoted()
       throw error
     }
-
-    for (const [nomination, nominee] of pairs) {
-      await conn.query(
-        `INSERT INTO ballot_picks (ballot_id, nomination_id, nominee_id) VALUES (?, ?, ?)`,
-        [ballotId, Number(nomination), Number(nominee)],
-      )
-    }
-    return { picks: pairs.length }
+    return { picks: fresh.length }
   })
 }
 

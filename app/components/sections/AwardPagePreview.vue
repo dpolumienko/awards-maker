@@ -25,7 +25,7 @@ const stats = [
   ['Voting closes', '12 December'],
 ]
 const rules = [
-  'Any Twitch account can vote, one ballot each.',
+  'Any Twitch or Kick account can vote, one ballot each.',
   'One vote per category, locked once you submit.',
   'Counts stay hidden until the host announces the winners.',
 ]

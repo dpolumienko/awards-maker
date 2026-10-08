@@ -77,7 +77,7 @@ export const IDEA_GROUPS: IdeaGroup[] = [
   {
     id: 'funny',
     emoji: '🤪',
-    title: 'Funny categories',
+    title: 'Funny award categories',
     set: 12,
     blurb:
       'Where the show actually gets shared. Two or three of these next to the serious ones is the right dose.',

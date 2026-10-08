@@ -21,6 +21,8 @@ export default defineNuxtConfig({
         // running with `ssr: false` this is the only one a crawler ever sees,
         // because nothing the app adds to the head is in the served HTML.
         { property: 'og:image', content: 'https://awards.streamscharts.com/og/home.png' },
+        // the large card on X for every page, not only awards pages (SEO audit 2026-10-06)
+        { name: 'twitter:card', content: 'summary_large_image' },
         // No twitter:image: X falls back to og:image, and a global one here
         // outranked every page's own card - /plans unfurled on X as the landing.
       ],
@@ -76,8 +78,8 @@ export default defineNuxtConfig({
     '/favicon.ico': { headers: { 'Cache-Control': 'public, max-age=604800' } },
     // Awards Maker runs under Streams Charts' legal pages (review 2026-09-24);
     // the old URLs point there instead of 404ing. Kept in step with app/data/sc.ts.
-    '/terms': { redirect: { to: 'https://streamscharts.com/terms-of-use', statusCode: 301 } },
-    '/privacy': { redirect: { to: 'https://streamscharts.com/privacy-policy', statusCode: 301 } },
+    '/terms': { redirect: { to: 'https://streamscharts.com/terms', statusCode: 301 } },
+    '/privacy': { redirect: { to: 'https://streamscharts.com/privacy', statusCode: 301 } },
     '/api/**': { headers: { 'Cache-Control': 'no-store' } },
     '/auth/**': { headers: { 'Cache-Control': 'no-store' } },
     '/**': {
@@ -114,7 +116,7 @@ export default defineNuxtConfig({
   // NUXT_SITE_ENV=staging on any other deploy keeps it out of search.
   site: {
     url: 'https://awards.streamscharts.com',
-    name: 'Streams Charts Awards',
+    name: 'Awards Maker by Streams Charts',
     description:
       'Run your own streamer awards: pick the categories, nominate channels from Twitch, Kick and YouTube, and let your viewers vote. Free to start.',
     defaultLocale: 'en',

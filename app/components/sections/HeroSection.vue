@@ -55,7 +55,7 @@ const catalogOpen = useCatalogOpen()
         <UiButton v-if="catalogOpen" to="/catalog" variant="ghost" class="w-full sm:w-auto">Browse the catalog</UiButton>
         <UiButton v-else to="/ideas" variant="ghost" class="w-full sm:w-auto">Category ideas</UiButton>
       </div>
-      <p class="hero-rise mt-3 text-sm text-ink-muted" style="--d: 360ms">Free. You'll log in with Twitch to create awards.</p>
+      <p class="hero-rise mt-3 text-sm text-ink-muted" style="--d: 360ms">Free. You'll log in with Twitch or Kick to create awards.</p>
     </div>
 
     <div class="shell relative z-10">

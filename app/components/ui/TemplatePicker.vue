@@ -15,7 +15,9 @@ import UiIcon from './UiIcon.vue'
 import { FREE } from '~/types/award'
 import UiMaskIcon from './UiMaskIcon.vue'
 
-const { used, active } = defineProps<{ used: number; active?: string }>()
+// `compact` (Night v2's first step): a row of packs, icon + name + count, so the
+// whole step fits one screen (review 2026-10-08)
+const { used, active, compact = false } = defineProps<{ used: number; active?: string; compact?: boolean }>()
 const emit = defineEmits<{ apply: [AwardTemplate]; addIdea: [string] }>()
 
 const openIdeas = ref(false)
@@ -34,7 +36,31 @@ function apply(t: AwardTemplate) {
 </script>
 
 <template>
-  <section class="rounded-card border border-hair bg-s1 p-6">
+  <section v-if="compact" class="rounded-card border border-hair bg-s1 p-4">
+    <div class="flex flex-wrap items-baseline justify-between gap-3">
+      <h2 class="text-lg font-semibold">Start from a pack</h2>
+      <NuxtLink to="/ideas" class="text-sm text-gold-text underline underline-offset-4">Or pick single ideas</NuxtLink>
+    </div>
+    <div class="mt-3 grid gap-3 sm:grid-cols-3">
+      <button
+        v-for="t in TEMPLATES"
+        :key="t.id"
+        type="button"
+        :aria-pressed="active === t.id"
+        class="flex items-center gap-2.5 rounded-btn border-2 p-3 text-left transition-colors"
+        :class="active === t.id ? 'border-gold bg-gold/[0.12]' : 'border-hair hover:border-ink'"
+        @click="apply(t)"
+      >
+        <UiMaskIcon :src="t.icon" class="h-4 w-4 flex-none text-gold" />
+        <span class="min-w-0">
+          <!-- one line each: a name broken over two rows made that tile odd one out -->
+          <span class="block whitespace-nowrap text-[15px] font-semibold leading-tight">{{ t.name }}</span>
+          <span class="block text-xs text-ink-muted">{{ applied === t.id ? 'Added to Categories' : active === t.id ? 'In use' : `${t.nominations.length} categories` }}</span>
+        </span>
+      </button>
+    </div>
+  </section>
+  <section v-else class="rounded-card border border-hair bg-s1 p-6">
     <div class="flex flex-wrap items-end justify-between gap-3">
       <div>
         <h2 class="text-xl font-semibold">Ready-made streamer awards categories</h2>

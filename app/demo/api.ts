@@ -11,6 +11,7 @@
 // Shows prerendered into the demo from the real database are read-only here:
 // their data is in the page, not in this store, so voting on them answers 404.
 import { slugify } from '#shared/slug'
+import { ranksOnly } from '#shared/tally'
 import { searchChannels } from '~/data/channels.mock'
 import type { Award } from '~/types/award'
 
@@ -23,6 +24,7 @@ interface DemoUser {
   avatar: null
   role: 'admin'
   host: true
+  platform: 'twitch' | 'kick'
 }
 interface Ballot {
   userId: number
@@ -33,7 +35,7 @@ interface Show {
   award: Award
   ownerId: number
   ballots: Ballot[]
-  ceremony: { stage: string; font: string; reveal: string } | null
+  ceremony: { stage: string; font: string; reveal: string; image?: string; partners?: boolean; counts?: boolean } | null
 }
 interface Db {
   user: DemoUser | null
@@ -43,7 +45,7 @@ interface Db {
 }
 
 // admin, so a paid-looking show publishes without a checkout that cannot run here
-export const DEMO_USER: DemoUser = { id: 9001, login: 'demo_host', name: 'demo_host', avatar: null, role: 'admin', host: true }
+export const DEMO_USER: DemoUser = { id: 9001, login: 'demo_host', name: 'demo_host', avatar: null, role: 'admin', host: true, platform: 'twitch' }
 
 function load(): Db {
   try {
@@ -62,9 +64,10 @@ function save(db: Db) {
   }
 }
 
-export function demoSignIn() {
+/** Signs in the demo host, as whichever provider was clicked. */
+export function demoSignIn(platform: DemoUser['platform'] = 'twitch') {
   const db = load()
-  db.user = DEMO_USER
+  db.user = { ...DEMO_USER, platform }
   save(db)
 }
 
@@ -109,6 +112,7 @@ function summary(s: Show) {
     status: a.status,
     closedAt: a.closedAt,
     resultsAt: a.resultsAt,
+    offline: a.offline,
     publishedAt: a.publishedAt,
     voters: s.ballots.length,
     categories: a.nominations.length,
@@ -162,7 +166,7 @@ function paidFeatures(a: Partial<Award>) {
   const look = (a.look ?? {}) as Record<string, unknown>
   return (
     (a.nominations?.length ?? 0) > 5 ||
-    ['theme', 'accent', 'font', 'coverUrl', 'logoUrl'].some((k) => look[k]) ||
+    ['theme', 'accent', 'font', 'coverUrl', 'logoUrl', 'hideLogo'].some((k) => look[k]) ||
     (a.nominations ?? []).some((n) => n.nominees.some((x) => x.kind === 'media'))
   )
 }
@@ -201,7 +205,7 @@ export async function demoApi(url: string, opts: { method?: string; body?: unkno
       save(db)
       return { ok: true }
     }
-    const draft = db.draft ?? { name: '', description: '', nominations: [], partners: [], look: {}, host: { name: DEMO_USER.name, platform: 'twitch' } }
+    const draft = db.draft ?? { name: '', description: '', nominations: [], partners: [], look: {}, host: { name: DEMO_USER.name, platform: db.user?.platform ?? 'twitch' } }
     return { draft: withIds(db, { slug: '', status: 'draft', ...draft }) }
   }
 
@@ -226,7 +230,7 @@ export async function demoApi(url: string, opts: { method?: string; body?: unkno
     needUser()
     return { awards: Object.values(db.shows).map(summary).reverse() }
   }
-  if (path === '/api/awards') return { awards: Object.values(db.shows).map(summary).reverse() }
+  if (path === '/api/awards') return { awards: Object.values(db.shows).filter((s) => !s.award.offline).map(summary).reverse() }
 
   const m = /^\/api\/awards\/([^/]+)(?:\/([a-z]+))?$/.exec(path)
   if (m) {
@@ -243,28 +247,48 @@ export async function demoApi(url: string, opts: { method?: string; body?: unkno
       return { ok: true }
     }
     if (!action) {
+      // offline: only the host sees it, as on the real site
+      if (show.award.offline && !isHost) fail(404, 'No such awards')
       const t = tally(show)
       return {
         award: show.award,
         isHost,
         ballot: mine ? { at: mine.at, picks: mine.picks } : null,
-        tally: isHost || show.award.resultsAt ? t : null,
+        tally: isHost || show.award.resultsAt ? (show.award.hideCounts && !isHost ? ranksOnly(t) : t) : null,
         voters: t.voters,
       }
     }
     if (action === 'ballot') {
       const u2 = needUser()
       const a = show.award
+      if (a.offline) fail(404, 'No such awards')
       if (a.closedAt || (a.closesAt && Date.parse(a.closesAt) < Date.now())) fail(409, 'Voting is closed')
       if (a.opensAt && Date.parse(a.opensAt) > Date.now()) fail(409, 'Voting has not opened yet')
-      if (mine) fail(409, 'You have already voted here')
       const picks = ((body ?? {}).picks ?? {}) as Record<string, string>
       if (!Object.keys(picks).length) fail(400, 'Pick at least one')
-      show.ballots.push({ userId: u2.id, picks, at: now() })
+      const onBallot = (nom: string, who: string) => a.nominations.some((n) => n.id === nom && n.nominees.some((x) => x.id === who))
+      if (!Object.entries(picks).every(([nom, who]) => onBallot(nom, who))) fail(400, 'That nominee is not on this ballot')
+      // as the server: a second submit only fills the categories skipped the first time
+      const fresh = Object.entries(picks).filter(([nom]) => !mine?.picks[nom])
+      if (!fresh.length) fail(409, 'You have already voted in these categories')
+      if (mine) Object.assign(mine.picks, Object.fromEntries(fresh))
+      else show.ballots.push({ userId: u2.id, picks, at: now() })
       save(db)
-      return { picks: Object.keys(picks).length }
+      return { picks: fresh.length }
     }
     if (action === 'tally') return { tally: tally(show), isHost }
+    if (action === 'counts') {
+      needUser()
+      show.award.hideCounts = !!(body ?? {}).hidden
+      save(db)
+      return { ok: true, hidden: show.award.hideCounts }
+    }
+    if (action === 'offline') {
+      needUser()
+      show.award.offline = !!(body ?? {}).offline
+      save(db)
+      return { ok: true, offline: show.award.offline }
+    }
     if (action === 'close') {
       needUser()
       show.award.closedAt = show.award.closedAt || now()

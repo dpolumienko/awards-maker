@@ -6,8 +6,12 @@
 //
 // Model comes from the Reveal screen in mockup v2 (outputs/awards-builder-mockup.html):
 // a 16:9 stage in the award's own look, award name as the kicker, the category as
-// the headline, the nominees dimmed, "And the winner is..." and then one of them
-// lit up. Two beats per category, so the pause is the host's to hold.
+// the headline, the nominees and "And the winner is...". Two beats per category,
+// so the pause is the host's to hold: the second is the winner's own screen -
+// their picture big, their clip playing, the name, the count (review 2026-10-08:
+// "the winner needs a screen of their own, so it is clear who won").
+import ClipPlayer from '~/components/ui/ClipPlayer.vue'
+import { playRevealMotion } from '~/utils/revealMotion'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import UiButton from '~/components/ui/UiButton.vue'
 import UiIcon from '~/components/ui/UiIcon.vue'
@@ -16,7 +20,9 @@ import { emptyTally, phaseOf, resultsOf, useVoting, votesInOf } from '~/composab
 import { prefersReducedMotion, useGsap } from '~/composables/useReveal'
 import { nomineeImage, nomineeInitials, nomineeName } from '~/utils/nominee'
 import CeremonySetup from '~/components/ui/CeremonySetup.vue'
-import { COVER, useCeremony } from '~/composables/useCeremony'
+import { stageImage, useCeremony } from '~/composables/useCeremony'
+import type { Nominee } from '~/types/award'
+import { partnerHost, partnerIconUrl } from '~/utils/partnerIcon'
 import { themeCss } from '~/data/themes'
 import { accentText, accentOf, inkOnFlood, onAccent, tint } from '~/utils/accent'
 import ZinePen from '~/components/zine/ZinePen.vue'
@@ -36,8 +42,8 @@ const { data, refresh } = await useAwardPage(() => slug.value)
 const award = computed(() => data.value?.award ?? null)
 const tally = computed(() => data.value?.tally ?? emptyTally())
 const accent = computed(() => accentOf(award.value?.look))
-const { isZine } = useVersion()
-const ink = computed(() => accentText(accent.value, isZine.value))
+const { isZine, onPaper } = useVersion()
+const ink = computed(() => accentText(accent.value, onPaper.value))
 // The Fanzine's ceremony floods the stage with the show's accent (blue by default)
 // and prints on it in white or black ink, whichever reads.
 const floodFg = computed(() => inkOnFlood(accent.value))
@@ -56,16 +62,20 @@ async function onStart() {
 }
 const headlineFont = computed(() => `'${settings.value.font}', Archivo, sans-serif`)
 
-const onCover = computed(() => settings.value.stage === COVER && !!award.value?.look?.coverUrl)
+// the show's cover, or a picture uploaded in the setup
+const picture = computed(() => stageImage(settings.value, award.value?.look?.coverUrl))
+const onCover = computed(() => !!picture.value)
 const stageCss = computed(() =>
   isZine.value && !onCover.value
     ? `background:radial-gradient(circle, rgba(255,255,255,.08) 40%, transparent 44%) 0 0/8px 8px, ${accent.value}`
-    : themeCss(
-        settings.value.stage === COVER ? undefined : settings.value.stage,
-        accent.value,
-        settings.value.stage === COVER ? award.value?.look?.coverUrl : undefined,
-      ),
+    : themeCss(picture.value ? undefined : settings.value.stage, accent.value, picture.value),
 )
+// the partners' corner (review 2026-10-08), unless the host switched it off
+const demo = !!useRuntimeConfig().public.demo
+const partners = computed(() => (award.value?.partners ?? []).filter((p) => p.name.trim()))
+const partnerIcon = (url: string) => partnerIconUrl(partnerHost(url), demo)
+/** a clip nominee plays on the winner's screen; an image one shows big */
+const clipOf = (n: Nominee) => (n.kind === 'media' && n.url ? n.url : '')
 
 /** A nominee plate: everyone in the house colour, the winner filled and lit. */
 const plate = (won: boolean) =>
@@ -108,9 +118,11 @@ const categories = computed(() =>
  * `duel` - two big plates facing each other, for a category with two nominees.
  */
 type Layout = 'row' | 'list' | 'duel'
-function layoutFor(index: number, count: number): Layout {
+function layoutFor(index: number, count: number, media: boolean): Layout {
   if (count === 2) return 'duel'
   if (count > 4) return 'list'
+  // clips and images are the thing itself: shown as big frames, never as a list
+  if (media) return 'row'
   return index % 2 === 0 ? 'row' : 'list'
 }
 
@@ -138,7 +150,8 @@ const slide = computed(() => slides.value[Math.min(step.value, slides.value.leng
 const current = computed(() => {
   if (slide.value.kind !== 'category') return null
   const c = categories.value[slide.value.index]!
-  return { ...c, layout: layoutFor(slide.value.index, c.rows.length) }
+  const media = c.rows.some((r) => !!nomineeImage(r.nominee))
+  return { ...c, media, layout: layoutFor(slide.value.index, c.rows.length, media) }
 })
 const atEnd = computed(() => step.value >= slides.value.length - 1)
 
@@ -200,31 +213,26 @@ onBeforeUnmount(() => {
 
 const titleWords = computed(() => (award.value?.name ?? '').trim().split(/\s+/).map((w) => [...w]))
 
-/**
- * The winner lands, in the style the host picked. Three different arrivals, one
- * per timeline - not three variations of a fade.
- */
+/** The winner lands on their screen, in the style the host picked (utils/revealMotion). */
 function playReveal() {
   const { gsap } = useGsap()
-  const line = '.js-winner-line'
-  const plate = '.js-winner'
-
-  if (settings.value.reveal === 'spotlight') {
-    // the room drops away and one light finds the name
-    gsap.fromTo('.s-nom, .s-line', { opacity: 0.55 }, { opacity: (i, el: Element) => (el.classList.contains('js-winner') ? 1 : 0.18), duration: 0.7, ease: 'power2.out' })
-    gsap.fromTo(plate, { scale: 0.92, filter: 'brightness(0.5)' }, { scale: 1.1, filter: 'brightness(1)', duration: 0.9, ease: 'expo.out' })
-    gsap.fromTo(line, { opacity: 0, filter: 'blur(10px)' }, { opacity: 1, filter: 'blur(0px)', duration: 0.8, delay: 0.1, ease: 'expo.out' })
-    return
-  }
-  if (settings.value.reveal === 'flip') {
-    gsap.fromTo(plate, { rotateX: -90, opacity: 0 }, { rotateX: 0, opacity: 1, duration: 0.75, ease: 'back.out(1.5)', transformPerspective: 800, stagger: 0.06 })
-    gsap.fromTo(line, { rotateX: -90, opacity: 0 }, { rotateX: 0, opacity: 1, duration: 0.7, delay: 0.18, ease: 'back.out(1.4)', transformPerspective: 800 })
-    return
-  }
-  // cut: the winner's name climbs in, letter by letter
-  gsap.fromTo(plate, { scale: 0.88, opacity: 0.2 }, { scale: 1.1, opacity: 1, duration: 0.7, ease: 'expo.out', stagger: 0.07 })
-  gsap.fromTo(line, { yPercent: 120, opacity: 0 }, { yPercent: 0, opacity: 1, duration: 0.8, delay: 0.1, ease: 'expo.out' })
+  playRevealMotion(gsap, settings.value.reveal, {
+    line: '.js-winner-line',
+    plate: document.querySelector('.js-winner') ? '.js-winner' : null,
+    rest: document.querySelector('.s-runners') ? '.s-runners' : null,
+    stage: stage.value,
+    reel: document.querySelector('.js-reel'),
+  })
 }
+
+/** The slot machine's strip: the other names, twice round, then the winner. */
+const reel = computed(() => {
+  const c = current.value
+  const won = c?.winners[0]
+  if (!c || !won || c.tied || settings.value.reveal !== 'slot') return []
+  const others = c.rows.filter((r) => r !== won).map((r) => nomineeName(r.nominee))
+  return [...others, ...others, nomineeName(won.nominee)]
+})
 
 watch(
   () => [step.value, slide.value.kind] as const,
@@ -310,32 +318,22 @@ definePageMeta({ chrome: false })
             </p>
           </template>
 
-          <!-- one category: nominees first, winner on the next click -->
-          <template v-else-if="slide.kind === 'category' && current">
+          <!-- one category, first beat: the nominees, and the pause -->
+          <template v-else-if="slide.kind === 'category' && current && !slide.shown">
             <p class="s-kicker" :style="{ color: stageInk }">{{ award.name }}</p>
             <h2 class="s-title max-w-[18ch]" :style="{ fontFamily: headlineFont }">
               {{ current.nomination.title || 'Untitled category' }}
             </h2>
 
-            <!-- plates across the middle, or two of them facing each other -->
+            <!-- plates across the middle, or two of them facing each other; a clip
+                 or an image gets a 16:9 frame big enough to read on stream -->
             <ul
               v-if="current.layout !== 'list'"
               class="s-noms m-0 flex list-none flex-wrap justify-center p-0"
-              :class="current.layout === 'duel' && 's-noms-duel'"
+              :class="[current.layout === 'duel' && 's-noms-duel', current.media && 's-noms-media']"
             >
-              <li
-                v-for="row in current.rows"
-                :key="row.nominee.id"
-                class="s-nom flex flex-col items-center transition-[opacity,transform] duration-500 ease-gala"
-                :class="[
-                  slide.shown && current.winners.includes(row) ? 'js-winner s-nom-win' : '',
-                  slide.shown && !current.winners.includes(row) ? (isZine ? 'opacity-80' : 'opacity-25') : '',
-                ]"
-              >
-                <span
-                  class="s-plate grid place-items-center overflow-hidden font-bold"
-                  :style="plate(slide.shown && current.winners.includes(row))"
-                >
+              <li v-for="row in current.rows" :key="row.nominee.id" class="s-nom flex flex-col items-center">
+                <span class="s-plate grid place-items-center overflow-hidden font-bold" :style="plate(false)">
                   <!-- what the host actually nominated: the image, or the clip's
                        poster frame. Initials are for channels and plain text. -->
                   <img
@@ -352,15 +350,7 @@ definePageMeta({ chrome: false })
 
             <!-- numbered lines: long names fit, and the eye runs down instead of across -->
             <ol v-else class="s-list-noms m-0 flex list-none flex-col p-0 text-left">
-              <li
-                v-for="(row, i) in current.rows"
-                :key="row.nominee.id"
-                class="s-line flex items-center transition-[opacity,transform] duration-500 ease-gala"
-                :class="[
-                  slide.shown && current.winners.includes(row) ? 'js-winner s-line-win' : '',
-                  slide.shown && !current.winners.includes(row) ? (isZine ? 'opacity-80' : 'opacity-25') : '',
-                ]"
-              >
+              <li v-for="(row, i) in current.rows" :key="row.nominee.id" class="s-line flex items-center">
                 <span class="s-line-i tnum" :style="{ color: stageInk }">{{ String(i + 1).padStart(2, '0') }}</span>
                 <img
                   v-if="nomineeImage(row.nominee)"
@@ -370,27 +360,49 @@ definePageMeta({ chrome: false })
                   class="s-line-thumb flex-none object-cover"
                 />
                 <span class="s-line-name min-w-0 flex-1 truncate">{{ nomineeName(row.nominee) }}</span>
-                <span
-                  v-if="slide.shown"
-                  class="s-line-pct tnum"
-                  :style="{ color: current.winners.includes(row) ? stageInk : undefined }"
-                >{{ row.pct }}%</span>
               </li>
             </ol>
 
-            <p class="js-winner-line s-win" :style="{ color: stageInk, fontFamily: headlineFont }">
-              <template v-if="!slide.shown">And the winner is...</template>
-              <template v-else-if="!current.winners.length">No votes in this category</template>
-              <template v-else-if="current.tied">
-                {{ current.winners.map((w) => nomineeName(w.nominee)).join(' & ') }} · tied
-              </template>
-              <template v-else>
-                <ZinePen>{{ nomineeName(current.winners[0]!.nominee) }}</ZinePen>
-              </template>
-            </p>
-            <p v-if="slide.shown && current.winners.length && !current.tied" class="s-win-sub tnum">
-              {{ current.winners[0]!.votes }} of {{ current.votes }} votes · {{ current.winners[0]!.pct }}%
-            </p>
+            <p class="s-win" :style="{ color: stageInk, fontFamily: headlineFont }">And the winner is...</p>
+          </template>
+
+          <!-- second beat: the winner's own screen -->
+          <template v-else-if="slide.kind === 'category' && current">
+            <p class="s-kicker" :style="{ color: stageInk }">{{ current.nomination.title || 'Untitled category' }}</p>
+
+            <template v-if="current.winners.length">
+              <div class="s-champs flex justify-center" :class="current.tied && 'is-tied'">
+                <figure v-for="w in current.winners" :key="w.nominee.id" class="js-winner s-champ m-0">
+                  <!-- the clip plays; an image or a channel is shown big -->
+                  <ClipPlayer v-if="clipOf(w.nominee) && !current.tied" :url="clipOf(w.nominee)" :title="nomineeName(w.nominee)" autoplay class="s-champ-media" />
+                  <span
+                    v-else
+                    class="s-champ-media grid place-items-center overflow-hidden font-bold"
+                    :class="!nomineeImage(w.nominee) && 's-champ-initials'"
+                    :style="plate(true)"
+                  >
+                    <img v-if="nomineeImage(w.nominee)" :src="nomineeImage(w.nominee)" :alt="nomineeName(w.nominee)" class="h-full w-full object-cover" />
+                    <template v-else>{{ nomineeInitials(w.nominee) }}</template>
+                  </span>
+                </figure>
+              </div>
+
+              <p class="js-winner-line s-champ-name" :style="{ color: stageInk, fontFamily: headlineFont }">
+                <span v-if="reel.length" class="s-reel-box"><span class="js-reel s-reel"><span v-for="(n, k) in reel" :key="k">{{ n }}</span></span></span>
+                <template v-else-if="current.tied">{{ current.winners.map((w) => nomineeName(w.nominee)).join(' & ') }} · tied</template>
+                <ZinePen v-else>{{ nomineeName(current.winners[0]!.nominee) }}</ZinePen>
+              </p>
+              <p v-if="settings.counts" class="s-win-sub tnum">
+                {{ current.winners[0]!.votes }} of {{ current.votes }} votes · {{ current.winners[0]!.pct }}%
+              </p>
+              <!-- the rest, small, for the host to read out -->
+              <ol v-if="current.rows.length > current.winners.length" class="s-runners m-0 flex list-none flex-wrap justify-center p-0">
+                <li v-for="row in current.rows.filter((r) => !current!.winners.includes(r))" :key="row.nominee.id" class="tnum">
+                  {{ nomineeName(row.nominee) }} <span v-if="settings.counts">{{ row.pct }}%</span>
+                </li>
+              </ol>
+            </template>
+            <p v-else class="js-winner-line s-champ-name" :style="{ color: stageInk, fontFamily: headlineFont }">No votes in this category</p>
           </template>
 
           <!-- closing card: the whole list, for the outro talk -->
@@ -407,6 +419,15 @@ definePageMeta({ chrome: false })
               </li>
             </ul>
           </template>
+        </div>
+
+        <!-- the partners, in the corner of every slide -->
+        <div v-if="settings.partners && partners.length" class="s-partners absolute flex items-center" :style="{ color: stageInk }">
+          <span class="s-partners-k">With</span>
+          <span v-for="p in partners" :key="p.id" class="s-partner flex items-center">
+            <img v-if="partnerIcon(p.url)" :src="partnerIcon(p.url)" alt="" aria-hidden="true" @error="($event.target as HTMLElement).remove()" />
+            {{ p.name }}
+          </span>
         </div>
 
         <!-- the category number, set big and quiet behind the content -->
@@ -524,6 +545,7 @@ definePageMeta({ chrome: false })
       :accent="accent"
       :name="award?.name ?? ''"
       :cover="award?.look?.coverUrl ?? ''"
+      :has-partners="partners.length > 0"
       @update="update"
       @close="setupOpen = false"
       @start="onStart"
@@ -572,10 +594,6 @@ definePageMeta({ chrome: false })
   gap: 1.2cqh;
   opacity: 0.75;
 }
-.s-nom-win {
-  opacity: 1;
-  transform: scale(1.1);
-}
 .s-plate {
   width: 8.5cqw;
   height: 8.5cqw;
@@ -596,6 +614,97 @@ definePageMeta({ chrome: false })
   margin-top: -1.6cqh;
 }
 
+/* clips and images: 16:9 frames, big enough to read on stream */
+.s-noms-media .s-nom {
+  width: 19cqw;
+}
+.s-noms-media .s-plate {
+  width: 19cqw;
+  height: 10.7cqw;
+  border-radius: 1cqw;
+}
+
+/* the partners' corner: bottom right, clear of the slide counter on the left */
+.s-partners {
+  right: 2cqw;
+  bottom: 2.4cqh;
+  gap: 1.4cqw;
+  font-size: 1.1cqw;
+  font-weight: 700;
+}
+.s-partners-k {
+  opacity: 0.7;
+  font-size: 0.85cqw;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.s-partner {
+  gap: 0.5cqw;
+}
+.s-partner img {
+  width: 1.5cqw;
+  height: 1.5cqw;
+  border-radius: 50%;
+  object-fit: contain;
+}
+
+/* the winner's own screen */
+.s-champs {
+  gap: 3cqw;
+}
+.s-champ-media {
+  display: block;
+  width: 46cqw;
+  height: 25.9cqw;
+  border-radius: 1.2cqw;
+  overflow: hidden;
+}
+.s-champ-initials {
+  display: grid;
+  width: 20cqw;
+  height: 20cqw;
+  border-radius: 2.4cqw;
+  font-size: 7cqw;
+}
+.is-tied .s-champ-media {
+  width: 28cqw;
+  height: 15.75cqw;
+}
+.is-tied .s-champ-initials {
+  width: 15cqw;
+  height: 15cqw;
+  font-size: 5cqw;
+}
+.s-champ-name {
+  font-size: 5.4cqw;
+  font-weight: 800;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+/* the slot machine: one line tall, the strip rolls inside it */
+.s-reel-box {
+  display: inline-block;
+  height: 1.1em;
+  overflow: hidden;
+  vertical-align: top;
+}
+.s-reel {
+  display: flex;
+  flex-direction: column;
+}
+.s-reel > span {
+  height: 1.1em;
+}
+.s-runners {
+  gap: 0.6cqh 2.4cqw;
+  font-size: 1.5cqw;
+  opacity: 0.75;
+}
+.s-runners span {
+  margin-left: 0.4cqw;
+  opacity: 0.7;
+}
+
 /* duel: two nominees, twice the presence */
 .s-noms-duel {
   gap: 7cqw;
@@ -612,6 +721,13 @@ definePageMeta({ chrome: false })
 .s-noms-duel .s-name {
   font-size: 2cqw;
 }
+.s-noms-duel.s-noms-media .s-nom {
+  width: 30cqw;
+}
+.s-noms-duel.s-noms-media .s-plate {
+  width: 30cqw;
+  height: 16.9cqw;
+}
 
 /* numbered lines */
 .s-list-noms {
@@ -623,29 +739,20 @@ definePageMeta({ chrome: false })
   font-size: 2.6cqw;
   opacity: 0.8;
 }
-.s-line-win {
-  opacity: 1;
-  font-weight: 700;
-}
 .s-line-i {
   font-size: 1.6cqw;
   font-weight: 700;
   width: 3cqw;
 }
 .s-line-thumb {
-  width: 5cqw;
-  height: 3.2cqw;
+  width: 8cqw;
+  height: 4.5cqw;
   border-radius: 0.5cqw;
-}
-.s-line-pct {
-  font-size: 1.8cqw;
-  color: #a5a5ac;
 }
 
 /* the Fanzine: one ink on a flooded page; the quiet greys become the same ink */
 .is-zine .s-meta,
 .is-zine .s-win-sub,
-.is-zine .s-line-pct,
 .is-zine .text-ink-2,
 .is-zine .text-ink-muted {
   color: inherit;

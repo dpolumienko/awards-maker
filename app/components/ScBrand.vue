@@ -4,14 +4,14 @@ import { useVersion } from '~/composables/useVersion'
 // used to be a standalone "AWARDS.MAKER" wordmark, which read as a separate
 // company - the review asked for SC's logo with Awards played next to it.
 const { size = 'md' } = defineProps<{ size?: 'md' | 'lg' }>()
-// white type on the dark stage, black ink on the Fanzine's paper
-const { isZine } = useVersion()
+// white type on the dark stage and on Night's black, black ink on the Fanzine's paper
+const { onPaper } = useVersion()
 </script>
 
 <template>
   <NuxtLink to="/" class="flex items-center gap-3 no-underline" aria-label="Streams Charts Awards, home">
     <img
-      :src="asset(isZine ? '/img/logos/streamscharts-dark.svg' : '/img/logos/streamscharts-light.svg')"
+      :src="asset(onPaper ? '/img/logos/streamscharts-dark.svg' : '/img/logos/streamscharts-light.svg')"
       alt=""
       width="135"
       height="46"
