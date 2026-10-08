@@ -98,7 +98,7 @@ const countdown = computed(() => {
            account behind it -->
       <span class="absolute bottom-3 left-5 flex items-center gap-2">
         <span
-          v-if="signedIn"
+          v-if="signedIn && !award.look?.hideLogo"
           aria-hidden="true"
           class="grid h-6 w-6 place-items-center rounded-pill text-[11px] font-bold"
           :style="{ background: accent, color: onAccent(accent) }"

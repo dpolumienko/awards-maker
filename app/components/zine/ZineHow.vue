@@ -9,16 +9,29 @@ import ZinePen from './ZinePen.vue'
 import { useLiveLoop } from '~/composables/useLiveLoop'
 
 const STEPS = [
-  { id: 'build', title: 'Build it', line: 'Name it, fill the categories, set the dates and the look. Five short steps.' },
+  { id: 'build', title: 'Build it', line: 'Set it up, fill the categories, pick the dates, customize the look. Five short steps.' },
   { id: 'share', title: 'Share the link', line: 'One page per awards. Paste it in chat, it unfolds into a card.' },
   { id: 'reveal', title: 'Reveal it live', line: 'Close voting, then announce each winner on stream.' },
 ] as const
 const CATEGORY = 'Streamer of the year'
-// the builder's own steps, walked through two beats each (review 2026-10-08: the
-// scene showed typing nominees, the builder is a run of steps)
-const BUILD = ['The show', 'Categories', 'Schedule', 'Look', 'Publish'] as const
-const CATS = ['Streamer of the year', 'Clip of the year', 'Best emote']
+// the builder's own steps (same names as on /create), four beats each, every
+// panel filling in over them (review 2026-10-08: the scene showed typing
+// nominees, then too little of each step)
+const BUILD = ['Setup', 'Categories', 'Schedule', 'Customize', 'Publish'] as const
+const PER_STEP = 4
+// nominees as the faces they would be: one dot each, in the inks
+const CATS = [
+  { name: 'Streamer of the year', who: 3 },
+  { name: 'Clip of the year', who: 2 },
+  { name: 'Best emote', who: 4 },
+]
+const DATES = [
+  { k: 'Voting opens', v: 'Dec 1, 18:00' },
+  { k: 'Voting closes', v: 'Dec 20, 21:00' },
+  { k: 'Ceremony, live', v: 'Dec 21, 20:00' },
+]
 const INKS = ['0 120 191', '255 72 176', '0 169 92', '255 108 47']
+const CHECKS = ['Name and description', '3 categories, 9 nominees', 'Voting dates']
 
 const root = ref<HTMLElement | null>(null)
 const step = ref(0)
@@ -26,10 +39,12 @@ const step = ref(0)
 const beat = ref(99)
 // beats per step: the ceremony gets the longest, each count a full second and
 // more (review 2026-10-08: 3-2-1 went by too fast to read)
-const BEATS = [11, 9, 14]
+const BEATS = [BUILD.length * PER_STEP - 1, 9, 14]
 const URL = 'awards.streamscharts.com/a/chat-awards-2026'
 
-const buildAt = computed(() => Math.min(BUILD.length - 1, Math.floor(beat.value / 2)))
+const buildAt = computed(() => Math.min(BUILD.length - 1, Math.floor(beat.value / PER_STEP)))
+/** how far the current panel has filled in, 0..3 - all of it at rest */
+const sub = computed(() => (beat.value >= BUILD.length * PER_STEP ? PER_STEP - 1 : beat.value % PER_STEP))
 const count = computed(() => Math.max(0, 3 - Math.floor(beat.value / 2)))
 const link = computed(() => URL.slice(0, beat.value * 12))
 
@@ -72,19 +87,40 @@ watch(running, (on) => (beat.value = on ? 0 : 99))
             <template v-if="buildAt === 0">
               <p class="zh-label">Awards name</p>
               <p class="zh-typed">Chat Awards 2026</p>
+              <p class="zh-label" :class="sub < 1 && 'zh-wait'">Description</p>
+              <p class="zh-desc" :class="sub < 1 && 'zh-wait'">For the chat that never sleeps. Vote for the best of the year.</p>
+              <p class="zh-chip" :class="sub < 2 && 'zh-wait'">Pack: Chat Awards, 5 categories added</p>
             </template>
             <ul v-else-if="buildAt === 1" class="zh-cats">
-              <li v-for="c in CATS" :key="c">{{ c }}<small>3 nominees</small></li>
+              <li v-for="(c, k) in CATS" :key="c.name" :class="sub < k && 'zh-wait'">
+                {{ c.name }}
+                <span class="zh-who"><i v-for="j in c.who" :key="j" :style="{ background: `rgb(${INKS[j % INKS.length]})` }" /></span>
+              </li>
+              <li class="zh-add" :class="sub < 3 && 'zh-wait'">+ Add a category</li>
             </ul>
-            <template v-else-if="buildAt === 2">
-              <p class="zh-label">Voting closes</p>
-              <p class="zh-typed">Dec 20, 21:00</p>
-            </template>
-            <template v-else-if="buildAt === 3">
-              <p class="zh-label">Ink</p>
-              <p class="zh-inks"><i v-for="(c, k) in INKS" :key="c" :class="k === 1 && 'is-on'" :style="{ background: `rgb(${c})` }" /></p>
-            </template>
-            <p v-else class="zh-go zine-display">Published</p>
+            <ol v-else-if="buildAt === 2" class="zh-dates">
+              <li v-for="(d, k) in DATES" :key="d.k" :class="sub < k && 'zh-wait'"><span>{{ d.k }}</span><b class="tnum">{{ d.v }}</b></li>
+            </ol>
+            <div v-else-if="buildAt === 3" class="zh-look">
+              <div>
+                <p class="zh-label">Ink</p>
+                <p class="zh-inks"><i v-for="(c, k) in INKS" :key="c" :class="k === sub && 'is-on'" :style="{ background: `rgb(${c})` }" /></p>
+                <p class="zh-label zh-gap">Partner</p>
+                <p class="zh-chip">Streams Charts</p>
+              </div>
+              <!-- the page header, in the ink being tried on -->
+              <div class="zh-mini" :style="{ '--try': INKS[sub] }">
+                <span class="zh-mini-cover" />
+                <b class="zine-display">Chat Awards 2026</b>
+                <small>Voting open, 3 categories</small>
+              </div>
+            </div>
+            <div v-else class="zh-pub">
+              <ul class="zh-checks">
+                <li v-for="(c, k) in CHECKS" :key="c" :class="sub < k && 'zh-wait'">{{ c }}</li>
+              </ul>
+              <p class="zh-go zine-display" :class="sub < 3 && 'zh-wait'">Published</p>
+            </div>
           </div>
         </div>
 
@@ -129,7 +165,7 @@ watch(running, (on) => (beat.value = on ? 0 : 99))
 .zh-tape { position: absolute; left: 0; top: -2px; height: 4px; width: 100%; background: rgb(var(--gold)); transform-origin: left; animation: zh-tape linear both; }
 @keyframes zh-tape { from { transform: scaleX(0); } }
 
-.zh-stage { position: relative; min-height: 380px; border: 2.5px solid rgb(var(--ink)); background: radial-gradient(circle, rgb(var(--gold) / 0.35) 46%, transparent 48%) 0 0 / 9px 9px, rgb(var(--s2)); overflow: hidden; }
+.zh-stage { position: relative; min-height: 420px; border: 2.5px solid rgb(var(--ink)); background: radial-gradient(circle, rgb(var(--gold) / 0.35) 46%, transparent 48%) 0 0 / 9px 9px, rgb(var(--s2)); overflow: hidden; }
 .zh-scene { position: absolute; inset: 28px; padding: 22px; border: 2.5px solid rgb(var(--ink)); background: rgb(var(--canvas)); animation: zh-scene 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
 @keyframes zh-scene { from { opacity: 0; transform: translateY(12px) rotate(-1deg); } }
 .zh-label { font-size: 11px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: rgb(var(--ink-muted)); }
@@ -147,10 +183,33 @@ watch(running, (on) => (beat.value = on ? 0 : 99))
 .zh-tix li.is-on span { color: rgb(var(--gold-text)); }
 .zh-panel { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 16px; border: 2px solid rgb(var(--ink)); background: rgb(var(--s2)); }
 .zh-cats { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
-.zh-cats li { display: flex; justify-content: space-between; padding: 8px 12px; border: 2px solid rgb(var(--ink)); background: rgb(var(--canvas)); font-weight: 800; }
+.zh-cats li { display: flex; justify-content: space-between; padding: 6px 12px; border: 2px solid rgb(var(--ink)); background: rgb(var(--canvas)); font-weight: 800; }
 .zh-cats small { font-weight: 600; color: rgb(var(--ink-muted)); }
+.zh-cats li { align-items: center; }
+.zh-who { display: flex; }
+.zh-who i { width: 20px; height: 20px; margin-left: -5px; border: 2px solid rgb(var(--ink)); border-radius: 50%; }
+.zh-cats li.zh-add { justify-content: flex-start; border-style: dashed; color: rgb(var(--ink-muted)); font-weight: 700; }
+/* the parts of a panel still to come: kept in place, so nothing shifts as they arrive */
+.zh-panel > *, .zh-cats li, .zh-dates li, .zh-checks li { transition: opacity 0.3s, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+.zh-wait, .zh-cats li.zh-wait, .zh-dates li.zh-wait, .zh-checks li.zh-wait { opacity: 0; transform: translateY(6px); }
+.zh-gap { margin-top: 14px; }
+.zh-desc { margin: 6px 0 14px; font-size: 14px; line-height: 1.4; color: rgb(var(--ink-2)); }
+.zh-chip { align-self: flex-start; display: inline-block; margin-top: 6px; padding: 5px 10px; border: 2px solid rgb(var(--ink)); background: rgb(var(--canvas)); font-size: 12px; font-weight: 800; }
+.zh-dates { margin: 0 0 0 6px; padding: 0 0 0 18px; list-style: none; display: grid; gap: 18px; border-left: 2px dashed rgb(var(--ink)); }
+.zh-dates li { position: relative; display: flex; justify-content: space-between; gap: 12px; font-size: 14px; color: rgb(var(--ink-2)); }
+.zh-dates li::before { content: ''; position: absolute; left: -26px; top: 3px; width: 12px; height: 12px; border: 2px solid rgb(var(--ink)); background: rgb(var(--gold)); }
+.zh-dates b { font: 800 16px/1.2 var(--font-display), sans-serif; font-stretch: 112%; color: rgb(var(--ink)); }
+.zh-look { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 20px; align-items: center; }
+.zh-mini { display: grid; gap: 4px; padding-bottom: 10px; border: 2px solid rgb(var(--ink)); background: rgb(var(--canvas)); }
+.zh-mini-cover { height: 54px; margin-bottom: 6px; border-bottom: 2px solid rgb(var(--ink)); background: radial-gradient(circle, rgb(255 255 255 / 0.35) 46%, transparent 48%) 0 0 / 7px 7px, rgb(var(--try)); transition: background-color 0.3s; }
+.zh-mini b { padding: 0 10px; font-size: 18px; line-height: 1; text-transform: uppercase; color: rgb(var(--try)); transition: color 0.3s; }
+.zh-mini small { padding: 0 10px; font-size: 11px; color: rgb(var(--ink-muted)); }
+.zh-pub { display: flex; flex-direction: column; gap: 12px; }
+.zh-pub .zh-go { align-self: flex-end; }
+.zh-checks { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; font-size: 14px; font-weight: 700; }
+.zh-checks li::before { content: 'OK'; display: inline-block; margin-right: 10px; padding: 1px 5px; border: 3px double rgb(var(--gold-text)); color: rgb(var(--gold-text)); font: 800 10px/1.2 var(--font-display), sans-serif; transform: rotate(-4deg); }
 .zh-inks { display: flex; gap: 10px; margin-top: 8px; }
-.zh-inks i { width: 40px; height: 40px; border: 2px solid rgb(var(--ink)); }
+.zh-inks i { width: 34px; height: 34px; border: 2px solid rgb(var(--ink)); }
 .zh-inks i.is-on { outline: 3px solid rgb(var(--ink)); outline-offset: 3px; }
 .zh-go { align-self: center; padding: 8px 16px 6px; border: 4px double rgb(var(--pink-ink)); color: rgb(var(--pink-ink)); font-size: 28px; text-transform: uppercase; transform: rotate(-4deg); }
 
@@ -171,5 +230,5 @@ watch(running, (on) => (beat.value = on ? 0 : 99))
 .zh-win { font-size: 46px; animation: zh-count 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
 .zh-win :deep(.zine-pen-line) { mix-blend-mode: normal; }
 .zh-votes { font-size: 13px; color: #9a9aa2; }
-@media (prefers-reduced-motion: reduce) { .zh-scene, .zh-in, .zh-count, .zh-win { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .zh-scene, .zh-in, .zh-count, .zh-win { animation: none; } .zh-panel > *, .zh-cats li, .zh-dates li, .zh-checks li { transition: none; } }
 </style>

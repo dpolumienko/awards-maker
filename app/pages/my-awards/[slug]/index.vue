@@ -27,6 +27,7 @@ import { FREE, type Nomination } from '~/types/award'
 import { DISPLAY_FONTS, useDisplayFonts } from '~/composables/useDisplayFonts'
 import { useVersion } from '~/composables/useVersion'
 import ShowDesk, { type DeskAction } from '~/components/zine/ShowDesk.vue'
+import ShowStats from '~/components/zine/ShowStats.vue'
 
 // ceremony typefaces and share cards draw in any of the headline faces
 useDisplayFonts(DISPLAY_FONTS)
@@ -104,6 +105,19 @@ const coverage = computed(() =>
     })),
 )
 const weakest = computed(() => coverage.value[coverage.value.length - 1])
+// Night v2's table of races (components/zine/ShowStats): the same races, flat
+const raceRows = computed(() =>
+  races.value.map((r) => ({
+    id: r.nomination.id,
+    title: r.nomination.title || 'Untitled category',
+    votes: r.votes,
+    coverage: r.coverage,
+    tied: r.tied,
+    margin: r.margin,
+    leader: r.leader ? nomineeName(r.leader.nominee) : '',
+    items: r.items,
+  })),
+)
 const ties = computed(() => races.value.filter((r) => r.tied).length)
 
 // dates are UTC instants; the host sees them in the show's zone, named
@@ -133,6 +147,7 @@ async function onDesk(a: DeskAction) {
     if (a === 'close') await closeVoting(slug.value)
     else if (a === 'publish') await publishResults(slug.value)
     else if (a === 'offline' || a === 'online') await setOffline(slug.value, a === 'offline')
+    else if (a === 'ceremony') return navigateTo(`/my-awards/${slug.value}/reveal`)
     else if (a === 'delete') {
       await $fetch(`/api/awards/${encodeURIComponent(slug.value)}`, { method: 'DELETE' })
       return navigateTo('/my-awards')
@@ -219,6 +234,19 @@ useSeoMeta({
         </p>
         <ShareRow class="mt-6" :url="shareUrl" :text="`Vote in ${award.name}:`" />
       </div>
+
+      <!-- Night v2: stat cards, the chart with a range, the races as a table -->
+      <ShowStats
+        v-else-if="isV2"
+        class="js-reveal"
+        :voters="voters"
+        :total-votes="totalVotes"
+        :trend="trend"
+        :races="raceRows"
+        :accent="accent"
+        :free-max="award.tier !== 'paid' ? FREE.maxVoters : 0"
+        :days-left="daysLeft"
+      />
 
       <template v-else>
         <!-- the four numbers worth a glance -->

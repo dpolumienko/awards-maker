@@ -234,7 +234,7 @@ export function useAwardDraft() {
         detail: `Free covers ${FREE.maxNominations}. The last ${d.nominations.length - FREE.maxNominations} would be dropped.`,
       })
     }
-    const look = [d.look?.theme && 'theme', d.look?.accent && 'colour', d.look?.font && 'type', d.look?.coverUrl && 'cover'].filter(Boolean)
+    const look = [d.look?.theme && 'theme', d.look?.accent && 'colour', d.look?.font && 'type', d.look?.coverUrl && 'cover', d.look?.hideLogo && 'page without the channel logo'].filter(Boolean)
     if (look.length) {
       out.push({ id: 'look', label: `Your own ${look.join(', ')}`, detail: 'Free awards use the standard page.' })
     }

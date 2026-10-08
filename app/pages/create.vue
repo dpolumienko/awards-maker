@@ -9,6 +9,7 @@ import UiTextarea from '~/components/ui/UiTextarea.vue'
 import UiButton from '~/components/ui/UiButton.vue'
 import SignInButtons from '~/components/ui/SignInButtons.vue'
 import BuilderTickets, { type BuilderStep } from '~/components/zine/BuilderTickets.vue'
+import BuilderMissing from '~/components/zine/BuilderMissing.vue'
 import { useVersion } from '~/composables/useVersion'
 import NominationCard from '~/components/ui/NominationCard.vue'
 import AwardPreview from '~/components/ui/AwardPreview.vue'
@@ -16,7 +17,6 @@ import PublishPanel from '~/components/ui/PublishPanel.vue'
 import TemplatePicker from '~/components/ui/TemplatePicker.vue'
 import PaywallNote from '~/components/ui/PaywallNote.vue'
 import LookSection from '~/components/ui/LookSection.vue'
-import PlatformDot from '~/components/ui/PlatformDot.vue'
 import InteractiveAccordion from '~/components/ui/InteractiveAccordion.vue'
 import type { AwardTemplate } from '~/data/templates'
 import { ideaGroup } from '~/data/ideas'
@@ -127,10 +127,10 @@ async function onAddNomination() {
 // a step is left, and the other versions keep the single long page.
 const { isV2 } = useVersion()
 const STEPS = [
-  { id: 'show', title: 'The show', sub: 'Name and a pack' },
+  { id: 'show', title: 'Setup', sub: 'Name and a pack' },
   { id: 'cats', title: 'Categories', sub: 'And who is nominated' },
   { id: 'when', title: 'Schedule', sub: 'Voting and the ceremony' },
-  { id: 'look', title: 'Look', sub: 'Style and partners' },
+  { id: 'look', title: 'Customize', sub: 'Style and partners' },
   { id: 'go', title: 'Publish', sub: 'Check and go live' },
 ] as const
 type StepId = (typeof STEPS)[number]['id']
@@ -163,7 +163,22 @@ const tickets = computed(() => {
 const stepIndex = computed(() => STEPS.findIndex((s) => s.id === step.value))
 /** Shown in this version's current step - always true outside v2. */
 const at = (...ids: StepId[]) => !isV2.value || ids.includes(step.value)
+/** steps left at least once: coming back to one that is still short shows what it lacks */
+const left = ref(new Set<StepId>())
+const missingHere = computed(() =>
+  isV2.value && left.value.has(step.value)
+    ? checks.value.filter((c) => NEEDS[step.value].includes(c.id) && !c.ok).map(({ id, label }) => ({ id, label }))
+    : [],
+)
+const isMissing = (id: string) => missingHere.value.some((m) => m.id === id)
+/** from the Missing list to the field: the first input in whatever carries `data-check` */
+function fixMissing(id: string) {
+  const el = document.querySelector<HTMLElement>(`[data-check="${id}"]`)
+  el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  el?.querySelector<HTMLElement>('input, textarea, select, button')?.focus({ preventScroll: true })
+}
 function goStep(id: string) {
+  if (id !== step.value) left.value.add(step.value)
   step.value = id as StepId
   visited.value.add(id as StepId)
   if (import.meta.client) document.getElementById('builder')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -303,7 +318,7 @@ useSeoMeta({
       vote on.
     </p>
 
-    <div :class="isV2 && 'mt-6 grid gap-3 lg:grid-cols-2'">
+    <div :class="isV2 && ['mt-6 grid gap-3', !signedIn && 'lg:grid-cols-2']">
       <!-- demo build only: skip Twitch and fill everything in -->
       <div
         v-if="demo"
@@ -330,16 +345,6 @@ useSeoMeta({
         </p>
         <SignInButtons class="ml-auto" @choose="signInAsHost" />
       </div>
-
-      <!-- signed in: the channel the awards belong to -->
-      <div v-else class="flex flex-wrap items-center gap-3 rounded-card border border-hair bg-s1" :class="isV2 ? 'p-3' : 'mt-8 p-4'">
-        <span aria-hidden="true" class="grid h-9 w-9 place-items-center rounded-pill bg-s3 text-xs font-bold text-ink-muted">
-          {{ draft.host.name.slice(0, 2).toUpperCase() }}
-        </span>
-        <span class="font-semibold">{{ draft.host.name }}</span>
-        <PlatformDot :platform="draft.host.platform" />
-        <span class="micro ml-auto">Building awards for this channel</span>
-      </div>
     </div>
 
     <!-- mobile switch between the form and the preview -->
@@ -365,6 +370,7 @@ useSeoMeta({
     <div class="mt-8 grid items-start gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
       <!-- FORM -->
       <div :class="tab === 'preview' && 'hidden lg:block'" class="space-y-8">
+        <BuilderMissing v-if="missingHere.length" :items="missingHere" @fix="fixMissing" />
         <TemplatePicker
           v-show="at('show')"
           :used="nominationsUsed"
@@ -384,7 +390,8 @@ useSeoMeta({
               label="Awards name"
               placeholder="Chat Awards 2026"
               :limit="FREE.nameLimit"
-              :error="nameError"
+              :error="nameError || (isMissing('name') ? 'Give the awards a name.' : '')"
+              data-check="name"
               :warning="nameWarning"
               helper="Shown as the page title and on every share image."
             />
@@ -395,6 +402,8 @@ useSeoMeta({
               placeholder="What these awards are for, and who votes."
               :limit="FIELD.descriptionLimit"
               :rows="isV2 ? 2 : 4"
+              :error="isMissing('description') ? 'Needs a few more words: what the awards are for and who votes.' : ''"
+              data-check="description"
               helper="A description is required before publishing. Two sentences is plenty."
             />
             <!-- dates are moments in the show's zone, not whole days (review 2026-09-24) -->
@@ -415,7 +424,8 @@ useSeoMeta({
             </div>
             <!-- one per row: a date and a time side by side do not fit two to a row
                  in the form column, and the browser clipped them to "mm/dd/y" -->
-            <div class="grid gap-4">
+            <div class="grid gap-4" data-check="dates">
+              <p v-if="isMissing('dates')" class="text-sm font-semibold text-danger">Voting has to open before it closes, and the ceremony comes after.</p>
               <UiDateTimeField v-model="draft.opensAt" label="Voting opens" :time-zone="draft.timezone" default-time="12:00" />
               <UiDateTimeField v-model="draft.closesAt" label="Voting closes" :time-zone="draft.timezone" default-time="21:00" />
               <UiDateTimeField v-model="draft.ceremonyAt" label="Ceremony" :time-zone="draft.timezone" default-time="20:00" />
@@ -427,13 +437,11 @@ useSeoMeta({
         <LookSection
           v-show="at('look')"
           :look="draft.look"
-          :signed-in="signedIn"
-          :channel="draft.host.name"
           @update:look="draft.look = $event"
-          @sign-in="signInAsHost"
         />
 
-        <section v-show="at('cats')" id="nominations">
+        <section v-show="at('cats')" id="nominations" data-check="nominations">
+          <span data-check="nominees" class="sr-only" />
           <div class="flex items-end justify-between gap-4">
             <h2 class="text-xl font-semibold">Nominations</h2>
             <!-- past the free five this is a paid feature in use, not an error:

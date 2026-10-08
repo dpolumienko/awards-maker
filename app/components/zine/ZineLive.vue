@@ -86,4 +86,5 @@ useLiveLoop(root, 1100, () => {
 .zv-line-leave-active { position: absolute; opacity: 0; }
 @keyframes zv-blink { 50% { opacity: 0.3; } }
 @media (max-width: 1199px) { .zv { transform: none; box-shadow: 6px 6px 0 rgb(var(--ink)); } }
+@media (min-width: 1200px) and (min-height: 820px) { .zv-name { font-size: 21px; } .zv-rows li { padding: 13px 0; } .zv-chat { height: 170px; } }
 </style>

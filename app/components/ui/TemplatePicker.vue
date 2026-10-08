@@ -47,16 +47,16 @@ function apply(t: AwardTemplate) {
         :key="t.id"
         type="button"
         :aria-pressed="active === t.id"
-        class="flex items-center gap-3 rounded-btn border-2 p-3 text-left transition-colors"
+        class="flex items-center gap-2.5 rounded-btn border-2 p-3 text-left transition-colors"
         :class="active === t.id ? 'border-gold bg-gold/[0.12]' : 'border-hair hover:border-ink'"
         @click="apply(t)"
       >
-        <UiMaskIcon :src="t.icon" class="h-5 w-5 flex-none text-gold" />
+        <UiMaskIcon :src="t.icon" class="h-4 w-4 flex-none text-gold" />
         <span class="min-w-0">
-          <span class="block font-semibold leading-tight">{{ t.name }}</span>
+          <!-- one line each: a name broken over two rows made that tile odd one out -->
+          <span class="block whitespace-nowrap text-[15px] font-semibold leading-tight">{{ t.name }}</span>
           <span class="block text-xs text-ink-muted">{{ applied === t.id ? 'Added to Categories' : active === t.id ? 'In use' : `${t.nominations.length} categories` }}</span>
         </span>
-        <UiIcon v-show="active === t.id" name="check" :size="14" class="ml-auto flex-none text-gold-text" />
       </button>
     </div>
   </section>

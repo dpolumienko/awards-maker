@@ -10,6 +10,7 @@
 // Each layout family appears once.
 import { computed } from 'vue'
 import UiButton from '~/components/ui/UiButton.vue'
+import PlatformDot from '~/components/ui/PlatformDot.vue'
 import InteractiveAccordion from '~/components/ui/InteractiveAccordion.vue'
 import ZineLive from './ZineLive.vue'
 import ZineStats from './ZineStats.vue'
@@ -35,18 +36,22 @@ const rack = computed(() => (data.value?.awards ?? []).slice(0, 3))
       <div class="shell zl-cover-grid">
         <div>
           <h1>
-            <span class="zl-kicker">Awards Maker for streamers:</span>
+            <!-- anyone can run one; streamers get the channel search (review 2026-10-08) -->
+            <span class="zl-kicker">Awards Maker for any community:</span>
             <span class="zl-h1 zine-display">Run your own awards show</span>
           </h1>
-          <p class="zl-lead">
-            Pick the categories, nominate channels from Twitch, Kick and YouTube, and let your viewers vote for every
-            winner.
-          </p>
+          <p class="zl-lead">Nominate anything: channels, clips, images or plain names. Your audience votes for every winner.</p>
           <div class="zl-ctas">
             <UiButton to="/create">Create your awards</UiButton>
             <UiButton v-if="catalogOpen" to="/catalog" variant="ghost">Browse the catalog</UiButton>
             <UiButton v-else to="/ideas" variant="ghost">Category ideas</UiButton>
           </div>
+          <p class="zl-search">
+            Channel search built in
+            <PlatformDot platform="twitch" :size="14" />
+            <PlatformDot platform="kick" :size="14" />
+            <PlatformDot platform="youtube" :size="14" />
+          </p>
         </div>
         <ZineLive />
       </div>
@@ -112,7 +117,9 @@ const rack = computed(() => (data.value?.awards ?? []).slice(0, 3))
 
 /* cover: the whole first screen and nothing else on it (review 2026-10-08: the
    numbers right under it made the first screen feel packed) - 77px is the header */
-.zl-cover { display: grid; align-content: center; min-height: calc(100dvh - 77px); padding: 48px 0 80px; overflow-x: clip; }
+.zl-cover { display: grid; align-content: center; min-height: calc(100dvh - 77px); padding: 40px 0 72px; overflow-x: clip; }
+/* a tall screen gets a bigger cover, not more empty paper around it (review 2026-10-08: "now it feels empty") */
+@media (min-width: 1200px) and (min-height: 820px) { .zl-cover-grid { grid-template-columns: minmax(0, 1fr) 560px; } .zl-lead { font-size: 22px; } }
 .zl-cover-grid { display: grid; gap: 48px; align-items: center; grid-template-columns: minmax(0, 1fr); }
 @media (min-width: 1200px) { .zl-cover-grid { grid-template-columns: minmax(0, 1fr) 520px; } }
 .zl-kicker { display: block; margin-bottom: 14px; font-size: clamp(18px, 2.2vw, 26px); font-weight: 700; color: rgb(var(--ink-2)); }
@@ -120,6 +127,7 @@ const rack = computed(() => (data.value?.awards ?? []).slice(0, 3))
 .zl-h1 { display: block; font-size: clamp(38px, 4.1vw, 54px); line-height: 0.92; text-transform: uppercase; color: rgb(var(--gold)); }
 .zl-lead { margin-top: 26px; max-width: 42ch; font-size: 20px; line-height: 1.5; color: rgb(var(--ink-2)); }
 .zl-ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+.zl-search { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: 28px; padding-top: 20px; border-top: 1px solid rgb(var(--hair)); width: fit-content; font-size: 14px; font-weight: 700; color: rgb(var(--ink-muted)); }
 
 /* prices */
 .zl-prices { display: grid; margin-top: 44px; border-top: 2.5px solid var(--rule); border-bottom: 2.5px solid var(--rule); }

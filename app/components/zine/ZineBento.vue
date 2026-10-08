@@ -12,7 +12,7 @@ import { useLiveLoop } from '~/composables/useLiveLoop'
 
 const root = ref<HTMLElement | null>(null)
 const t = ref(0)
-useLiveLoop(root, 450, () => (t.value += 1))
+useLiveLoop(root, 370, () => (t.value += 1))
 
 // a query types itself, then its results land; t = 0 is the resting state
 // a channel, a clip, an image - every kind of nominee shows up in turn
