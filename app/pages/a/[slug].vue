@@ -33,6 +33,7 @@ import { awardOgImage } from '~/utils/og'
 import { formatInZone } from '#shared/time'
 import { isIndexable } from '#shared/indexable'
 import { useDisplayFonts } from '~/composables/useDisplayFonts'
+import BallotCounted from '~/components/ui/BallotCounted.vue'
 
 const route = useRoute()
 const slug = computed(() => String(route.params.slug))
@@ -78,12 +79,18 @@ const headlineFont = computed(() =>
   award.value?.look?.font ? `'${award.value.look.font}', Archivo, sans-serif` : undefined,
 )
 
-// Voting, and the one submit each voter gets.
+// Voting. Each pick is final, but categories skipped the first time stay open
+// until voting closes (review 2026-10-08) - a second submit fills only those.
 const picks = ref<Record<string, string>>({})
 const ballot = computed(() => data.value?.ballot ?? null)
 const voted = computed(() => !!ballot.value)
-const shown = computed(() => ballot.value?.picks ?? picks.value)
-const pickedCount = computed(() => Object.keys(shown.value).length)
+const cast = computed(() => ballot.value?.picks ?? {})
+const shown = computed(() => ({ ...picks.value, ...cast.value }))
+/** picks on screen not yet sent - what the submit button sends */
+const fresh = computed(() => Object.fromEntries(Object.entries(picks.value).filter(([id]) => !cast.value[id])))
+const pickedCount = computed(() => Object.keys(fresh.value).length)
+const castCount = computed(() => Object.keys(cast.value).length)
+const skipped = computed(() => (award.value?.nominations.length ?? 0) - castCount.value)
 const voters = computed(() => data.value?.voters ?? 0)
 const done = ref<HTMLElement | null>(null)
 const voteError = ref('')
@@ -101,7 +108,7 @@ onMounted(() => {
 
 const mode = computed<'vote' | 'locked' | 'results'>(() => {
   if (phase.value === 'revealed') return 'results'
-  if (phase.value === 'open' && !voted.value) return 'vote'
+  if (phase.value === 'open' && (!voted.value || skipped.value > 0)) return 'vote'
   return 'locked'
 })
 
@@ -126,7 +133,7 @@ async function submit(provider?: SignInProvider) {
     return
   }
   try {
-    await castBallot(slug.value, { ...picks.value })
+    await castBallot(slug.value, fresh.value)
     await refresh()
     nextTick(() => {
       done.value?.focus()
@@ -415,6 +422,7 @@ if (award.value && !thin.value) {
           </nav>
           <div class="flex flex-wrap items-center gap-3">
             <span
+              v-if="!award.look?.hideLogo"
               aria-hidden="true"
               class="grid h-11 w-11 place-items-center rounded-pill text-sm font-bold"
               :style="{ background: accent, color: onAccent(accent) }"
@@ -499,8 +507,12 @@ if (award.value && !thin.value) {
                   Counted from {{ voters }} {{ voters === 1 ? 'ballot' : 'ballots' }}, announced by
                   {{ award.host.name }}. The page stays up at this address.
                 </template>
+                <template v-else-if="skipped > 0">
+                  Your picks are final. The {{ skipped === 1 ? 'category' : `${skipped} categories` }} you skipped
+                  {{ skipped === 1 ? 'stays' : 'stay' }} open to you until voting closes.
+                </template>
                 <template v-else>
-                  Counted. One ballot per account, so this is your final answer - but you can still send the page on.
+                  Counted, every category. Your picks are final - but you can still send the page on.
                 </template>
               </p>
 
@@ -539,7 +551,7 @@ if (award.value && !thin.value) {
                 :nomination="n"
                 :index="i"
                 :accent="accent"
-                :mode="mode"
+                :mode="mode === 'vote' && cast[n.id] ? 'locked' : mode"
                 :picked="shown[n.id] ?? null"
                 :results="mode === 'results' ? resultsOf(tally, n) : []"
                 :votes-in="votesInOf(tally, n)"
@@ -554,11 +566,11 @@ if (award.value && !thin.value) {
             >
               <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
                 <p class="text-sm" aria-live="polite">
-                  <b class="tnum">{{ pickedCount }} of {{ award.nominations.length }}</b>
-                  <span class="text-ink-2"> categories picked</span>
+                  <b class="tnum">{{ pickedCount }} of {{ skipped }}</b>
+                  <span class="text-ink-2">{{ voted ? ' remaining categories picked' : ' categories picked' }}</span>
                 </p>
-                <p v-if="pickedCount < award.nominations.length" class="hidden text-sm text-ink-muted sm:block">
-                  You get one submit, so finish the ones you care about first.
+                <p v-if="pickedCount < skipped" class="hidden text-sm text-ink-muted sm:block">
+                  Each pick is final. Skipped ones stay open until voting closes.
                 </p>
                 <!-- signed out: submitting is signing in, with either account; a
                      disabled pair that does not say why reads as broken -->
@@ -586,14 +598,15 @@ if (award.value && !thin.value) {
               ref="done"
               tabindex="-1"
               role="status"
-              class="mt-6 rounded-card border p-5"
-              :style="{ borderColor: accent }"
+              class="mt-6 rounded-card focus:outline-none"
             >
-              <p class="font-semibold">Thanks - your ballot is counted.</p>
-              <p class="mt-1 text-sm text-ink-2">
-                <template v-if="award.ceremonyAt">Winners are announced {{ fmtDate(award.ceremonyAt) }}.</template>
-                Send the page to other viewers: every vote after yours changes the result.
-              </p>
+              <BallotCounted
+                :picked="castCount"
+                :total="award.nominations.length"
+                :ceremony="fmtDate(award.ceremonyAt)"
+                :closes="fmtDate(award.closesAt)"
+                :accent="ink"
+              />
             </div>
           </div>
 

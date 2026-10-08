@@ -165,7 +165,7 @@ function paidFeatures(a: Partial<Award>) {
   const look = (a.look ?? {}) as Record<string, unknown>
   return (
     (a.nominations?.length ?? 0) > 5 ||
-    ['theme', 'accent', 'font', 'coverUrl', 'logoUrl'].some((k) => look[k]) ||
+    ['theme', 'accent', 'font', 'coverUrl', 'logoUrl', 'hideLogo'].some((k) => look[k]) ||
     (a.nominations ?? []).some((n) => n.nominees.some((x) => x.kind === 'media'))
   )
 }
@@ -263,12 +263,17 @@ export async function demoApi(url: string, opts: { method?: string; body?: unkno
       if (a.offline) fail(404, 'No such awards')
       if (a.closedAt || (a.closesAt && Date.parse(a.closesAt) < Date.now())) fail(409, 'Voting is closed')
       if (a.opensAt && Date.parse(a.opensAt) > Date.now()) fail(409, 'Voting has not opened yet')
-      if (mine) fail(409, 'You have already voted here')
       const picks = ((body ?? {}).picks ?? {}) as Record<string, string>
       if (!Object.keys(picks).length) fail(400, 'Pick at least one')
-      show.ballots.push({ userId: u2.id, picks, at: now() })
+      const onBallot = (nom: string, who: string) => a.nominations.some((n) => n.id === nom && n.nominees.some((x) => x.id === who))
+      if (!Object.entries(picks).every(([nom, who]) => onBallot(nom, who))) fail(400, 'That nominee is not on this ballot')
+      // as the server: a second submit only fills the categories skipped the first time
+      const fresh = Object.entries(picks).filter(([nom]) => !mine?.picks[nom])
+      if (!fresh.length) fail(409, 'You have already voted in these categories')
+      if (mine) Object.assign(mine.picks, Object.fromEntries(fresh))
+      else show.ballots.push({ userId: u2.id, picks, at: now() })
       save(db)
-      return { picks: Object.keys(picks).length }
+      return { picks: fresh.length }
     }
     if (action === 'tally') return { tally: tally(show), isHost }
     if (action === 'offline') {
