@@ -9,11 +9,20 @@ export default defineNuxtPlugin((nuxtApp) => {
 
   let lenis: { destroy: () => void; raf: (t: number) => void } | null = null
   let tick: ((t: number) => void) | null = null
+  // start() waits on an import, and the first page load calls it twice (mounted,
+  // then the router's afterEach). Without this the second call made a second
+  // Lenis, stop() only ever destroyed one, and the orphan kept scrolling the next
+  // page - /ideas opened at its bottom (review 2026-10-08, the bug's real cause).
+  let starting = false
 
   async function start() {
-    if (lenis) return
+    if (lenis || starting) return
+    starting = true
     const { gsap, ScrollTrigger } = useGsap()
     const { default: Lenis } = await import('lenis')
+    starting = false
+    // left the landing while the import was on its way
+    if (useRoute().path !== '/') return
     const instance = new Lenis({ duration: 1.05, smoothWheel: true })
     instance.on('scroll', ScrollTrigger.update)
     tick = (time: number) => instance.raf(time * 1000)
