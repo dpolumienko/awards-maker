@@ -34,12 +34,14 @@ const instant = z
   .nullable()
   .optional()
 
+// an uploads path we handed out, never a data: URL - see server/api/uploads.post.ts
+const uploadPath = z.string().max(512).regex(/^\/uploads\/[\w-]+\/[\w.-]+$/)
+
 export const nomineeSchema = z.object({
   kind: z.enum(['channel', 'text', 'media']),
   text: z.string().max(191).optional(),
   url: webUrl.optional(),
-  // an uploads path we handed out, never a data: URL - see server/api/uploads.post.ts
-  image: z.string().max(512).regex(/^\/uploads\/[\w-]+\/[\w.-]+$/).or(z.literal('')).optional(),
+  image: uploadPath.or(z.literal('')).optional(),
   channel: z
     .object({
       name: z.string().max(191),
@@ -77,7 +79,10 @@ export const ballotSchema = z.object({
 export const ceremonySchema = z.object({
   stage: z.string().max(64),
   font: z.string().max(64),
-  reveal: z.enum(['cut', 'spotlight', 'flip']),
+  reveal: z.enum(['cut', 'spotlight', 'flip', 'slot', 'stamp', 'typewriter', 'curtain']),
+  image: uploadPath.optional(),
+  partners: z.boolean().optional(),
+  counts: z.boolean().optional(),
 })
 
 export const reportSchema = z.object({

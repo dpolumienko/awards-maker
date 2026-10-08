@@ -34,7 +34,7 @@ useDisplayFonts(DISPLAY_FONTS)
 
 const route = useRoute()
 const slug = computed(() => String(route.params.slug))
-const { closeVoting, publishResults, setOffline } = useVoting()
+const { closeVoting, publishResults, setOffline, setHideCounts } = useVoting()
 const { data, refresh } = await useAwardPage(() => slug.value)
 
 const root = ref<HTMLElement | null>(null)
@@ -158,6 +158,17 @@ async function onDesk(a: DeskAction) {
   }
 }
 
+/** The public page with or without the vote counts - places stay either way. */
+async function onCounts(hidden: boolean) {
+  deskBusy.value = true
+  try {
+    await setHideCounts(slug.value, hidden)
+    await refresh()
+  } finally {
+    deskBusy.value = false
+  }
+}
+
 // taken offline outranks the phase: it is what a viewer would run into
 const badge = computed(() => (award.value?.offline ? { tone: 'ended' as const, text: 'Offline' } : badges[phase.value]))
 
@@ -223,7 +234,9 @@ useSeoMeta({
         :offline="!!award.offline"
         :slug="award.slug ?? slug"
         :closes-label="fmt(award.closesAt)"
+        :hide-counts="!!award.hideCounts"
         @act="onDesk"
+        @counts="onCounts"
       />
 
       <!-- nothing to chart yet: say it once and hand over the link -->
@@ -390,6 +403,20 @@ useSeoMeta({
             <UiButton :to="`/my-awards/${award.slug}/reveal`" variant="ghost" size="sm" class="w-full">Run the ceremony</UiButton>
             <UiButton :to="`/a/${award.slug}`" variant="ghost" size="sm" class="w-full">Open public page</UiButton>
           </div>
+          <!-- once voting is shut: the winners with or without the numbers -->
+          <label v-if="phase !== 'open' && phase !== 'soon'" class="mt-5 flex cursor-pointer items-start gap-3 border-t border-hair pt-4 text-sm">
+            <input
+              type="checkbox"
+              :checked="!award.hideCounts"
+              :disabled="deskBusy"
+              class="mt-0.5 h-5 w-5 flex-none rounded-btn border border-hair2 bg-s2 accent-gold focus:shadow-focus focus:outline-none"
+              @change="onCounts(!($event.target as HTMLInputElement).checked)"
+            />
+            <span>
+              <b class="font-semibold">Show the vote counts</b>
+              <span class="block text-ink-muted">Off: the public page names the winners and the order, without votes or %.</span>
+            </span>
+          </label>
         </div>
 
         <div class="js-reveal rounded-card border border-hair bg-s1 p-5 sm:p-6">

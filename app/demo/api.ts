@@ -11,6 +11,7 @@
 // Shows prerendered into the demo from the real database are read-only here:
 // their data is in the page, not in this store, so voting on them answers 404.
 import { slugify } from '#shared/slug'
+import { ranksOnly } from '#shared/tally'
 import { searchChannels } from '~/data/channels.mock'
 import type { Award } from '~/types/award'
 
@@ -34,7 +35,7 @@ interface Show {
   award: Award
   ownerId: number
   ballots: Ballot[]
-  ceremony: { stage: string; font: string; reveal: string } | null
+  ceremony: { stage: string; font: string; reveal: string; image?: string; partners?: boolean; counts?: boolean } | null
 }
 interface Db {
   user: DemoUser | null
@@ -253,7 +254,7 @@ export async function demoApi(url: string, opts: { method?: string; body?: unkno
         award: show.award,
         isHost,
         ballot: mine ? { at: mine.at, picks: mine.picks } : null,
-        tally: isHost || show.award.resultsAt ? t : null,
+        tally: isHost || show.award.resultsAt ? (show.award.hideCounts && !isHost ? ranksOnly(t) : t) : null,
         voters: t.voters,
       }
     }
@@ -276,6 +277,12 @@ export async function demoApi(url: string, opts: { method?: string; body?: unkno
       return { picks: fresh.length }
     }
     if (action === 'tally') return { tally: tally(show), isHost }
+    if (action === 'counts') {
+      needUser()
+      show.award.hideCounts = !!(body ?? {}).hidden
+      save(db)
+      return { ok: true, hidden: show.award.hideCounts }
+    }
     if (action === 'offline') {
       needUser()
       show.award.offline = !!(body ?? {}).offline

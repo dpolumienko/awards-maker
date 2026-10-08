@@ -120,5 +120,9 @@ export function useVoting() {
   const setOffline = (slug: string, offline: boolean) =>
     $fetch(`/api/awards/${encodeURIComponent(slug)}/offline`, { method: 'POST', body: { offline } })
 
-  return { castBallot, closeVoting, publishResults, setOffline }
+  /** Keeps the vote counts off the public page (places only), or puts them back. */
+  const setHideCounts = (slug: string, hidden: boolean) =>
+    $fetch(`/api/awards/${encodeURIComponent(slug)}/counts`, { method: 'POST', body: { hidden } })
+
+  return { castBallot, closeVoting, publishResults, setOffline, setHideCounts }
 }

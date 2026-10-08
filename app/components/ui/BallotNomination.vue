@@ -24,6 +24,7 @@ const {
   picked = null,
   results = [],
   votesIn = 0,
+  numbers = true,
 } = defineProps<{
   nomination: Nomination
   index: number
@@ -33,6 +34,8 @@ const {
   picked?: string | null
   results?: Result[]
   votesIn?: number
+  /** false: the host hid the counts - places and the winner, no votes, no bars, no % */
+  numbers?: boolean
 }>()
 
 const emit = defineEmits<{ pick: [string] }>()
@@ -71,7 +74,7 @@ function onKey(e: KeyboardEvent, i: number) {
       <span aria-hidden="true" class="tnum text-sm font-bold" :style="{ color: ink }">{{ num }}</span>
       <h2 :id="'nom-' + nomination.id" class="text-xl font-semibold">{{ nomination.title }}</h2>
       <span class="ml-auto text-sm text-ink-muted">
-        <template v-if="mode === 'results'">{{ votesIn }} {{ votesIn === 1 ? 'vote' : 'votes' }}</template>
+        <template v-if="mode === 'results'">{{ numbers ? `${votesIn} ${votesIn === 1 ? 'vote' : 'votes'}` : '' }}</template>
         <template v-else-if="picked">{{ mode === 'vote' ? 'Picked' : 'Your pick' }}</template>
         <template v-else-if="mode === 'vote'">Pick one</template>
       </span>
@@ -87,6 +90,7 @@ function onKey(e: KeyboardEvent, i: number) {
         :style="r.top ? { borderColor: accent } : undefined"
       >
         <span
+          v-if="numbers"
           aria-hidden="true"
           class="absolute inset-y-0 left-0 w-full origin-left transition-transform duration-700 ease-gala"
           :style="{ transform: `scaleX(${r.pct / 100})`, background: accent, opacity: r.top ? 0.18 : 0.08 }"
@@ -107,7 +111,7 @@ function onKey(e: KeyboardEvent, i: number) {
           >
             {{ winners.length > 1 ? 'Tied' : 'Winner' }}
           </span>
-          <span class="tnum flex-none text-sm" :class="r.top ? 'ml-3 font-bold text-ink' : 'ml-auto text-ink-muted'">
+          <span v-if="numbers" class="tnum flex-none text-sm" :class="r.top ? 'ml-3 font-bold text-ink' : 'ml-auto text-ink-muted'">
             {{ r.pct }}%
           </span>
         </span>

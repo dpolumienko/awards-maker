@@ -13,13 +13,18 @@
 import { computed, ref } from 'vue'
 
 export type DeskAction = 'close' | 'publish' | 'offline' | 'online' | 'delete' | 'ceremony'
-const { phase, offline, slug, closesLabel } = defineProps<{
+const { phase, offline, slug, closesLabel, hideCounts = false } = defineProps<{
   phase: 'soon' | 'open' | 'capped' | 'counting' | 'revealed'
   offline: boolean
   slug: string
   closesLabel: string
+  /** the public page shows places only (review 2026-10-08) */
+  hideCounts?: boolean
 }>()
-const emit = defineEmits<{ act: [DeskAction] }>()
+/** `counts` carries the new hidden state */
+const emit = defineEmits<{ act: [DeskAction]; counts: [boolean] }>()
+// once voting is shut the host decides whether the page prints the numbers
+const closed = computed(() => phase === 'counting' || phase === 'capped' || phase === 'revealed')
 const busy = defineModel<boolean>('busy', { default: false })
 
 const main = computed(() => {
@@ -64,6 +69,18 @@ defineExpose({ ask })
         @click="ask(offline ? 'online' : 'offline')"
       >
         <span class="sd-track" aria-hidden="true" />Public page {{ offline ? 'offline' : 'online' }}
+      </button>
+      <!-- reversible and quiet, so no dialog: it flips -->
+      <button
+        v-if="closed"
+        type="button"
+        role="switch"
+        class="sd-switch"
+        :aria-checked="!hideCounts"
+        :disabled="busy"
+        @click="emit('counts', !hideCounts)"
+      >
+        <span class="sd-track" aria-hidden="true" />Vote counts {{ hideCounts ? 'hidden' : 'shown' }}
       </button>
       <p class="sd-note">{{ main.line }}</p>
     </div>

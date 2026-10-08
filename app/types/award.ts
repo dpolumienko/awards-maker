@@ -63,6 +63,8 @@ export interface Award {
   publishedAt?: string
   /** taken offline by its host: kept, but answered to the host only */
   offline?: boolean
+  /** the public page shows the winners without vote counts or percentages */
+  hideCounts?: boolean
 }
 
 /**

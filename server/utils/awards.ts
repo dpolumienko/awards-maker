@@ -44,12 +44,14 @@ export interface AwardRow {
   results_at: string | null
   /** set while the host has taken the show offline */
   offline_at: string | null
+  /** 1 = the public page gets places, not vote counts */
+  hide_counts: number
   published_at: string | null
 }
 
 const AWARD_COLUMNS = `id, owner_id, slug, status, tier, name, description, template_id,
   opens_at, closes_at, ceremony_at, timezone, look, host_name, host_platform,
-  closed_at, results_at, offline_at, published_at`
+  closed_at, results_at, offline_at, hide_counts, published_at`
 
 /** mysql2 hands JSON back parsed on some server versions and as text on others. */
 function readLook(value: AwardRow['look']): Record<string, unknown> {
@@ -130,6 +132,7 @@ export async function hydrate(row: AwardRow) {
     closedAt: fromDbDateTime(row.closed_at) || undefined,
     resultsAt: fromDbDateTime(row.results_at) || undefined,
     offline: !!row.offline_at,
+    hideCounts: !!row.hide_counts,
     publishedAt: fromDbDateTime(row.published_at) || undefined,
     partners: partners.map((p) => ({ id: String(p.id), name: p.name, url: p.url })),
     nominations: nominations.map((m) => ({
@@ -338,6 +341,10 @@ export async function publishAward(awardId: number, slug: string, tier: 'free' |
 /** Pulls a published show off the web, or puts it back. Nothing else changes. */
 export async function setOffline(awardId: number, offline: boolean) {
   await query(`UPDATE awards SET offline_at = ${offline ? 'NOW()' : 'NULL'} WHERE id = ?`, [awardId])
+}
+
+export async function setHideCounts(awardId: number, hidden: boolean) {
+  await query(`UPDATE awards SET hide_counts = ? WHERE id = ?`, [hidden ? 1 : 0, awardId])
 }
 
 export async function deleteAward(awardId: number) {

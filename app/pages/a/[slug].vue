@@ -554,6 +554,7 @@ if (award.value && !thin.value) {
                 :mode="mode === 'vote' && cast[n.id] ? 'locked' : mode"
                 :picked="shown[n.id] ?? null"
                 :results="mode === 'results' ? resultsOf(tally, n) : []"
+                :numbers="!award.hideCounts"
                 :votes-in="votesInOf(tally, n)"
                 @pick="picks[n.id] = $event"
               />
