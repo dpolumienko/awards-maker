@@ -156,18 +156,9 @@
 :root[data-version='zine'][data-ink='night'] select {
   color-scheme: dark !important;
 }
-/* On black, multiply would print nothing: the pen adds light instead, and the
-   pink plate goes under the blue one, so the headline still reads blue with a
-   pink misregister, as it does on paper. */
+/* On black, multiply would print nothing: the pen adds light instead */
 :root[data-ink='night'] .zine-pen-line {
   mix-blend-mode: screen;
-}
-:root[data-ink='night'] .zine-plate {
-  color: rgb(var(--gold-text));
-}
-:root[data-ink='night'] .zine-plate::after {
-  z-index: -1;
-  mix-blend-mode: normal;
 }
 /* blue type on black takes the lighter blue, so it reads under the dimmed room too */
 :root[data-ink='night'] :is(.zl-h1, .zl-h2, .zi-h, .zh-h, .zb2-h, .zv-cat, .zh-card-body b, .zc-mark, .idea-title) {
@@ -262,23 +253,6 @@
   .zine-pen-line.is-inked {
     animation: none;
   }
-}
-
-/* ---------------------------------------------------------------- two plates */
-
-.zine-plate {
-  position: relative;
-  isolation: isolate;
-  color: rgb(var(--gold));
-}
-.zine-plate::after {
-  content: attr(data-text);
-  position: absolute;
-  inset: 0;
-  color: rgb(var(--pink));
-  transform: translate(0.045em, 0.035em);
-  mix-blend-mode: multiply;
-  pointer-events: none;
 }
 
 /* ---------------------------------------------------------------- stamps */

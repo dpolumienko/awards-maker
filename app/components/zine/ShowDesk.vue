@@ -94,23 +94,24 @@ defineExpose({ ask })
 
 <style scoped>
 .sd { display: grid; margin-top: 24px; border: 2.5px solid rgb(var(--ink)); }
-@media (min-width: 1024px) { .sd { grid-template-columns: 260px repeat(3, minmax(0, 1fr)); } }
-.sd-air { display: grid; align-content: space-between; gap: 18px; padding: 18px; background: rgb(var(--ink)); color: rgb(var(--canvas)); }
-.sd-lamp { display: flex; align-items: center; gap: 10px; font: 900 22px/1 var(--font-display), sans-serif; font-stretch: 125%; text-transform: uppercase; }
-.sd-lamp i { width: 14px; height: 14px; border-radius: 50%; background: rgb(var(--pink)); animation: sd-blink 1.6s infinite; }
+/* compact: a control strip, not a hero (review 2026-10-08: the keys were huge) */
+@media (min-width: 1024px) { .sd { grid-template-columns: 220px repeat(3, minmax(0, 1fr)); } }
+.sd-air { display: grid; align-content: space-between; gap: 10px; padding: 12px 16px; background: rgb(var(--ink)); color: rgb(var(--canvas)); }
+.sd-lamp { display: flex; align-items: center; gap: 8px; font: 900 16px/1 var(--font-display), sans-serif; font-stretch: 125%; text-transform: uppercase; }
+.sd-lamp i { width: 10px; height: 10px; border-radius: 50%; background: rgb(var(--pink)); animation: sd-blink 1.6s infinite; }
 .sd-lamp.is-off i { background: rgb(var(--ink-muted)); animation: none; }
 @keyframes sd-blink { 50% { opacity: 0.35; } }
-.sd-note { margin-bottom: 10px; font-size: 13px; opacity: 0.8; }
+.sd-note { margin-bottom: 8px; font-size: 12px; opacity: 0.8; }
 .sd-switch { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 700; color: inherit; }
-.sd-track { position: relative; width: 52px; height: 28px; border: 2px solid rgb(var(--canvas)); }
-.sd-track::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; background: rgb(var(--canvas)); transition: transform 0.2s; }
+.sd-track { position: relative; width: 44px; height: 24px; border: 2px solid rgb(var(--canvas)); }
+.sd-track::after { content: ''; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; background: rgb(var(--canvas)); transition: transform 0.2s; }
 .sd-switch[aria-checked='true'] .sd-track { background: rgb(var(--gold)); border-color: rgb(var(--gold)); }
-.sd-switch[aria-checked='true'] .sd-track::after { transform: translateX(24px); background: #fff; }
+.sd-switch[aria-checked='true'] .sd-track::after { transform: translateX(20px); background: #fff; }
 .sd-switch:focus-visible { outline: 3px solid rgb(var(--gold)); outline-offset: 3px; }
-.sd-key { display: grid; align-content: space-between; gap: 14px; min-height: 170px; padding: 18px; text-align: left; border-top: 2.5px solid rgb(var(--ink)); color: rgb(var(--ink)); text-decoration: none; transition: background-color 0.15s, color 0.15s; }
+.sd-key { display: grid; align-content: space-between; gap: 6px; padding: 12px 16px; text-align: left; border-top: 2.5px solid rgb(var(--ink)); color: rgb(var(--ink)); text-decoration: none; transition: background-color 0.15s, color 0.15s; }
 @media (min-width: 1024px) { .sd-key { border-top: 0; border-left: 2.5px solid rgb(var(--ink)); } }
-.sd-key b { font-size: 22px; line-height: 1; text-transform: uppercase; }
-.sd-key span { font-size: 13px; color: rgb(var(--ink-2)); }
+.sd-key b { font-size: 16px; line-height: 1.05; text-transform: uppercase; }
+.sd-key span { font-size: 12px; color: rgb(var(--ink-2)); }
 .sd-key:hover:not(:disabled):not(.is-off), .sd-key:focus-visible { background: rgb(var(--ink)); color: rgb(var(--canvas)); }
 .sd-key:hover:not(:disabled):not(.is-off) span, .sd-key:focus-visible span { color: rgb(var(--canvas) / 0.75); }
 .sd-key.is-main { background: rgb(var(--gold)); color: #fff; }

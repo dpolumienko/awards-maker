@@ -8,7 +8,7 @@ import UiDateTimeField from '~/components/ui/UiDateTimeField.vue'
 import UiTextarea from '~/components/ui/UiTextarea.vue'
 import UiButton from '~/components/ui/UiButton.vue'
 import SignInButtons from '~/components/ui/SignInButtons.vue'
-import BuilderTickets from '~/components/zine/BuilderTickets.vue'
+import BuilderTickets, { type BuilderStep } from '~/components/zine/BuilderTickets.vue'
 import { useVersion } from '~/composables/useVersion'
 import NominationCard from '~/components/ui/NominationCard.vue'
 import AwardPreview from '~/components/ui/AwardPreview.vue'
@@ -62,8 +62,9 @@ async function createDemoAward() {
     await useUserSession().fetch()
     draft.value = demoAward(DEMO_USER.name)
     await nextTick()
-    if (isV2.value) return goStep('cats')
-    document.getElementById('nominations')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    // v2 shows the filled categories step; elsewhere the page stays put - jumping
+    // 2 500 px down to the nominations read as a broken anchor (review 2026-10-08)
+    if (isV2.value) goStep('cats')
   } finally {
     demoBusy.value = false
   }
@@ -135,19 +136,30 @@ const STEPS = [
 type StepId = (typeof STEPS)[number]['id']
 const step = ref<StepId>('show')
 const visited = ref(new Set<StepId>(['show']))
-const ok = (id: string) => !!checks.value.find((c) => c.id === id)?.ok
-const tickets = computed(() =>
-  STEPS.map((s) => ({
-    ...s,
-    done: {
-      show: ok('name') && ok('description'),
-      cats: ok('nominations') && ok('nominees'),
-      when: ok('dates') && visited.value.has('when'),
-      look: visited.value.has('look') && step.value !== 'look',
-      go: false,
-    }[s.id],
-  })),
-)
+// what each ticket needs from the publish checks; Look and Publish need nothing
+// of their own (Publish lists every check itself)
+const NEEDS: Record<StepId, string[]> = { show: ['name', 'description'], cats: ['nominations', 'nominees'], when: ['dates'], look: [], go: [] }
+/** a ticket that just got something from another step - a pack picked on the first */
+const flashed = ref<StepId | null>(null)
+const tickets = computed(() => {
+  const titled = draft.value.nominations.filter((n) => n.title.trim()).length
+  return STEPS.map((s) => {
+    const short = checks.value.filter((c) => NEEDS[s.id].includes(c.id) && !c.ok).map((c) => c.label)
+    const left = visited.value.has(s.id) && step.value !== s.id
+    const state: BuilderStep['state'] =
+      s.id === 'go' ? 'todo'
+      : short.length ? (left ? 'missing' : 'todo')
+      : NEEDS[s.id].length && s.id !== 'when' ? 'done'
+      : left ? 'done' : 'todo'
+    return {
+      ...s,
+      sub: s.id === 'cats' && titled ? `${titled} added, ${s.sub.toLowerCase()}` : s.sub,
+      state,
+      missing: short.join(', '),
+      flash: flashed.value === s.id,
+    }
+  })
+})
 const stepIndex = computed(() => STEPS.findIndex((s) => s.id === step.value))
 /** Shown in this version's current step - always true outside v2. */
 const at = (...ids: StepId[]) => !isV2.value || ids.includes(step.value)
@@ -183,6 +195,10 @@ function applyTemplate(t: AwardTemplate) {
   // and the Look is paid - so one click on a free-looking preset made the whole
   // show paid (review 2026-09-24: "paid things scare people off at once").
   draft.value.templateId = t.id
+  if (isV2.value) {
+    flashed.value = 'cats'
+    setTimeout(() => (flashed.value = null), 1200)
+  }
 }
 
 /**
@@ -279,45 +295,51 @@ useSeoMeta({
 </script>
 
 <template>
-  <div class="shell py-10">
+  <div class="shell" :class="isV2 ? 'pb-10 pt-6' : 'py-10'">
     <h1 class="heading">Create your own awards show</h1>
-    <p class="mt-3 max-w-copy text-lg text-ink-2">
+    <!-- Night v2 keeps the first step on one screen: no lead, the two strips side by side -->
+    <p v-if="!isV2" class="mt-3 max-w-copy text-lg text-ink-2">
       Start from a pack or write your own categories, nominate any channel or meme, and publish a page your viewers
       vote on.
     </p>
 
-    <!-- demo build only: skip Twitch and fill everything in -->
-    <div
-      v-if="demo"
-      class="mt-8 flex flex-wrap items-center gap-4 rounded-card border border-dashed border-gold-24 bg-gold/[0.06] p-5"
-    >
-      <p class="text-sm text-ink-2">
-        <b class="text-ink">Demo.</b> Signs you in as a test host and fills a show with every feature:
-        channels, images, clips, cover, partners, dates. Then publish, vote, close and run the ceremony.
-      </p>
-      <UiButton class="ml-auto" :disabled="demoBusy" @click="createDemoAward">Create demo award</UiButton>
-    </div>
+    <div :class="isV2 && 'mt-6 grid gap-3 lg:grid-cols-2'">
+      <!-- demo build only: skip Twitch and fill everything in -->
+      <div
+        v-if="demo"
+        class="flex flex-wrap items-center gap-4 rounded-card border border-dashed border-gold-24 bg-gold/[0.06]"
+        :class="isV2 ? 'p-3' : 'mt-8 p-5'"
+      >
+        <p v-if="isV2" class="min-w-0 flex-1 text-sm text-ink-2"><b class="text-ink">Demo.</b> A test host and a show with every feature.</p>
+        <p v-else class="min-w-0 flex-1 text-sm text-ink-2">
+          <b class="text-ink">Demo.</b> Signs you in as a test host and fills a show with every feature:
+          channels, images, clips, cover, partners, dates. Then publish, vote, close and run the ceremony.
+        </p>
+        <UiButton class="ml-auto" :disabled="demoBusy" @click="createDemoAward">Create demo award</UiButton>
+      </div>
 
-    <!-- signed out: nothing is blocked except publishing, the way the flow was designed -->
-    <div
-      v-if="!signedIn"
-      id="host-signin"
-      class="mt-8 flex flex-wrap items-center gap-4 rounded-card border border-hair bg-s1 p-5"
-    >
-      <p class="text-sm text-ink-2">
-        You can build the whole thing first. A Twitch or Kick login is asked when you publish.
-      </p>
-      <SignInButtons class="ml-auto" @choose="signInAsHost" />
-    </div>
+      <!-- signed out: nothing is blocked except publishing, the way the flow was designed -->
+      <div
+        v-if="!signedIn"
+        id="host-signin"
+        class="flex flex-wrap items-center gap-4 rounded-card border border-hair bg-s1"
+        :class="isV2 ? 'p-3' : 'mt-8 p-5'"
+      >
+        <p class="min-w-0 flex-1 text-sm text-ink-2">
+          {{ isV2 ? 'Login is asked when you publish.' : 'You can build the whole thing first. A Twitch or Kick login is asked when you publish.' }}
+        </p>
+        <SignInButtons class="ml-auto" @choose="signInAsHost" />
+      </div>
 
-    <!-- signed in: the channel the awards belong to -->
-    <div v-else class="mt-8 flex flex-wrap items-center gap-3 rounded-card border border-hair bg-s1 p-4">
-      <span aria-hidden="true" class="grid h-9 w-9 place-items-center rounded-pill bg-s3 text-xs font-bold text-ink-muted">
-        {{ draft.host.name.slice(0, 2).toUpperCase() }}
-      </span>
-      <span class="font-semibold">{{ draft.host.name }}</span>
-      <PlatformDot :platform="draft.host.platform" />
-      <span class="micro ml-auto">Building awards for this channel</span>
+      <!-- signed in: the channel the awards belong to -->
+      <div v-else class="flex flex-wrap items-center gap-3 rounded-card border border-hair bg-s1" :class="isV2 ? 'p-3' : 'mt-8 p-4'">
+        <span aria-hidden="true" class="grid h-9 w-9 place-items-center rounded-pill bg-s3 text-xs font-bold text-ink-muted">
+          {{ draft.host.name.slice(0, 2).toUpperCase() }}
+        </span>
+        <span class="font-semibold">{{ draft.host.name }}</span>
+        <PlatformDot :platform="draft.host.platform" />
+        <span class="micro ml-auto">Building awards for this channel</span>
+      </div>
     </div>
 
     <!-- mobile switch between the form and the preview -->
@@ -337,7 +359,7 @@ useSeoMeta({
     </div>
 
     <!-- Night v2: the steps, as tickets -->
-    <BuilderTickets v-if="isV2" id="builder" class="mt-8 scroll-mt-24" :steps="tickets" :current="step" @go="goStep" />
+    <BuilderTickets v-if="isV2" id="builder" class="mt-6 scroll-mt-24" :steps="tickets" :current="step" @go="goStep" />
 
     <!-- the form is where the work is; the preview is read-only and can be narrower -->
     <div class="mt-8 grid items-start gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
@@ -347,13 +369,15 @@ useSeoMeta({
           v-show="at('show')"
           :used="nominationsUsed"
           :active="draft.templateId"
+          :compact="isV2"
           @apply="applyTemplate"
           @add-idea="addIdea"
         />
 
         <section v-show="at('show', 'when')" class="rounded-card border border-hair bg-s1 p-6">
-          <h2 class="text-xl font-semibold">{{ isV2 && step === 'when' ? 'Schedule' : 'The basics' }}</h2>
-          <div class="mt-5 space-y-5">
+          <!-- in Night v2 the ticket above already names the step -->
+          <h2 v-if="!isV2" class="text-xl font-semibold">The basics</h2>
+          <div class="space-y-5" :class="!isV2 && 'mt-5'">
             <UiField
               v-show="at('show')"
               v-model="draft.name"
@@ -370,6 +394,7 @@ useSeoMeta({
               label="Description"
               placeholder="What these awards are for, and who votes."
               :limit="FIELD.descriptionLimit"
+              :rows="isV2 ? 2 : 4"
               helper="A description is required before publishing. Two sentences is plenty."
             />
             <!-- dates are moments in the show's zone, not whole days (review 2026-09-24) -->

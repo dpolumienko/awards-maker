@@ -10,8 +10,9 @@ import UiButton from '~/components/ui/UiButton.vue'
 import { IDEA_GROUPS, IDEA_TOTAL } from '~/data/ideas'
 import { TEMPLATES } from '~/data/templates'
 
-// each stamp opens its group on /ideas, which is why the band pauses on hover
-const ideas = IDEA_GROUPS.flatMap((g) => g.items.slice(0, 6).map((name) => ({ name, to: `/ideas#${g.id}` })))
+// breadth, not targets: the stamps just run past, nothing to click or pause for;
+// the packs under them are what you click (review 2026-10-08)
+const ideas = IDEA_GROUPS.flatMap((g) => g.items.slice(0, 6))
 // a pack is a kind of show, said in a line - the marquee above is the list
 const PACK_LINES: Record<string, string> = {
   classics: 'The categories every streaming award show runs.',
@@ -28,10 +29,10 @@ const PACK_LINES: Record<string, string> = {
 
     <div class="zi-band">
       <ul class="zi-run">
-        <li v-for="(idea, i) in ideas" :key="idea.name"><NuxtLink :to="idea.to" :class="`t${i % 4}`">{{ idea.name }}</NuxtLink></li>
+        <li v-for="(idea, i) in ideas" :key="idea" :class="`t${i % 4}`">{{ idea }}</li>
       </ul>
       <ul class="zi-run" aria-hidden="true">
-        <li v-for="(idea, i) in ideas" :key="idea.name"><NuxtLink :to="idea.to" :class="`t${i % 4}`" tabindex="-1">{{ idea.name }}</NuxtLink></li>
+        <li v-for="(idea, i) in ideas" :key="idea" :class="`t${i % 4}`">{{ idea }}</li>
       </ul>
     </div>
 
@@ -54,13 +55,10 @@ const PACK_LINES: Record<string, string> = {
 .zi { padding: 72px 0; border-top: 2px solid rgb(var(--ink)); overflow: hidden; }
 .zi-h { max-width: 14ch; font-size: clamp(36px, 5vw, 60px); line-height: 0.9; text-transform: uppercase; color: rgb(var(--gold)); text-wrap: balance; }
 
-/* the marquee: stamps running past, slowed on hover so one can be read */
+/* the marquee: stamps running past */
 .zi-band { display: flex; margin: 40px 0; padding: 18px 0; border-block: 2.5px solid rgb(var(--ink)); background: radial-gradient(circle, rgb(var(--gold) / 0.25) 46%, transparent 48%) 0 0 / 9px 9px, rgb(var(--s2)); }
 .zi-run { display: flex; flex: none; gap: 18px; margin: 0; padding: 0 9px; list-style: none; animation: zi-run 70s linear infinite; }
-.zi-band:hover .zi-run, .zi-band:focus-within .zi-run { animation-play-state: paused; }
-.zi-run li { flex: none; }
-.zi-run a { display: block; padding: 8px 14px 7px; border: 3px double currentColor; background: rgb(var(--canvas)); font: 800 15px/1 var(--font-display), sans-serif; font-stretch: 115%; letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; text-decoration: none; transition: background-color 0.15s; }
-.zi-run a:hover { background: rgb(var(--s2)); }
+.zi-run li { flex: none; padding: 8px 14px 7px; border: 3px double currentColor; background: rgb(var(--canvas)); font: 800 15px/1 var(--font-display), sans-serif; font-stretch: 115%; letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; }
 .zi-run .t0 { color: rgb(var(--gold-text)); transform: rotate(-2deg); }
 .zi-run .t1 { color: rgb(var(--ink)); transform: rotate(1.5deg); }
 .zi-run .t2 { color: rgb(var(--pink-ink)); transform: rotate(-1deg); }

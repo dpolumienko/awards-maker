@@ -15,15 +15,18 @@ const t = ref(0)
 useLiveLoop(root, 450, () => (t.value += 1))
 
 // a query types itself, then its results land; t = 0 is the resting state
-const QUERIES = [
-  { q: 'kai', hits: [{ name: 'KaiCenat', kind: 'Twitch', p: 'twitch' as const }] },
-  { q: 'the 3am raid', hits: [{ name: 'the 3am raid', kind: 'Clip', p: null }, { name: 'the 3am raid', kind: 'Text', p: null }] },
-  { q: 'speed', hits: [{ name: 'ishowspeed', kind: 'YouTube', p: 'youtube' as const }] },
+// a channel, a clip, an image - every kind of nominee shows up in turn
+// (review 2026-10-08: clips and images were not visible as options)
+type Hit = { name: string; kind: string; p?: 'twitch' | 'kick' | 'youtube'; thumb?: 'clip' | 'image' }
+const QUERIES: { q: string; hits: Hit[] }[] = [
+  { q: 'the 3am raid', hits: [{ name: 'The 3am raid', kind: 'Clip', thumb: 'clip' }, { name: 'the 3am raid', kind: 'Text' }] },
+  { q: 'kai', hits: [{ name: 'KaiCenat', kind: 'Twitch', p: 'twitch' }, { name: 'kai_clutch.png', kind: 'Image', thumb: 'image' }] },
+  { q: 'pogfrog', hits: [{ name: 'PogFrog', kind: 'Image', thumb: 'image' }, { name: 'PogFrog moment', kind: 'Clip', thumb: 'clip' }] },
 ]
 const qi = computed(() => Math.floor(t.value / 14) % QUERIES.length)
 const qt = computed(() => t.value % 14)
-const query = computed(() => (t.value === 0 ? QUERIES[1]!.q : QUERIES[qi.value]!.q.slice(0, qt.value * 2)))
-const hits = computed(() => (t.value === 0 ? QUERIES[1]!.hits : qt.value >= 8 ? QUERIES[qi.value]!.hits : []))
+const query = computed(() => (t.value === 0 ? QUERIES[0]!.q : QUERIES[qi.value]!.q.slice(0, qt.value * 2)))
+const hits = computed(() => (t.value === 0 ? QUERIES[0]!.hits : qt.value >= 8 ? QUERIES[qi.value]!.hits : []))
 
 const PLATS = ['twitch', 'kick', 'youtube'] as const
 </script>
@@ -39,7 +42,11 @@ const PLATS = ['twitch', 'kick', 'youtube'] as const
           <div class="zb2-art" aria-hidden="true">
             <p class="zb2-search"><span>&#8981;</span>{{ query }}<i class="zb2-caret" /></p>
             <TransitionGroup name="zb2-drop" tag="ul" class="zb2-hits">
-              <li v-for="h in hits" :key="qi + h.kind"><PlatformDot v-if="h.p" :platform="h.p" :label="false" :size="14" /><b>{{ h.name }}</b><small>{{ h.kind }}</small></li>
+              <li v-for="h in hits" :key="qi + h.kind">
+                <span v-if="h.thumb" class="zb2-thumb" :class="`is-${h.thumb}`" />
+                <PlatformDot v-else-if="h.p" :platform="h.p" :label="false" :size="14" />
+                <b>{{ h.name }}</b><small>{{ h.kind }}</small>
+              </li>
             </TransitionGroup>
           </div>
         </article>
@@ -88,6 +95,11 @@ const PLATS = ['twitch', 'kick', 'youtube'] as const
 .zb2-hits { height: 104px; margin: 8px 0 0; padding: 0; list-style: none; display: grid; align-content: start; gap: 6px; }
 .zb2-hits li { display: flex; align-items: center; gap: 10px; height: 46px; padding: 0 14px; border: 2px solid rgb(var(--ink)); background: rgb(var(--canvas)); }
 .zb2-hits b { font-weight: 800; }
+/* a clip and an image get a frame of their own, like in the builder */
+.zb2-thumb { width: 44px; height: 26px; flex: none; border: 1.5px solid rgb(var(--ink)); }
+.zb2-thumb.is-image { background: radial-gradient(circle, rgb(var(--pink)) 46%, transparent 48%) 0 0 / 6px 6px, rgb(var(--gold) / 0.3); }
+.zb2-thumb.is-clip { display: grid; place-items: center; background: #0b0b0d; }
+.zb2-thumb.is-clip::after { content: ''; border-left: 8px solid #f2f2ec; border-block: 5px solid transparent; }
 .zb2-hits small { margin-left: auto; font-size: 13px; color: rgb(var(--ink-muted)); }
 .zb2-drop-enter-from { opacity: 0; transform: translateY(-8px); }
 .zb2-drop-enter-active { transition: opacity 0.25s, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
@@ -96,10 +108,10 @@ const PLATS = ['twitch', 'kick', 'youtube'] as const
 /* the card turns over only when pointed at: feedback, not a loop */
 .zb2-flip { position: relative; height: 120px; perspective: 700px; }
 .zb2-face { position: absolute; inset: 0; display: grid; align-content: center; gap: 8px; padding: 14px; border: 2px solid rgb(var(--ink)); background: rgb(var(--canvas)); backface-visibility: hidden; transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
-.zb2-face span { font: 900 13px/1 var(--font-display), sans-serif; letter-spacing: 0.06em; text-transform: uppercase; color: rgb(var(--gold-text)); }
+.zb2-face > span { font: 900 13px/1 var(--font-display), sans-serif; letter-spacing: 0.06em; text-transform: uppercase; color: rgb(var(--gold-text)); }
 .zb2-face b { font-size: 22px; text-transform: uppercase; overflow-wrap: anywhere; }
 .zb2-back { transform: rotateY(180deg); background: rgb(var(--gold)); color: #fff; }
-.zb2-back span { color: #fff; }
+.zb2-back > span { color: #fff; }
 .zb2-back :deep(.zine-pen-line) { mix-blend-mode: normal; }
 .zb2-card:hover .zb2-face:not(.zb2-back) { transform: rotateY(-180deg); }
 .zb2-card:hover .zb2-back { transform: rotateY(0); }

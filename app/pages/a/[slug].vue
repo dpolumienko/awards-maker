@@ -20,7 +20,6 @@ import ShareCards from '~/components/ui/ShareCards.vue'
 import PartnerChip from '~/components/ui/PartnerChip.vue'
 import CountdownRow from '~/components/ui/CountdownRow.vue'
 import InteractiveAccordion from '~/components/ui/InteractiveAccordion.vue'
-import ZinePlate from '~/components/zine/ZinePlate.vue'
 import { useVersion } from '~/composables/useVersion'
 import { useAwardPage, useCatalogOpen } from '~/composables/useAwards'
 import { emptyTally, phaseOf, resultsOf, useVoting, votesInOf } from '~/composables/useVoting'
@@ -431,11 +430,8 @@ if (award.value && !thin.value) {
 
       <div class="shell pt-8">
         <!-- the masthead is a display moment: two plates in the Fanzine -->
-        <ZinePlate
-          class="display-2"
-          :style="{ fontFamily: headlineFont }"
-          :text="award.name"
-        />
+        <!-- one ink: the two-plate misprint went with the old Fanzine cover (review 2026-10-08) -->
+        <h1 class="display-2" :class="isZine && 'text-gold-text'" :style="{ fontFamily: headlineFont }">{{ award.name }}</h1>
         <span aria-hidden="true" class="mt-4 block h-0.5 w-20" :style="{ background: accent }" />
         <p class="mt-4 max-w-copy text-lg text-ink-2">{{ award.description }}</p>
 

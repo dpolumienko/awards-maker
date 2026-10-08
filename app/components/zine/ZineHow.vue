@@ -6,20 +6,19 @@
 // jump on a click. The step titles and lines are the page's text for search.
 import { computed, ref, watch } from 'vue'
 import ZinePen from './ZinePen.vue'
-import PlatformDot from '~/components/ui/PlatformDot.vue'
 import { useLiveLoop } from '~/composables/useLiveLoop'
 
 const STEPS = [
-  { id: 'build', title: 'Build it', line: 'Categories, nominees from Twitch, Kick and YouTube, or anything typed in.' },
+  { id: 'build', title: 'Build it', line: 'Name it, fill the categories, set the dates and the look. Five short steps.' },
   { id: 'share', title: 'Share the link', line: 'One page per awards. Paste it in chat, it unfolds into a card.' },
   { id: 'reveal', title: 'Reveal it live', line: 'Close voting, then announce each winner on stream.' },
 ] as const
 const CATEGORY = 'Streamer of the year'
-const NOMS = [
-  { name: 'KaiCenat', platform: 'twitch' as const },
-  { name: 'ishowspeed', platform: 'youtube' as const },
-  { name: 'xQc', platform: 'kick' as const },
-]
+// the builder's own steps, walked through two beats each (review 2026-10-08: the
+// scene showed typing nominees, the builder is a run of steps)
+const BUILD = ['The show', 'Categories', 'Schedule', 'Look', 'Publish'] as const
+const CATS = ['Streamer of the year', 'Clip of the year', 'Best emote']
+const INKS = ['0 120 191', '255 72 176', '0 169 92', '255 108 47']
 
 const root = ref<HTMLElement | null>(null)
 const step = ref(0)
@@ -27,11 +26,10 @@ const step = ref(0)
 const beat = ref(99)
 // beats per step: the ceremony gets the longest, each count a full second and
 // more (review 2026-10-08: 3-2-1 went by too fast to read)
-const BEATS = [9, 9, 14]
+const BEATS = [11, 9, 14]
 const URL = 'awards.streamscharts.com/a/chat-awards-2026'
 
-const typed = computed(() => CATEGORY.slice(0, Math.min(CATEGORY.length, beat.value * 4)))
-const shown = computed(() => Math.max(0, Math.min(NOMS.length, beat.value - 4)))
+const buildAt = computed(() => Math.min(BUILD.length - 1, Math.floor(beat.value / 2)))
 const count = computed(() => Math.max(0, 3 - Math.floor(beat.value / 2)))
 const link = computed(() => URL.slice(0, beat.value * 12))
 
@@ -39,10 +37,11 @@ function go(i: number) {
   step.value = i
   beat.value = 0
 }
+// plays only once it is mostly on screen: one moving scene at a time
 const { running } = useLiveLoop(root, 550, () => {
   beat.value += 1
   if (beat.value > BEATS[step.value]!) go((step.value + 1) % STEPS.length)
-})
+}, 0.5)
 // with reduced motion (or before the first tick) every scene sits at its last
 // beat; once the block is on screen the step plays from the top
 watch(running, (on) => (beat.value = on ? 0 : 99))
@@ -64,15 +63,29 @@ watch(running, (on) => (beat.value = on ? 0 : 99))
       </div>
 
       <div class="zh-stage" aria-hidden="true">
-        <!-- 01: the builder fills itself in -->
+        <!-- 01: the builder's steps, as tickets, each panel filling in -->
         <div v-if="step === 0" class="zh-scene zh-build">
-          <p class="zh-label">Category</p>
-          <p class="zh-typed">{{ typed }}<i v-if="typed.length < CATEGORY.length" class="zh-caret" /></p>
-          <p class="zh-label">Nominees</p>
-          <TransitionGroup name="zh-pop" tag="ul" class="zh-noms">
-            <li v-for="n in NOMS.slice(0, shown)" :key="n.name"><PlatformDot :platform="n.platform" :label="false" :size="14" />{{ n.name }}</li>
-          </TransitionGroup>
-          <p class="zh-add">+ Add a nominee</p>
+          <ol class="zh-tix">
+            <li v-for="(t, i) in BUILD" :key="t" :class="{ 'is-on': i === buildAt, 'is-done': i < buildAt }"><span class="tnum">0{{ i + 1 }}</span>{{ t }}</li>
+          </ol>
+          <div :key="buildAt" class="zh-panel zh-in">
+            <template v-if="buildAt === 0">
+              <p class="zh-label">Awards name</p>
+              <p class="zh-typed">Chat Awards 2026</p>
+            </template>
+            <ul v-else-if="buildAt === 1" class="zh-cats">
+              <li v-for="c in CATS" :key="c">{{ c }}<small>3 nominees</small></li>
+            </ul>
+            <template v-else-if="buildAt === 2">
+              <p class="zh-label">Voting closes</p>
+              <p class="zh-typed">Dec 20, 21:00</p>
+            </template>
+            <template v-else-if="buildAt === 3">
+              <p class="zh-label">Ink</p>
+              <p class="zh-inks"><i v-for="(c, k) in INKS" :key="c" :class="k === 1 && 'is-on'" :style="{ background: `rgb(${c})` }" /></p>
+            </template>
+            <p v-else class="zh-go zine-display">Published</p>
+          </div>
         </div>
 
         <!-- 02: the link is pasted and unfolds into its card. Not a chat: the
@@ -123,11 +136,23 @@ watch(running, (on) => (beat.value = on ? 0 : 99))
 .zh-typed { min-height: 1.3em; margin: 6px 0 18px; padding-bottom: 6px; border-bottom: 2px solid rgb(var(--ink)); font: 800 24px/1.2 var(--font-display), sans-serif; font-stretch: 112%; color: rgb(var(--gold-text)); }
 .zh-caret { display: inline-block; width: 2px; height: 0.9em; margin-left: 2px; background: currentColor; vertical-align: -2px; animation: zv-blink 0.8s steps(2) infinite; }
 @keyframes zv-blink { 50% { opacity: 0; } }
-.zh-noms { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
-.zh-noms li { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border: 2px solid rgb(var(--ink)); font-weight: 800; }
-.zh-add { margin-top: 8px; padding: 8px 12px; border: 2px dashed rgb(var(--hair)); font-size: 14px; color: rgb(var(--ink-muted)); }
-.zh-pop-enter-from { opacity: 0; transform: translateX(-14px); }
-.zh-pop-enter-active { transition: opacity 0.3s, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+.zh-build { display: flex; flex-direction: column; gap: 18px; }
+.zh-tix { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; }
+.zh-tix li { display: grid; gap: 2px; padding: 8px 8px 7px; border: 1.5px dashed rgb(var(--ink)); font-size: 11px; font-weight: 800; color: rgb(var(--ink-muted)); transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s; }
+.zh-tix li + li { margin-left: -1.5px; }
+.zh-tix span { font: 900 16px/1 var(--font-display), sans-serif; color: rgb(var(--hair)); }
+.zh-tix li.is-done { color: rgb(var(--ink)); }
+.zh-tix li.is-done span { color: rgb(var(--gold-text)); }
+.zh-tix li.is-on { background: rgb(var(--ink)); color: rgb(var(--canvas)); transform: translateY(-4px); }
+.zh-tix li.is-on span { color: rgb(var(--gold-text)); }
+.zh-panel { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 16px; border: 2px solid rgb(var(--ink)); background: rgb(var(--s2)); }
+.zh-cats { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.zh-cats li { display: flex; justify-content: space-between; padding: 8px 12px; border: 2px solid rgb(var(--ink)); background: rgb(var(--canvas)); font-weight: 800; }
+.zh-cats small { font-weight: 600; color: rgb(var(--ink-muted)); }
+.zh-inks { display: flex; gap: 10px; margin-top: 8px; }
+.zh-inks i { width: 40px; height: 40px; border: 2px solid rgb(var(--ink)); }
+.zh-inks i.is-on { outline: 3px solid rgb(var(--ink)); outline-offset: 3px; }
+.zh-go { align-self: center; padding: 8px 16px 6px; border: 4px double rgb(var(--pink-ink)); color: rgb(var(--pink-ink)); font-size: 28px; text-transform: uppercase; transform: rotate(-4deg); }
 
 .zh-share { display: flex; flex-direction: column; justify-content: center; gap: 12px; }
 .zh-paste { min-height: 46px; padding: 12px 14px; border: 2px solid rgb(var(--ink)); background: rgb(var(--s2)); font: 600 15px/1.3 ui-monospace, Menlo, monospace; overflow-wrap: anywhere; }

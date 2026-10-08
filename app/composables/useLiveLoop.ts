@@ -6,9 +6,10 @@ import { prefersReducedMotion } from './useReveal'
  * blocks, less text"). `tick` runs every `ms` while the block is on screen, and
  * never with reduced motion - the scene then shows its resting state, so it has
  * to read fine without a single tick. Off screen it stops, so a long page does
- * not keep a dozen timers busy.
+ * not keep a dozen timers busy. `threshold` is how much of the block must be on
+ * screen before it plays.
  */
-export function useLiveLoop(el: Ref<HTMLElement | null>, ms: number, tick: () => void) {
+export function useLiveLoop(el: Ref<HTMLElement | null>, ms: number, tick: () => void, threshold = 0.2) {
   const running = ref(false)
   let timer = 0
   let io: IntersectionObserver | null = null
@@ -22,7 +23,7 @@ export function useLiveLoop(el: Ref<HTMLElement | null>, ms: number, tick: () =>
 
   onMounted(() => {
     if (prefersReducedMotion() || !el.value) return
-    io = new IntersectionObserver(([e]) => set(!!e?.isIntersecting), { threshold: 0.2 })
+    io = new IntersectionObserver(([e]) => set(!!e?.isIntersecting), { threshold })
     io.observe(el.value)
   })
   onBeforeUnmount(() => {

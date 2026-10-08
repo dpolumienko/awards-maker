@@ -12,6 +12,7 @@ import { computed } from 'vue'
 import UiButton from '~/components/ui/UiButton.vue'
 import InteractiveAccordion from '~/components/ui/InteractiveAccordion.vue'
 import ZineLive from './ZineLive.vue'
+import ZineStats from './ZineStats.vue'
 import ZineHow from './ZineHow.vue'
 import ZineBento from './ZineBento.vue'
 import ZineIdeas from './ZineIdeas.vue'
@@ -51,6 +52,8 @@ const rack = computed(() => (data.value?.awards ?? []).slice(0, 3))
       </div>
     </section>
 
+    <!-- a still strip of numbers, so the cover's scene is the only thing moving on the first screen -->
+    <ZineStats />
     <ZineHow />
     <ZineBento />
     <ZineIdeas />
