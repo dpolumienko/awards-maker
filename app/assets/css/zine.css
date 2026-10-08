@@ -170,14 +170,10 @@
   mix-blend-mode: normal;
 }
 /* blue type on black takes the lighter blue, so it reads under the dimmed room too */
-:root[data-ink='night'] :is(.zl-h1, .zl-h2, .zl-issue-h.is-blue, .zl-n, .zf-h, .zf-claim, .zi-h, .zp-h, .zp-title, .zc-mark, .idea-title),
-:root[data-ink='night'] .zp-rules li::before {
+:root[data-ink='night'] :is(.zl-h1, .zl-h2, .zi-h, .zh-h, .zb2-h, .zv-cat, .zh-card-body b, .zc-mark, .idea-title) {
   color: rgb(var(--gold-text));
 }
-/* a Twitch name in chat: Twitch's own lighter purple, as its dark mode prints it */
-:root[data-ink='night'] .zl-chat b {
-  color: #a970ff;
-}
+
 
 :root[data-version='zine'] input,
 :root[data-version='zine'] textarea,

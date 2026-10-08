@@ -30,7 +30,8 @@ export const PLANS: Plan[] = [
       'One awards at a time',
       'Any channel we track, or plain text',
     ],
-    cta: { label: 'Start free', to: '/create', variant: 'ghost' },
+    // one label per intent across the page: every way into the builder says the same
+    cta: { label: 'Create your awards', to: '/create', variant: 'ghost' },
     featured: false,
   },
   {
