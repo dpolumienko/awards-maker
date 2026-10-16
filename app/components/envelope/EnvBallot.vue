@@ -156,7 +156,7 @@ const nextLabel = computed(() => {
               @click="pick(n)"
               @keydown="onKey($event, i)"
             >
-              <span v-if="n.kind === 'media'" class="ap-media art">
+              <span v-if="n.kind === 'media'" class="ap-media art" :class="n.image && 'is-img'">
                 <NomineeThumb :nominee="n" :width="320" />
                 <button
                   v-if="n.image || n.url"

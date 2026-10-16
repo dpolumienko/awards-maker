@@ -119,7 +119,7 @@ function toPayload(a: Award) {
       title: n.title,
       nominees: n.nominees.map((x) =>
         x.kind === 'channel'
-          ? { kind: 'channel' as const, channel: { name: x.channel.name, platform: x.channel.platform, followers: x.channel.followers } }
+          ? { kind: 'channel' as const, channel: { name: x.channel.name, platform: x.channel.platform, followers: x.channel.followers, avatar: x.channel.avatar } }
           : x.kind === 'media'
             ? { kind: 'media' as const, text: x.text, url: x.url, image: x.image }
             : { kind: 'text' as const, text: x.text },

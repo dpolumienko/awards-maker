@@ -3,6 +3,7 @@
 // voting open right now; pictures are drawn here on a canvas, so the demo needs
 // no image files. Goes with the rest of app/demo/.
 import type { Award, Nominee } from '~/types/award'
+import { envAsset } from '~/utils/envelopeAssets'
 
 // Kick clips copied from streamscharts.com/clips: Kick's CDN serves their frame
 // and playlist publicly, so the demo shows real previews (a Twitch frame needs the
@@ -99,9 +100,11 @@ export function demoAward(host: string): Award {
         id: id(),
         title: 'Best Emote',
         nominees: [
-          image('PogFrog', picture(800, 800, '#11998e', '#38ef7d', 'PogFrog')),
-          image('SadCat', picture(800, 800, '#4568dc', '#b06ab3', 'SadCat')),
-          image('BigLaugh', picture(800, 800, '#f7971e', '#ffd200', 'BigLaugh')),
+          // Twitch's own global emotes, the real pictures (review 2026-10-16, item 7)
+          image('PogChamp', envAsset('8bf40cad.webp')),
+          image('LUL', envAsset('bb62b448.webp')),
+          image('Kreygasm', envAsset('260a4ad5.webp')),
+          image('SeemsGood', envAsset('963e4b03.webp')),
         ],
       },
       {

@@ -399,3 +399,5 @@
 .env-ap .ap-hero[data-bg="cover"]::before { display:block!important;background:linear-gradient(90deg,rgba(244,239,229,.94) 0%,rgba(244,239,229,.82) 55%,rgba(244,239,229,.35) 100%)!important }
 .env-ap .btn.p:disabled { background:var(--e-s3)!important;border-color:var(--e-s3);color:#8A867D;cursor:not-allowed }
 .env-ap .ap-nom[aria-disabled="true"]:not([aria-checked="true"]) .tick { opacity:.35 }
+/* an image nominee (an emote, a meme) is shown whole, lifted off the frame as in the prototype; a clip's frame fills it */
+.env-ap .ap-media.is-img img { object-fit:contain;padding:12%;filter:drop-shadow(0 8px 14px rgba(0,0,0,.5)) }
