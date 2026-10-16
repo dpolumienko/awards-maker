@@ -51,3 +51,26 @@ export function zineCoverCss(accent: string, img?: string) {
   if (img) return `background-image:url(${img});background-size:cover;background-position:center`
   return `background:radial-gradient(circle, ${accent} 44%, transparent 47%) 0 0/8px 8px, rgb(var(--canvas))`
 }
+
+/**
+ * The cream ticket of the Envelope version (review 2026-10-16): the same six
+ * themes, drawn softly in the accent on warm off-white and brightest in the
+ * bottom-right corner, the way the designer's prototype lights its card. Returns
+ * the card's background (its --ap-bg). A cover image is still the streamer's own.
+ */
+export function envelopeCardCss(theme: string | undefined, accent: string, img?: string) {
+  if (img) return `center/cover url(${img})`
+  const B = '#F4EFE5', a = (alpha: string) => hex(accent, alpha), fade = `linear-gradient(120deg,${B} 18%,${hex(B, '00')} 70%)`
+  const corner = (alpha: string) => `radial-gradient(ellipse 110% 140% at 100% 100%,${a(alpha)},${a('00')} 70%)`
+  const layers: Record<string, string> = {
+    plain: `radial-gradient(ellipse 120% 150% at var(--gx,100%) 100%,${a('44')},${a('00')} 70%)`,
+    stage: `radial-gradient(ellipse 120% 150% at var(--gx,100%) 100%,${a('EE')},${a('88')} 22%,${a('33')} 50%,${a('00')} 80%)`,
+    rays: `${fade},repeating-conic-gradient(from 180deg at 100% 100%,${a('55')} 0deg 4deg,${a('00')} 4deg 11deg),${corner('66')}`,
+    // his "aurora" is what Glow is: soft lights pooled in the accent
+    glow: `radial-gradient(55% 75% at 92% 18%,${a('77')},${a('00')} 62%),radial-gradient(60% 80% at 68% 105%,${a('AA')},${a('00')} 60%),radial-gradient(45% 60% at 40% 85%,${a('44')},${a('00')} 65%),radial-gradient(40% 55% at 100% 70%,${a('55')},${a('00')} 60%)`,
+    // and his "ribbons" are Beams: light falling across the card at an angle
+    spotlights: `${fade},repeating-linear-gradient(118deg,${a('00')} 0 34px,${a('33')} 34px 58px,${a('00')} 58px 92px,${a('66')} 92px 98px),${corner('44')}`,
+    grid: `${fade},linear-gradient(${a('33')} 1px,${a('00')} 1px) 0 0/24px 24px,linear-gradient(90deg,${a('33')} 1px,${a('00')} 1px) 0 0/24px 24px,${corner('55')}`,
+  }
+  return `${layers[theme ?? 'plain'] ?? layers.plain},${B}`
+}

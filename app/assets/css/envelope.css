@@ -234,3 +234,17 @@
   font-weight: 600;
   color: rgb(var(--ink));
 }
+
+/* ---------------------------------------------------------------- shared components */
+
+/* the counted-ballot stub: the viewer's moment, in the interface's own voice */
+:root[data-version='envelope'] .bc-h {
+  font: 600 clamp(26px, 3vw, 32px) / 1.1 var(--font-body), sans-serif;
+  letter-spacing: -0.02em;
+  text-transform: none;
+}
+:root[data-version='envelope'] .bc-stamp,
+:root[data-version='envelope'] .bc-n {
+  font-family: var(--font-body), sans-serif;
+  font-weight: 700;
+}

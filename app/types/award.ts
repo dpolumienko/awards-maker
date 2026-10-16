@@ -9,6 +9,8 @@ export interface Channel {
   live?: boolean
   /** What they are streaming, shown next to a live channel. */
   game?: string
+  /** The channel's picture, when the search returned one; initials stand in otherwise (review 2026-10-16, item 7). */
+  avatar?: string
 }
 
 /**

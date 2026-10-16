@@ -9,7 +9,6 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import UiButton from '~/components/ui/UiButton.vue'
 import SignInButtons from '~/components/ui/SignInButtons.vue'
-import type { SignInProvider } from '~/composables/useAccount'
 import UiBadge from '~/components/ui/UiBadge.vue'
 import PlatformDot from '~/components/ui/PlatformDot.vue'
 import LimitMeter from '~/components/ui/LimitMeter.vue'
@@ -23,6 +22,7 @@ import InteractiveAccordion from '~/components/ui/InteractiveAccordion.vue'
 import { useVersion } from '~/composables/useVersion'
 import { useAwardPage, useCatalogOpen } from '~/composables/useAwards'
 import { emptyTally, phaseOf, resultsOf, useVoting, votesInOf } from '~/composables/useVoting'
+import { useBallot } from '~/composables/useBallot'
 import { useReveal } from '~/composables/useReveal'
 import { playCue } from '~/composables/useCue'
 import { themeCss, zineCoverCss } from '~/data/themes'
@@ -34,11 +34,15 @@ import { formatInZone } from '#shared/time'
 import { isIndexable } from '#shared/indexable'
 import { useDisplayFonts } from '~/composables/useDisplayFonts'
 import BallotCounted from '~/components/ui/BallotCounted.vue'
+import ReportAbuse from '~/components/ui/ReportAbuse.vue'
+// the Envelope version's masthead and stepper ballot, split out of the other versions' bundle
+const EnvAwardHero = defineAsyncComponent(() => import('~/components/envelope/EnvAwardHero.vue'))
+const EnvBallot = defineAsyncComponent(() => import('~/components/envelope/EnvBallot.vue'))
 
 const route = useRoute()
 const slug = computed(() => String(route.params.slug))
-const { castBallot, publishResults } = useVoting()
-const { signedIn, signIn } = useAccount()
+const { publishResults } = useVoting()
+const { signedIn } = useAccount()
 
 const { data, refresh, error } = await useAwardPage(() => slug.value)
 const catalogOpen = useCatalogOpen()
@@ -72,80 +76,29 @@ const phase = computed(() =>
     : 'open',
 )
 const accent = computed(() => accentOf(award.value?.look))
-const { isZine, onPaper } = useVersion()
+const { isZine, isEnvelope, onPaper } = useVersion()
 // Fills keep the colour the streamer picked; type takes the readable version.
 const ink = computed(() => accentText(accent.value, onPaper.value))
 const headlineFont = computed(() =>
   award.value?.look?.font ? `'${award.value.look.font}', Archivo, sans-serif` : undefined,
 )
 
-// Voting. Each pick is final, but categories skipped the first time stay open
-// until voting closes (review 2026-10-08) - a second submit fills only those.
-const picks = ref<Record<string, string>>({})
-const ballot = computed(() => data.value?.ballot ?? null)
-const voted = computed(() => !!ballot.value)
-const cast = computed(() => ballot.value?.picks ?? {})
-const shown = computed(() => ({ ...picks.value, ...cast.value }))
-/** picks on screen not yet sent - what the submit button sends */
-const fresh = computed(() => Object.fromEntries(Object.entries(picks.value).filter(([id]) => !cast.value[id])))
-const pickedCount = computed(() => Object.keys(fresh.value).length)
-const castCount = computed(() => Object.keys(cast.value).length)
-const skipped = computed(() => (award.value?.nominations.length ?? 0) - castCount.value)
+// Voting: the state and the submit are shared by every version (composables/useBallot.ts)
 const voters = computed(() => data.value?.voters ?? 0)
 const done = ref<HTMLElement | null>(null)
-const voteError = ref('')
-
-onMounted(() => {
-  try {
-    const parked = sessionStorage.getItem(PARKED(slug.value))
-    if (!parked) return
-    sessionStorage.removeItem(PARKED(slug.value))
-    if (!voted.value) picks.value = JSON.parse(parked)
-  } catch {
-    /* nothing parked */
-  }
-})
-
-const mode = computed<'vote' | 'locked' | 'results'>(() => {
-  if (phase.value === 'revealed') return 'results'
-  if (phase.value === 'open' && (!voted.value || skipped.value > 0)) return 'vote'
-  return 'locked'
-})
-
-/**
- * Twitch OAuth with the voter scope - an email address and nothing else. The
- * sign-in is a full-page round trip, so the picks are parked in sessionStorage
- * and put back when the voter lands on this ballot again (QA P1: they used to
- * come back to an empty ballot). They are not submitted for them - one submit
- * per account, so the voter presses it.
- */
-const PARKED = (s: string) => `am-picks:${s}`
-async function submit(provider?: SignInProvider) {
-  if (!pickedCount.value) return
-  voteError.value = ''
-  if (!signedIn.value) {
-    try {
-      sessionStorage.setItem(PARKED(slug.value), JSON.stringify(picks.value))
-    } catch {
-      /* private mode: the voter picks again */
-    }
-    signIn(provider)
-    return
-  }
-  try {
-    await castBallot(slug.value, fresh.value)
-    await refresh()
+const ballotState = useBallot({
+  slug,
+  award,
+  ballot: computed(() => data.value?.ballot ?? null),
+  phase,
+  refresh,
+  onCast: () =>
     nextTick(() => {
       done.value?.focus()
       playCue(done.value, accent.value)
-    })
-  } catch (error) {
-    // 409 is "already voted" or "voting closed" - both are things to say out
-    // loud rather than swallow, because the ballot on screen looks fine
-    voteError.value = (error as { statusMessage?: string }).statusMessage || 'Could not save your vote'
-    await refresh()
-  }
-}
+    }),
+})
+const { picks, voted, cast, shown, pickedCount, castCount, skipped, voteError, mode, submit } = ballotState
 
 // Publishing the winners is the host's call, not a date - so it asks twice and
 // the second click is the one that does it.
@@ -153,33 +106,13 @@ async function submit(provider?: SignInProvider) {
 // carries the news, rather than in a dialog over it.
 
 const hostPanel = ref<HTMLElement | null>(null)
+const envBallot = ref<{ start: () => void } | null>(null)
 const { isArmed: publishArmed, arm: armPublish } = useArm()
 async function onPublishResults() {
   if (!armPublish()) return
   await publishResults(slug.value)
   await refresh()
   nextTick(() => playCue(hostPanel.value, accent.value))
-}
-
-// A report does not need an account: somebody who has just been impersonated
-// should not have to sign in to say so. The endpoint checks the origin instead.
-const reportOpen = ref(false)
-const reported = ref(false)
-const reportText = ref('')
-async function sendReport() {
-  // an empty report is not a report - the button is disabled, this is the Enter key
-  if (!reportText.value.trim()) return
-  try {
-    await $fetch('/api/reports', {
-      method: 'POST',
-      body: { slug: slug.value, reason: reportText.value },
-    })
-  } catch {
-    // saying "sent" either way: a failed report is not the reporter's problem to
-    // solve, and the alternative is an error dialog over an accusation
-  }
-  reported.value = true
-  reportOpen.value = false
 }
 
 /** Winners per category, but only once the host has published them. */
@@ -236,6 +169,21 @@ const badge = computed(() => {
   }
 })
 
+// the Envelope ballot says the state in one line above its steps
+const envNote = computed(() => {
+  const a = award.value
+  if (!a) return ''
+  switch (phase.value) {
+    case 'soon':
+      return `Voting opens ${fmtDate(a.opensAt)}. These are the nominees you will vote on.`
+    case 'capped':
+      return `Voting closed at the free limit of ${FREE.maxVoters} voters. Every vote already in counts.`
+    case 'counting':
+      return `Voting is closed. ${a.host.name} announces the winners${a.ceremonyAt ? ` ${fmtDate(a.ceremonyAt)}` : ''}; the counts stay hidden until then.`
+    default:
+      return voted.value && !skipped.value ? 'Your votes are in, every category. The winners come out at the ceremony.' : ''
+  }
+})
 const partners = computed(() => (award.value?.partners ?? []).filter((p) => p.name.trim()))
 const nomineeTotal = computed(() =>
   (award.value?.nominations ?? []).reduce((sum, n) => sum + n.nominees.length, 0),
@@ -397,6 +345,77 @@ if (award.value && !thin.value) {
       <p v-if="award.offline" class="relative z-10 border-b-2 border-warn bg-warn/10 px-4 py-3 text-center text-sm font-semibold text-warn" role="status">
         This awards is offline. Only you can see it; viewers get "not available". Put it back online from the dashboard.
       </p>
+      <!-- the Envelope version: the show on a cream ticket, the ballot as a stepper -->
+      <div v-if="isEnvelope" class="env-ap shell pt-6">
+        <nav class="crumbs ap-crumbs" aria-label="Breadcrumb">
+          <NuxtLink to="/">Awards Maker</NuxtLink><span aria-hidden="true">/</span>
+          <template v-if="catalogOpen"><NuxtLink to="/catalog">Catalog</NuxtLink><span aria-hidden="true">/</span></template>
+          <span aria-current="page">{{ award.name }}</span>
+        </nav>
+        <div v-if="isHost" ref="hostPanel" class="ap-host" role="region" aria-label="Host tools">
+          <span class="ap-host-i" aria-hidden="true" />
+          <span class="ap-host-l">
+            <b>You host this awards</b>
+            <span><i class="ap-host-dot" />{{ badge.text }} · <b class="tnum">{{ voters }}</b>{{ award.tier !== 'paid' ? ` of ${FREE.maxVoters}` : '' }} voters so far</span>
+          </span>
+          <span class="ap-host-r">
+            <button v-if="phase === 'counting' || phase === 'capped'" class="btn sm" type="button" @click="onPublishResults">
+              {{ publishArmed() ? 'Publish - sure?' : 'Publish the winners' }}
+            </button>
+            <NuxtLink v-if="phase === 'counting' || phase === 'capped' || phase === 'revealed'" class="btn sm" :to="`/my-awards/${award.slug}/reveal`">Open the ceremony</NuxtLink>
+            <NuxtLink class="btn sm p" :to="`/my-awards/${award.slug}`">Dashboard</NuxtLink>
+          </span>
+        </div>
+        <PaywallNote v-if="isHost && award.tier !== 'paid' && voters / FREE.maxVoters >= 0.8" class="mt-4" reason="voters" compact />
+        <EnvAwardHero
+          :award="award"
+          :phase="phase"
+          :state="badge.text"
+          :countdown="countdown"
+          :countdown-label="countdownLabel"
+          :partners="partners"
+          :nominee-total="nomineeTotal"
+          :voters="voters"
+          :closes="fmtDate(phase === 'soon' ? award.opensAt : award.closesAt)"
+          :ceremony="fmtDate(award.ceremonyAt)"
+          :share-url="shareUrl"
+          :accent="accent"
+          :headline-font="headlineFont"
+          @start="envBallot?.start()"
+        />
+        <EnvBallot
+          ref="envBallot"
+          :award="award"
+          :tally="tally"
+          :mode="mode"
+          :shown="shown"
+          :cast="cast"
+          :voted="voted"
+          :picked-count="pickedCount"
+          :signed-in="signedIn"
+          :vote-error="voteError"
+          :note="envNote"
+          @pick="(c: string, n: string) => (picks[c] = n)"
+          @submit="submit"
+        />
+        <div v-if="voted && phase !== 'revealed'" ref="done" tabindex="-1" role="status" class="mt-8 rounded-card focus:outline-none">
+          <BallotCounted
+            :picked="castCount"
+            :total="award.nominations.length"
+            :ceremony="fmtDate(award.ceremonyAt)"
+            :closes="fmtDate(award.closesAt)"
+            :accent="ink"
+          />
+        </div>
+        <section class="ap-info" aria-label="How voting works">
+          <div class="ai-u"><b>One vote per account</b><span>Sign in with Twitch or Kick once, when you submit.</span></div>
+          <div class="ai-l"><b>Picks lock on submit</b><span>One vote per category. Skipped ones stay open.</span></div>
+          <div class="ai-e"><b>Counts stay sealed</b><span>Nobody sees the numbers until the host opens them on stream.</span></div>
+        </section>
+        <ReportAbuse class="ap-report" :slug="slug" variant="line" />
+      </div>
+
+      <template v-else>
       <!-- cover band: the streamer's theme or their own cover, full width -->
       <div class="relative h-48 sm:h-64">
         <!-- the band runs up under the transparent header, so the page has no seam
@@ -675,46 +694,14 @@ if (award.value && !thin.value) {
               <ShareRow class="mt-4" :url="shareUrl" :text="`Vote in ${award.name}:`" />
             </div>
 
-            <div class="rounded-card border border-hair bg-s1 p-5">
-              <p class="label">Something wrong with this page?</p>
-              <p v-if="reported" class="mt-2 text-sm text-live">Reported. Our moderators pick it up from the queue.</p>
-              <template v-else>
-                <p class="mt-2 text-sm text-ink-2">
-                  Awards are made by streamers, not by us. Anything abusive or stolen goes to our moderation queue.
-                </p>
-                <button
-                  v-if="!reportOpen"
-                  type="button"
-                  class="mt-3 text-sm text-ink-muted underline underline-offset-4 transition-colors hover:text-danger"
-                  @click="reportOpen = true"
-                >
-                  Report this awards
-                </button>
-                <form v-else class="mt-3" @submit.prevent="sendReport">
-                  <label class="label" for="report-reason">What is wrong</label>
-                  <textarea
-                    id="report-reason"
-                    v-model="reportText"
-                    rows="3"
-                    class="mt-2 w-full rounded-btn border border-hair bg-canvas p-3 text-sm"
-                    placeholder="Harassment, stolen content, impersonation..."
-                  />
-                  <div class="mt-3 flex gap-3">
-                    <button
-                      type="submit"
-                      :disabled="!reportText.trim()"
-                      class="h-10 rounded-btn border border-hair px-4 text-sm font-bold uppercase tracking-button transition-colors hover:border-danger hover:text-danger disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-hair disabled:hover:text-ink"
-                    >
-                      Send report
-                    </button>
-                    <button type="button" class="text-sm text-ink-muted underline underline-offset-4" @click="reportOpen = false">Cancel</button>
-                  </div>
-                </form>
-              </template>
-            </div>
+            <ReportAbuse :slug="slug" />
           </aside>
         </div>
 
+      </div>
+      </template>
+
+      <div class="shell">
         <!-- the cards: this is how the page finds the next voter -->
         <ShareCards
           class="mt-12"
