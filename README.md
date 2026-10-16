@@ -39,14 +39,26 @@ sign-in: the hash is in any page of that branch. On Windows run it with
 
 `npm run dev:demo` is the same mode on localhost (`.env.demo`).
 
-## Two versions
+## Versions
 
 The design preview tab (left edge of every page) switches the whole site between
-**Current** and **Fanzine** - Concept C from the 2026-10-01 design round. Same pages
-and logic; the Fanzine is a token set (`app/assets/css/zine.css`) plus the pieces in
-`app/components/zine/`. The choice is a cookie (`am-version`), so pages render on the
-server in the right version; `?version=zine` in a link picks it. Removal once one
-wins: `zine.css`, `components/zine/`, `useVersion` and the `isZine` branches.
+versions. Same pages and logic; each version is a token set plus its own pieces.
+The choice is a cookie (`am-version`), so pages render on the server in the right
+version; `?version=<id>` in a link picks it (`app/data/design.ts`).
+
+- **Current** (`stage`) - the dark stage.
+- **Fanzine** (`zine`), **Fanzine Night** (`night`), **Night v2** (`night2`) - Concept C
+  from the 2026-10-01 round: `app/assets/css/zine.css` and `app/components/zine/`.
+  Night v2 adds the builder in steps and the dashboard's show desk.
+- **Envelope** (`envelope`) - the designer's prototype from 2026-10-16:
+  `app/assets/css/envelope*.css`, `app/components/envelope/`, the hero's three.js
+  trophies in `app/utils/envelopeHero.ts` (loaded only on that landing), the ballot as
+  a stepper, the stepped builder, the drumroll reveal (`app/utils/ceremonyFx.ts`, a
+  reveal style any version can pick) and its own share card.
+
+Ballot state is shared by every version (`app/composables/useBallot.ts`).
+Removal once one wins: its CSS, its components folder, the `useVersion` flag and its
+branches.
 
 ## Components ported from 21st.dev
 
