@@ -28,6 +28,8 @@ import { accentText, accentOf, inkOnFlood, onAccent, tint } from '~/utils/accent
 import ZinePen from '~/components/zine/ZinePen.vue'
 import { DISPLAY_FONTS, useDisplayFonts } from '~/composables/useDisplayFonts'
 import { useVersion } from '~/composables/useVersion'
+import { confetti, createCeremonySound, drumroll, stageMotes } from '~/utils/ceremonyFx'
+import '~/assets/css/envelope-ceremony.css'
 
 // ceremony typefaces and share cards draw in any of the headline faces
 useDisplayFonts(DISPLAY_FONTS)
@@ -42,7 +44,7 @@ const { data, refresh } = await useAwardPage(() => slug.value)
 const award = computed(() => data.value?.award ?? null)
 const tally = computed(() => data.value?.tally ?? emptyTally())
 const accent = computed(() => accentOf(award.value?.look))
-const { isZine, onPaper } = useVersion()
+const { isZine, isEnvelope, onPaper } = useVersion()
 const ink = computed(() => accentText(accent.value, onPaper.value))
 // The Fanzine's ceremony floods the stage with the show's accent (blue by default)
 // and prints on it in white or black ink, whichever reads.
@@ -61,12 +63,18 @@ async function onStart() {
   step.value = 0
 }
 const headlineFont = computed(() => `'${settings.value.font}', Archivo, sans-serif`)
+// the Envelope speaks the show's name in Gloock unless the host picked a face (review 2026-10-16, item 10)
+const showFont = computed(() =>
+  isEnvelope.value && !award.value?.look?.font && settings.value.font === 'Hanken Grotesk' ? "'Gloock', Georgia, serif" : headlineFont.value,
+)
 
 // the show's cover, or a picture uploaded in the setup
 const picture = computed(() => stageImage(settings.value, award.value?.look?.coverUrl))
 const onCover = computed(() => !!picture.value)
 const stageCss = computed(() =>
-  isZine.value && !onCover.value
+  isEnvelope.value && !onCover.value && (!settings.value.stage || settings.value.stage === 'plain')
+    ? 'background:#070707'
+    : isZine.value && !onCover.value
     ? `background:radial-gradient(circle, rgba(255,255,255,.08) 40%, transparent 44%) 0 0/8px 8px, ${accent.value}`
     : themeCss(picture.value ? undefined : settings.value.stage, accent.value, picture.value),
 )
@@ -79,7 +87,11 @@ const clipOf = (n: Nominee) => (n.kind === 'media' && n.url ? n.url : '')
 
 /** A nominee plate: everyone in the house colour, the winner filled and lit. */
 const plate = (won: boolean) =>
-  isZine.value
+  isEnvelope.value
+    ? won
+      ? { background: accent.value, color: onAccent(accent.value), boxShadow: `0 0 6cqw ${tint(accent.value, '55')}` }
+      : { background: 'rgba(246,244,238,.035)', color: '#F6F4EE', border: '0.12cqw solid rgba(246,244,238,.22)' }
+    : isZine.value
     ? won
       ? { background: floodFg.value, color: accent.value, boxShadow: 'none' }
       : { background: 'transparent', color: stageInk.value, border: `0.25cqw solid ${stageInk.value}` }
@@ -155,8 +167,32 @@ const current = computed(() => {
 })
 const atEnd = computed(() => step.value >= slides.value.length - 1)
 
-const next = () => (step.value = Math.min(step.value + 1, slides.value.length - 1))
-const back = () => (step.value = Math.max(step.value - 1, 0))
+/** The drumroll (reveal style 'drumroll'): sound is on until the host mutes it. */
+const sound = import.meta.client ? createCeremonySound() : null
+const soundOn = ref(true)
+watch(soundOn, (v) => sound?.set(v))
+const rolling = ref(false)
+const fx = ref<HTMLCanvasElement | null>(null)
+const flash = ref<HTMLElement | null>(null)
+const motes = ref<HTMLCanvasElement | null>(null)
+
+async function next() {
+  if (rolling.value) return
+  const s = slide.value, c = current.value
+  // a drumroll runs on the nominees' screen and lands on the winner before the winner's own screen;
+  // a tie has nobody to land on, so it goes straight to its own frame
+  if (s.kind === 'category' && !s.shown && c && settings.value.reveal === 'drumroll' && c.winners.length === 1 && sound && !prefersReducedMotion()) {
+    const cards = [...(stage.value?.querySelectorAll<HTMLElement>('.js-nom') ?? [])]
+    if (cards.length) {
+      rolling.value = true
+      await drumroll(cards, c.rows.indexOf(c.winners[0]!), sound)
+      cards.forEach((x) => x.classList.remove('is-hot'))
+      rolling.value = false
+    }
+  }
+  step.value = Math.min(step.value + 1, slides.value.length - 1)
+}
+const back = () => { if (!rolling.value) step.value = Math.max(step.value - 1, 0) }
 
 const phase = computed(() => (award.value ? phaseOf(award.value, data.value?.voters ?? 0) : 'open'))
 const voters = computed(() => data.value?.voters ?? 0)
@@ -204,11 +240,14 @@ onMounted(() => {
   window.addEventListener('keydown', onKey)
   document.addEventListener('fullscreenchange', onFullChange)
   wake()
+  if (isEnvelope.value && motes.value && !prefersReducedMotion()) stopMotes = stageMotes(motes.value)
 })
+let stopMotes: (() => void) | null = null
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onKey)
   document.removeEventListener('fullscreenchange', onFullChange)
   if (idleTimer) clearTimeout(idleTimer)
+  stopMotes?.()
 })
 
 const titleWords = computed(() => (award.value?.name ?? '').trim().split(/\s+/).map((w) => [...w]))
@@ -223,6 +262,16 @@ function playReveal() {
     stage: stage.value,
     reel: document.querySelector('.js-reel'),
   })
+  if (settings.value.reveal === 'drumroll') land()
+}
+
+/** where the drumroll lands: a flash, the chord, confetti from the winner's plate */
+function land() {
+  const f = flash.value
+  if (f) { f.classList.remove('go'); void f.offsetWidth; f.classList.add('go') }
+  sound?.hit()
+  const w = stage.value?.querySelector('.js-winner')?.getBoundingClientRect(), r = stage.value?.getBoundingClientRect()
+  if (fx.value && w && r) confetti(fx.value, (w.left + w.width / 2 - r.left) / r.width, (w.top + w.height / 2 - r.top) / r.height)
 }
 
 /** The slot machine's strip: the other names, twice round, then the winner. */
@@ -292,17 +341,18 @@ definePageMeta({ chrome: false })
       <div
         ref="stage"
         class="stage relative mx-auto flex w-full flex-col items-center justify-center overflow-hidden text-center"
-        :class="[bare ? 'h-screen w-screen' : 'mt-4 aspect-video max-w-[1600px] rounded-card', isZine && 'is-zine']"
+        :class="[bare ? 'h-screen w-screen' : 'mt-4 aspect-video max-w-[1600px] rounded-card', isZine && 'is-zine', isEnvelope && 'env-cer', rolling && 'is-rolling']"
         :style="[stageCss, isZine ? { color: stageInk } : {}]"
       >
-        <span v-if="!isZine || onCover" aria-hidden="true" class="absolute inset-0 bg-black/50" />
+        <span v-if="(!isZine && !isEnvelope) || onCover" aria-hidden="true" class="absolute inset-0 bg-black/50" />
+        <canvas v-if="isEnvelope" ref="motes" class="env-motes" aria-hidden="true" />
 
         <div class="stage-body relative flex w-full flex-col items-center" role="status" aria-live="polite">
           <!-- title card: the same letter-by-letter arrival as the publish curtain,
                so the show opens in the language the product already speaks -->
           <template v-if="slide.kind === 'title'">
             <p class="s-kicker" :style="{ color: stageInk }">{{ award.host.name }} presents</p>
-            <h1 class="s-title max-w-[16ch]" :style="{ fontFamily: headlineFont }">
+            <h1 class="s-title max-w-[16ch]" :style="{ fontFamily: showFont }">
               <span class="sr-only">{{ award.name }}</span>
               <span aria-hidden="true" class="flex flex-wrap justify-center gap-x-[0.26em]">
                 <span v-for="(word, w) in titleWords" :key="w" class="flex">
@@ -332,7 +382,7 @@ definePageMeta({ chrome: false })
               class="s-noms m-0 flex list-none flex-wrap justify-center p-0"
               :class="[current.layout === 'duel' && 's-noms-duel', current.media && 's-noms-media']"
             >
-              <li v-for="row in current.rows" :key="row.nominee.id" class="s-nom flex flex-col items-center">
+              <li v-for="row in current.rows" :key="row.nominee.id" class="js-nom s-nom flex flex-col items-center">
                 <span class="s-plate grid place-items-center overflow-hidden font-bold" :style="plate(false)">
                   <!-- what the host actually nominated: the image, or the clip's
                        poster frame. Initials are for channels and plain text. -->
@@ -350,7 +400,7 @@ definePageMeta({ chrome: false })
 
             <!-- numbered lines: long names fit, and the eye runs down instead of across -->
             <ol v-else class="s-list-noms m-0 flex list-none flex-col p-0 text-left">
-              <li v-for="(row, i) in current.rows" :key="row.nominee.id" class="s-line flex items-center">
+              <li v-for="(row, i) in current.rows" :key="row.nominee.id" class="js-nom s-line flex items-center">
                 <span class="s-line-i tnum" :style="{ color: stageInk }">{{ String(i + 1).padStart(2, '0') }}</span>
                 <img
                   v-if="nomineeImage(row.nominee)"
@@ -408,7 +458,7 @@ definePageMeta({ chrome: false })
           <!-- closing card: the whole list, for the outro talk -->
           <template v-else>
             <p class="s-kicker" :style="{ color: stageInk }">{{ award.name }}</p>
-            <h2 class="s-title" :style="{ fontFamily: headlineFont }">That is the show</h2>
+            <h2 class="s-title" :style="{ fontFamily: showFont }">That is the show</h2>
             <ul class="s-list m-0 grid list-none p-0 text-left sm:grid-cols-2">
               <li v-for="c in categories" :key="c.nomination.id">
                 <span class="text-ink-2">{{ c.nomination.title }}</span>
@@ -442,6 +492,10 @@ definePageMeta({ chrome: false })
           {{ step + 1 }} / {{ slides.length }}
         </span>
 
+        <!-- the drumroll's landing: one flash over the stage, confetti on top of it -->
+        <span ref="flash" class="cer-flash" aria-hidden="true" />
+        <canvas ref="fx" class="cer-fx" aria-hidden="true" />
+
         <!-- how far through the evening we are -->
         <span aria-hidden="true" class="absolute inset-x-0 bottom-0 h-[0.5cqh] bg-white/10">
           <span
@@ -458,17 +512,18 @@ definePageMeta({ chrome: false })
         :class="idle && isFull ? 'opacity-0' : 'opacity-100'"
       >
         <div class="mt-4 flex flex-wrap items-center gap-3">
-          <UiButton variant="ghost" size="sm" :disabled="step === 0" @click="back">
+          <UiButton variant="ghost" size="sm" :disabled="step === 0 || rolling" @click="back">
             <UiIcon name="chevron-left" :size="14" /> Back
           </UiButton>
-          <UiButton size="sm" :disabled="atEnd" @click="next">
+          <UiButton size="sm" :disabled="atEnd || rolling" @click="next">
             <span class="grid">
               <span aria-hidden="true" class="col-start-1 row-start-1 invisible">Reveal the winner</span>
-              <span class="col-start-1 row-start-1">{{ slide.kind === 'category' && !slide.shown ? 'Reveal the winner' : 'Next' }}</span>
+              <span class="col-start-1 row-start-1">{{ rolling ? 'Drumroll...' : slide.kind === 'category' && !slide.shown ? 'Reveal the winner' : 'Next' }}</span>
             </span>
             <UiIcon name="chevron-right" :size="14" />
           </UiButton>
           <UiButton variant="ghost" size="sm" @click="setupOpen = true">Look and motion</UiButton>
+          <UiButton v-if="settings.reveal === 'drumroll'" variant="ghost" size="sm" :aria-pressed="soundOn" @click="soundOn = !soundOn">{{ soundOn ? 'Sound on' : 'Sound off' }}</UiButton>
           <span class="text-sm text-ink-muted">Space or arrows work too. F for fullscreen.</span>
 
           <button

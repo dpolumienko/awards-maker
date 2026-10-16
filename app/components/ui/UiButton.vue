@@ -30,7 +30,7 @@ const variants = {
     :href="internal ? undefined : to"
     :class="['ui-btn', `ui-btn-${variant}`, base, sizes[size], variants[variant], variant === 'primary' && 'group']"
   >
-    <span class="relative z-10"><slot /></span>
+    <span class="relative z-10 inline-flex items-center gap-2"><slot /></span>
     <!-- gold sheen: the one decorative flourish a primary button gets -->
     <span
       v-if="variant === 'primary'"

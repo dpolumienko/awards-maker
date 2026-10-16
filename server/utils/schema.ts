@@ -79,7 +79,7 @@ export const ballotSchema = z.object({
 export const ceremonySchema = z.object({
   stage: z.string().max(64),
   font: z.string().max(64),
-  reveal: z.enum(['cut', 'spotlight', 'flip', 'slot', 'stamp', 'typewriter', 'curtain']),
+  reveal: z.enum(['cut', 'spotlight', 'flip', 'slot', 'stamp', 'typewriter', 'curtain', 'drumroll']),
   image: uploadPath.optional(),
   partners: z.boolean().optional(),
   counts: z.boolean().optional(),

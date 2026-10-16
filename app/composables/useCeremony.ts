@@ -1,5 +1,6 @@
 import { computed, ref, watch } from 'vue'
 import type { Award } from '~/types/award'
+import { useVersion } from '~/composables/useVersion'
 
 // How a ceremony is dressed. Stored against the show now instead of against the
 // browser, so a host can set it up on a laptop and run it from the studio machine.
@@ -13,6 +14,8 @@ export const REVEALS = [
   { id: 'stamp', label: 'Stamp', note: 'The name slams down and the screen takes the knock.' },
   { id: 'typewriter', label: 'Typewriter', note: 'The name types itself out, letter by letter.' },
   { id: 'curtain', label: 'Curtain', note: 'The name opens from the middle out.' },
+  // review 2026-10-16, from the Envelope prototype
+  { id: 'drumroll', label: 'Drumroll', note: 'A light runs over the nominees and lands on the winner, with confetti and sound.' },
 ] as const
 export type RevealStyle = (typeof REVEALS)[number]['id']
 export const REVEAL_IDS = REVEALS.map((r) => r.id) as [RevealStyle, ...RevealStyle[]]
@@ -43,13 +46,15 @@ export function stageImage(s: CeremonySettings, cover?: string) {
 
 export function useCeremony(slug: () => string, award: () => Award | null) {
   const stored = ref<CeremonySettings | null>(null)
+  // the Envelope's own defaults: its interface face, and the drumroll it was designed with
+  const { isEnvelope } = useVersion()
   const configured = computed(() => stored.value !== null)
 
   /** Falls back to the show's own Look, so an unconfigured ceremony still fits. */
   const settings = computed<CeremonySettings>(() => ({
     stage: stored.value?.stage ?? (award()?.look?.coverUrl ? COVER : (award()?.look?.theme ?? 'stage')),
-    font: stored.value?.font ?? award()?.look?.font ?? 'Anton',
-    reveal: stored.value?.reveal ?? 'cut',
+    font: stored.value?.font ?? award()?.look?.font ?? (isEnvelope.value ? 'Hanken Grotesk' : 'Anton'),
+    reveal: stored.value?.reveal ?? (isEnvelope.value ? 'drumroll' : 'cut'),
     image: stored.value?.image,
     partners: stored.value?.partners ?? true,
     counts: stored.value?.counts ?? true,

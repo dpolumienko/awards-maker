@@ -51,6 +51,11 @@ export function playRevealMotion(
       gsap.fromTo(line, { clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0% 0 0)', duration: 1.4, ease: 'steps(14)' })
       if (plate) gsap.fromTo(plate, { opacity: 0 }, { opacity: 1, duration: 0.5, delay: 1.3 })
       return
+    case 'drumroll':
+      // the light has already landed (utils/ceremonyFx): the plate pops, the name rises out of a blur
+      if (plate) gsap.fromTo(plate, { scale: 0.86 }, { scale: 1, duration: 0.9, ease: 'back.out(2.6)' })
+      gsap.fromTo(line, { opacity: 0, y: 24, filter: 'blur(6px)' }, { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.8, ease: 'expo.out' })
+      return
     case 'curtain':
       gsap.fromTo(both, { clipPath: 'inset(0 50% 0 50%)' }, { clipPath: 'inset(0 0% 0 0%)', duration: 1.1, ease: 'expo.inOut', stagger: 0.15 })
       return
