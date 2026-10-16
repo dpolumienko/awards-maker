@@ -76,7 +76,7 @@ const agreed = ref(false)
     </div>
 
     <div class="mt-6 space-y-4 border-t border-hair pt-6">
-      <LimitMeter label="Nominations" :used="nominationsUsed" :total="FREE.maxNominations" />
+      <LimitMeter label="Categories" :used="nominationsUsed" :total="FREE.maxNominations" />
       <LimitMeter
         label="Unique voters"
         :used="0"

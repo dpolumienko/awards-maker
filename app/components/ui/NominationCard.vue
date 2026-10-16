@@ -114,14 +114,14 @@ const shortMeta = (n: Nomination['nominees'][number]) =>
         ref="titleInput"
         :value="nomination.title"
         type="text"
-        :aria-label="'Nomination ' + (index + 1) + ' title'"
-        placeholder="Nomination title, e.g. Best moment of the year"
+        :aria-label="'Category ' + (index + 1) + ' title'"
+        placeholder="Category title, e.g. Best moment of the year"
         class="h-11 min-w-0 flex-1 basis-[12rem] rounded-btn border border-hair2 bg-s2 px-3 text-base font-semibold text-ink placeholder:font-normal placeholder:text-ink-disabled hover:border-hair2 focus:border-gold focus:shadow-focus focus:outline-none"
         @input="emit('update:title', ($event.target as HTMLInputElement).value)"
       />
       <UiConfirmButton
-        :aria-label="'Remove nomination ' + (index + 1)"
-        :confirm-aria-label="'Confirm removing nomination ' + (index + 1) + ' and its nominees'"
+        :aria-label="'Remove category ' + (index + 1)"
+        :confirm-aria-label="'Confirm removing category ' + (index + 1) + ' and its nominees'"
         @confirm="emit('remove')"
       />
     </div>
@@ -243,7 +243,7 @@ const shortMeta = (n: Nomination['nominees'][number]) =>
               v-model="mediaUrl"
               type="url"
               :disabled="!!mediaImage"
-              :aria-label="'Clip link for nomination ' + (index + 1)"
+              :aria-label="'Clip link for category ' + (index + 1)"
               placeholder="https://clips.twitch.tv/..."
               class="h-11 w-full rounded-btn border border-hair bg-s2 px-3 text-sm text-ink placeholder:text-ink-disabled focus:border-gold focus:shadow-focus focus:outline-none disabled:opacity-40"
             />

@@ -230,7 +230,7 @@ export function useAwardDraft() {
     if ((d.nominations?.length ?? 0) > FREE.maxNominations) {
       out.push({
         id: 'nominations',
-        label: `${d.nominations.length} nominations`,
+        label: `${d.nominations.length} categories`,
         detail: `Free covers ${FREE.maxNominations}. The last ${d.nominations.length - FREE.maxNominations} would be dropped.`,
       })
     }
@@ -267,7 +267,7 @@ export function useAwardDraft() {
       },
       {
         id: 'nominations',
-        label: `At least ${PUBLISH.minNominations} nominations`,
+        label: `At least ${PUBLISH.minNominations} categories`,
         ok: filled.length >= PUBLISH.minNominations,
       },
       {

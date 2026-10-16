@@ -64,7 +64,7 @@ async function createDemoAward() {
     await nextTick()
     // v2 shows the filled categories step; elsewhere the page stays put - jumping
     // 2 500 px down to the nominations read as a broken anchor (review 2026-10-08)
-    if (isV2.value) goStep('cats')
+    if (stepped.value) goStep('cats')
   } finally {
     demoBusy.value = false
   }
@@ -125,7 +125,9 @@ async function onAddNomination() {
 // Night v2: the same form, one ticket at a time (components/zine/BuilderTickets).
 // Every section stays mounted - v-show, not v-if - so nothing typed is lost when
 // a step is left, and the other versions keep the single long page.
-const { isV2 } = useVersion()
+const { isV2, isEnvelope } = useVersion()
+// the builder in steps: Night v2's tickets, and the Envelope's stepper (review 2026-10-16, item 2)
+const stepped = computed(() => isV2.value || isEnvelope.value)
 const STEPS = [
   { id: 'show', title: 'Setup', sub: 'Name and a pack' },
   { id: 'cats', title: 'Categories', sub: 'And who is nominated' },
@@ -162,11 +164,11 @@ const tickets = computed(() => {
 })
 const stepIndex = computed(() => STEPS.findIndex((s) => s.id === step.value))
 /** Shown in this version's current step - always true outside v2. */
-const at = (...ids: StepId[]) => !isV2.value || ids.includes(step.value)
+const at = (...ids: StepId[]) => !stepped.value || ids.includes(step.value)
 /** steps left at least once: coming back to one that is still short shows what it lacks */
 const left = ref(new Set<StepId>())
 const missingHere = computed(() =>
-  isV2.value && left.value.has(step.value)
+  stepped.value && left.value.has(step.value)
     ? checks.value.filter((c) => NEEDS[step.value].includes(c.id) && !c.ok).map(({ id, label }) => ({ id, label }))
     : [],
 )
@@ -210,7 +212,7 @@ function applyTemplate(t: AwardTemplate) {
   // and the Look is paid - so one click on a free-looking preset made the whole
   // show paid (review 2026-09-24: "paid things scare people off at once").
   draft.value.templateId = t.id
-  if (isV2.value) {
+  if (stepped.value) {
     flashed.value = 'cats'
     setTimeout(() => (flashed.value = null), 1200)
   }
@@ -227,7 +229,7 @@ function applyIdeasFromQuery() {
   // the whole set, not the free slice: a set that runs past the ceiling is how the
   // page said it would behave, and the paywall note explains the rest
   group.items.slice(0, group.set).forEach(addIdea)
-  if (isV2.value) step.value = 'cats'
+  if (stepped.value) step.value = 'cats'
   // once applied, drop it from the URL so a reload does not add the set twice
   navigateTo({ query: { ...route.query, ideas: undefined } }, { replace: true })
 }
@@ -280,10 +282,10 @@ const faq = [
   },
   {
     q: 'How do I set up awards for my viewers?',
-    a: 'Start from one of the three sets above or add nominations yourself, put at least two nominees in each, set the dates and publish. Nominees can be any channel we track or plain text, so a clip, a mod or a running joke all work.',
+    a: 'Start from one of the three sets above or add categories yourself, put at least two nominees in each, set the dates and publish. Nominees can be any channel we track or plain text, so a clip, a mod or a running joke all work.',
   },
   {
-    q: 'How many nominations can I have?',
+    q: 'How many categories can I have?',
     a: `Five on the free plan, and one awards running at a time. You can rename or remove any of them before publishing.`,
   },
   {
@@ -310,7 +312,7 @@ useSeoMeta({
 </script>
 
 <template>
-  <div class="shell" :class="isV2 ? 'pb-10 pt-6' : 'py-10'">
+  <div class="shell" :class="stepped ? 'pb-10 pt-6' : 'py-10'">
     <h1 class="heading">Create your own awards show</h1>
     <!-- Night v2 keeps the first step on one screen: no lead, the two strips side by side -->
     <p v-if="!isV2" class="mt-3 max-w-copy text-lg text-ink-2">
@@ -318,14 +320,14 @@ useSeoMeta({
       vote on.
     </p>
 
-    <div :class="isV2 && ['mt-6 grid gap-3', !signedIn && 'lg:grid-cols-2']">
+    <div :class="stepped && ['mt-6 grid gap-3', !signedIn && 'lg:grid-cols-2']">
       <!-- demo build only: skip Twitch and fill everything in -->
       <div
         v-if="demo"
         class="flex flex-wrap items-center gap-4 rounded-card border border-dashed border-gold-24 bg-gold/[0.06]"
-        :class="isV2 ? 'p-3' : 'mt-8 p-5'"
+        :class="stepped ? 'p-3' : 'mt-8 p-5'"
       >
-        <p v-if="isV2" class="min-w-0 flex-1 text-sm text-ink-2"><b class="text-ink">Demo.</b> A test host and a show with every feature.</p>
+        <p v-if="stepped" class="min-w-0 flex-1 text-sm text-ink-2"><b class="text-ink">Demo.</b> A test host and a show with every feature.</p>
         <p v-else class="min-w-0 flex-1 text-sm text-ink-2">
           <b class="text-ink">Demo.</b> Signs you in as a test host and fills a show with every feature:
           channels, images, clips, cover, partners, dates. Then publish, vote, close and run the ceremony.
@@ -338,10 +340,10 @@ useSeoMeta({
         v-if="!signedIn"
         id="host-signin"
         class="flex flex-wrap items-center gap-4 rounded-card border border-hair bg-s1"
-        :class="isV2 ? 'p-3' : 'mt-8 p-5'"
+        :class="stepped ? 'p-3' : 'mt-8 p-5'"
       >
         <p class="min-w-0 flex-1 text-sm text-ink-2">
-          {{ isV2 ? 'Login is asked when you publish.' : 'You can build the whole thing first. A Twitch or Kick login is asked when you publish.' }}
+          {{ stepped ? 'Login is asked when you publish.' : 'You can build the whole thing first. A Twitch or Kick login is asked when you publish.' }}
         </p>
         <SignInButtons class="ml-auto" @choose="signInAsHost" />
       </div>
@@ -364,7 +366,7 @@ useSeoMeta({
     </div>
 
     <!-- Night v2: the steps, as tickets -->
-    <BuilderTickets v-if="isV2" id="builder" class="mt-6 scroll-mt-24" :steps="tickets" :current="step" @go="goStep" />
+    <BuilderTickets v-if="stepped" id="builder" class="mt-6 scroll-mt-24" :steps="tickets" :current="step" @go="goStep" />
 
     <!-- the form is where the work is; the preview is read-only and can be narrower -->
     <div class="mt-8 grid items-start gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
@@ -375,15 +377,15 @@ useSeoMeta({
           v-show="at('show')"
           :used="nominationsUsed"
           :active="draft.templateId"
-          :compact="isV2"
+          :compact="stepped"
           @apply="applyTemplate"
           @add-idea="addIdea"
         />
 
         <section v-show="at('show', 'when')" class="rounded-card border border-hair bg-s1 p-6">
           <!-- in Night v2 the ticket above already names the step -->
-          <h2 v-if="!isV2" class="text-xl font-semibold">The basics</h2>
-          <div class="space-y-5" :class="!isV2 && 'mt-5'">
+          <h2 v-if="!stepped" class="text-xl font-semibold">The basics</h2>
+          <div class="space-y-5" :class="!stepped && 'mt-5'">
             <UiField
               v-show="at('show')"
               v-model="draft.name"
@@ -401,7 +403,7 @@ useSeoMeta({
               label="Description"
               placeholder="What these awards are for, and who votes."
               :limit="FIELD.descriptionLimit"
-              :rows="isV2 ? 2 : 4"
+              :rows="stepped ? 2 : 4"
               :error="isMissing('description') ? 'Needs a few more words: what the awards are for and who votes.' : ''"
               data-check="description"
               helper="A description is required before publishing. Two sentences is plenty."
@@ -443,11 +445,11 @@ useSeoMeta({
         <section v-show="at('cats')" id="nominations" data-check="nominations">
           <span data-check="nominees" class="sr-only" />
           <div class="flex items-end justify-between gap-4">
-            <h2 class="text-xl font-semibold">Nominations</h2>
+            <h2 class="text-xl font-semibold">Categories</h2>
             <!-- past the free five this is a paid feature in use, not an error:
                  the count says what is free and what is paid, in those words -->
             <span class="flex items-center gap-2 text-sm">
-              <span class="tnum text-ink-muted">{{ nominationsUsed }} {{ nominationsUsed === 1 ? 'nomination' : 'nominations' }}</span>
+              <span class="tnum text-ink-muted">{{ nominationsUsed }} {{ nominationsUsed === 1 ? 'category' : 'categories' }}</span>
               <span
                 v-if="nominationsUsed > FREE.maxNominations"
                 class="rounded-pill border border-gold-24 px-2 py-0.5 text-[11px] font-bold uppercase tracking-micro text-gold-text"
@@ -476,7 +478,7 @@ useSeoMeta({
           </div>
 
           <div class="mt-4">
-            <UiButton variant="ghost" @click="onAddNomination">Add nomination</UiButton>
+            <UiButton variant="ghost" @click="onAddNomination">Add category</UiButton>
           </div>
 
           <!-- the 6th nomination is where the paid version starts -->
@@ -529,8 +531,8 @@ useSeoMeta({
         <!-- the payment goes straight to checkout from here; Stripe off answers 503 and says so -->
         <p v-if="checkoutError" class="mt-3 text-sm text-danger" role="alert">{{ checkoutError }}</p>
 
-        <!-- Night v2: back and next under every step -->
-        <div v-if="isV2" class="flex justify-between gap-3 border-t-2 border-ink pt-5">
+        <!-- the stepped builder: back and next under every step -->
+        <div v-if="stepped" class="builder-steps-bar flex justify-between gap-3 border-t-2 border-ink pt-5">
           <UiButton v-if="stepIndex > 0" variant="ghost" @click="goStep(STEPS[stepIndex - 1]!.id)">Back</UiButton>
           <span v-else />
           <UiButton v-if="stepIndex < STEPS.length - 1" @click="goStep(STEPS[stepIndex + 1]!.id)">Next: {{ STEPS[stepIndex + 1]!.title }}</UiButton>
