@@ -1,5 +1,5 @@
 import qrcode from 'qrcode-generator'
-import { accentOf, accentText, resolveAccent } from './accent'
+import { accentOf, accentText, resolveAccent, tint } from './accent'
 import type { Award, AwardLook } from '~/types/award'
 
 /**
@@ -33,6 +33,8 @@ export interface CardSpec {
   format: ShareFormat
   /** The Fanzine version's flyer instead of the stage card (renderZineCard). */
   zine?: boolean
+  /** The Envelope version's cream ticket instead of the stage card (renderEnvelopeCard). */
+  envelope?: boolean
   /** The full address the flyer's QR code opens; `url` is the one printed. */
   href?: string
 }
@@ -161,6 +163,7 @@ function wrap(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): st
  */
 export async function renderShareCard(spec: CardSpec): Promise<string> {
   if (spec.zine) return renderZineCard(spec)
+  if (spec.envelope) return renderEnvelopeCard(spec)
   const { w, h } = FORMATS[spec.format]
   const canvas = document.createElement('canvas')
   canvas.width = w
@@ -266,6 +269,134 @@ export async function renderShareCard(spec: CardSpec): Promise<string> {
   ctx.fill()
   ctx.fillStyle = '#FFFFFF'
   ctx.font = `600 ${bodySize}px Archivo, sans-serif`
+  ctx.fillText(spec.url, pad + bodySize * 1.1, footY)
+
+  return canvas.toDataURL('image/png')
+}
+
+/**
+ * The Envelope card (review 2026-10-16): the show on a cream ticket in a dark room,
+ * the way its awards page opens - the theme drawn softly in the accent, brightest in
+ * the bottom-right corner; the claim in brass, the line in Gloock, the address below
+ * the ticket. A cover goes under the ticket with a cream wash, as on the page.
+ */
+async function renderEnvelopeCard(spec: CardSpec): Promise<string> {
+  const { w, h } = FORMATS[spec.format]
+  const canvas = document.createElement('canvas')
+  canvas.width = w
+  canvas.height = h
+  const ctx = canvas.getContext('2d')!
+  const accent = resolveAccent(accentOf(spec.look))
+  const story = spec.format === 'story'
+  const display = spec.look.font ? `'${spec.look.font}'` : 'Gloock'
+  try {
+    await document.fonts.load(`400 100px ${display}`)
+    await document.fonts.load('600 40px "Hanken Grotesk"')
+  } catch {
+    /* a face that will not load simply falls back */
+  }
+  await document.fonts.ready
+
+  // the room
+  ctx.fillStyle = '#0B0B0A'
+  ctx.fillRect(0, 0, w, h)
+  const glow = ctx.createRadialGradient(w * 0.5, 0, 0, w * 0.5, 0, h * 0.9)
+  glow.addColorStop(0, 'rgba(255,232,190,0.10)')
+  glow.addColorStop(1, 'rgba(255,232,190,0)')
+  ctx.fillStyle = glow
+  ctx.fillRect(0, 0, w, h)
+
+  // the ticket
+  const pad = Math.round(w * 0.06)
+  const bodySize = Math.round(w * (story ? 0.033 : 0.026))
+  const tx = pad, ty = pad, tw = w - pad * 2, th = h - pad * 2 - bodySize * 2.6
+  const r = Math.round(w * 0.02)
+  ctx.save()
+  ctx.beginPath()
+  ctx.roundRect(tx, ty, tw, th, r)
+  ctx.clip()
+  ctx.fillStyle = '#F4EFE5'
+  ctx.fillRect(tx, ty, tw, th)
+  const img = spec.look.coverUrl ? await loadImage(spec.look.coverUrl) : null
+  if (img) {
+    ctx.save()
+    ctx.translate(tx, ty)
+    drawCover(ctx, img, tw, th)
+    ctx.restore()
+    const wash = ctx.createLinearGradient(tx, 0, tx + tw, 0)
+    wash.addColorStop(0, 'rgba(244,239,229,0.94)')
+    wash.addColorStop(1, 'rgba(244,239,229,0.45)')
+    ctx.fillStyle = wash
+    ctx.fillRect(tx, ty, tw, th)
+  } else {
+    const corner = ctx.createRadialGradient(tx + tw, ty + th, 0, tx + tw, ty + th, Math.max(tw, th) * 0.95)
+    corner.addColorStop(0, tint(accent, 'CC'))
+    corner.addColorStop(0.3, tint(accent, '55'))
+    corner.addColorStop(1, tint(accent, '00'))
+    ctx.fillStyle = corner
+    ctx.fillRect(tx, ty, tw, th)
+  }
+  ctx.restore()
+
+  const ix = tx + Math.round(tw * 0.07), iw = tw - Math.round(tw * 0.14)
+  ctx.textBaseline = 'top'
+  ctx.fillStyle = '#8E6E33'
+  ctx.font = `600 ${Math.round(bodySize * 1.05)}px "Hanken Grotesk", sans-serif`
+  ctx.letterSpacing = '3px'
+  ctx.fillText(spec.kicker.toUpperCase(), ix, ty + Math.round(th * 0.1))
+  ctx.letterSpacing = '0px'
+
+  const top = ty + Math.round(th * 0.1) + bodySize * 2.4
+  const bottom = ty + th - Math.round(th * 0.1)
+  let size = Math.round(w * (story ? 0.1 : 0.072))
+  let lines: string[] = []
+  let subLines: string[] = []
+  let block = 0
+  for (; size > bodySize * 1.3; size -= 4) {
+    ctx.font = `400 ${size}px ${display}, Georgia, serif`
+    lines = wrap(ctx, spec.headline, iw)
+    ctx.font = `500 ${bodySize}px "Hanken Grotesk", sans-serif`
+    subLines = spec.sub ? wrap(ctx, spec.sub, iw).slice(0, 2) : []
+    block = lines.length * Math.round(size * 1.02) + (subLines.length ? subLines.length * Math.round(bodySize * 1.4) + bodySize * 0.7 : 0) + (spec.cta ? Math.round(bodySize * 2.4) : 0)
+    if (lines.length <= 4 && block <= bottom - top) break
+  }
+  let y = story ? top + (bottom - top - block) / 2 : bottom - block
+  ctx.fillStyle = '#15140F'
+  ctx.font = `400 ${size}px ${display}, Georgia, serif`
+  for (const line of lines) {
+    ctx.fillText(line, ix, y)
+    y += Math.round(size * 1.02)
+  }
+  if (subLines.length) {
+    ctx.fillStyle = '#4A463D'
+    ctx.font = `500 ${bodySize}px "Hanken Grotesk", sans-serif`
+    y += Math.round(bodySize * 0.7)
+    for (const line of subLines) {
+      ctx.fillText(line, ix, y)
+      y += Math.round(bodySize * 1.4)
+    }
+  }
+  if (spec.cta) {
+    y += Math.round(bodySize * 0.6)
+    ctx.font = `600 ${Math.round(bodySize * 1.1)}px "Hanken Grotesk", sans-serif`
+    const label = spec.cta
+    const bw = ctx.measureText(label).width + bodySize * 1.6, bh = bodySize * 2
+    ctx.fillStyle = '#15140F'
+    ctx.beginPath()
+    ctx.roundRect(ix, y, bw, bh, r * 0.6)
+    ctx.fill()
+    ctx.fillStyle = '#F3EEE4'
+    ctx.fillText(label, ix + bodySize * 0.8, y + (bh - bodySize * 1.1) / 2)
+  }
+
+  // the address, under the ticket: a brass dot and the link
+  const footY = h - pad - bodySize * 1.1
+  ctx.fillStyle = '#C9A45C'
+  ctx.beginPath()
+  ctx.arc(pad + bodySize * 0.28, footY + bodySize * 0.55, bodySize * 0.28, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.fillStyle = '#F3F0E8'
+  ctx.font = `600 ${bodySize}px "Hanken Grotesk", sans-serif`
   ctx.fillText(spec.url, pad + bodySize * 1.1, footY)
 
   return canvas.toDataURL('image/png')

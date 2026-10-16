@@ -78,7 +78,7 @@ const format = ref<ShareFormat>('link')
 const formatOptions = (Object.keys(FORMATS) as ShareFormat[]).map((id) => ({ value: id, label: `${FORMATS[id].name} - ${FORMATS[id].note}` }))
 
 // the Fanzine draws flyers instead of stage cards
-const { isZine } = useVersion()
+const { isZine, isEnvelope } = useVersion()
 // The card shows the address the way a person reads it out: no scheme, and none
 // of the payload the link carries while there is no backend to look a show up in.
 const plainUrl = computed(() => url.replace(/^https?:\/\//, '').split('?')[0]!)
@@ -94,6 +94,7 @@ const card = computed(() => {
     href: url,
     format: format.value,
     zine: isZine.value,
+    envelope: isEnvelope.value,
     role: role.value,
     ...cardCopy(role.value, award, { nomination: s.nomination, nominee: s.nominee, closes, cta }),
   }
