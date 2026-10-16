@@ -16,7 +16,9 @@ const palette = ref<string>('gold')
 const button = ref<string>('solid')
 const copied = ref(false)
 const open = ref(false)
-const { version, isZine, setVersion } = useVersion()
+const { version, setVersion } = useVersion()
+// palette and button options belong to Current only; every other version brings its own
+const tunable = computed(() => version.value === 'stage')
 
 onMounted(() => {
   const d = document.documentElement
@@ -43,7 +45,7 @@ watch(button, (v) => {
 async function share() {
   const url = new URL(location.href)
   url.searchParams.set('version', version.value)
-  if (!isZine.value) {
+  if (tunable.value) {
     url.searchParams.set('palette', palette.value)
     url.searchParams.set('button', button.value)
   }
@@ -100,7 +102,7 @@ const seg = (active: boolean) =>
 
       <div v-if="open" id="design-preview" role="region" :aria-label="`Design options, ${label}`" class="ds-panel">
         <p class="ds-title">{{ label }} version</p>
-        <template v-if="!isZine">
+        <template v-if="tunable">
           <div class="flex flex-wrap items-center gap-1" role="radiogroup" aria-label="Palette">
             <span class="ds-k">Palette</span>
             <button
@@ -279,6 +281,26 @@ const seg = (active: boolean) =>
   width: 14px;
   height: 4px;
   background: #5cace8;
+}
+.ds-swatch-envelope {
+  background: #0b0b0a;
+  box-shadow: inset 0 0 0 1px #3d3c38;
+}
+.ds-swatch-envelope i {
+  left: 7px;
+  top: 6px;
+  width: 24px;
+  height: 12px;
+  border-radius: 3px;
+  background: #f4efe5;
+}
+.ds-swatch-envelope b {
+  left: 7px;
+  top: 21px;
+  width: 14px;
+  height: 4px;
+  border-radius: 2px;
+  background: #c9a45c;
 }
 .ds-more {
   display: grid;

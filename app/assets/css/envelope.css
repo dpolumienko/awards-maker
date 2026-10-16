@@ -1,0 +1,145 @@
+/*
+  The Envelope version (review 2026-10-16): the designer's prototype (Ed,
+  "Envelope · prototype") brought into the app. A dark room, one brass light,
+  and the show itself on a cream ticket. Switched by data-version on <html>
+  (data/design.ts); everything here is scoped to it.
+
+  Type has two voices, and each has one job (review 2026-10-16, item 10):
+    Gloock         - the show: the landing hero and interludes, "Awards" in the
+                     logo, an awards' own name on its page and in the ceremony
+    Hanken Grotesk - everything else
+  One radius (12px) for every surface and control. A surface is a fill or a
+  border, never both.
+
+  Loaded after zine.css at the same specificity, so it wins over whatever
+  palette the Current version last left on <html>.
+*/
+
+:root[data-version='envelope'] {
+  --font-body: 'Hanken Grotesk';
+  --font-display: 'Gloock';
+  --canvas: 11 11 10;
+  --s1: 20 20 19;
+  --s2: 26 26 24;
+  --s3: 37 37 34;
+  --hair: 42 42 39;
+  --hair2: 61 60 56;
+  --ink: 243 240 232;
+  --ink-2: 194 189 178;
+  --ink-muted: 156 151 141;
+  --ink-disabled: 138 134 125;
+  --live: 126 211 161;
+  --warn: 224 162 74;
+  --danger: 240 138 120;
+  /* brass is the accent; "gold" is only the token's name */
+  --gold: 201 164 92;
+  --gold-pressed: 142 110 51;
+  --gold-text: 226 196 138;
+  --on-gold: 11 11 10;
+  --on-gold-soft: 21 20 15;
+  /* the cream of the ticket */
+  --ivory: 244 239 229;
+  --r-card: 12px;
+  --r-btn: 12px;
+  --glow-fill: none;
+  --glow-text: currentColor;
+  color-scheme: dark;
+}
+/* the stage and backstage are the same room */
+:root[data-version='envelope'] body,
+:root[data-version='envelope'] body[data-stage] {
+  --canvas: 11 11 10;
+}
+:root[data-version='envelope'] .rig {
+  display: none;
+}
+:root[data-version='envelope'] .glow {
+  filter: none;
+}
+
+/* ---------------------------------------------------------------- type */
+
+:root[data-version='envelope'] .display-1,
+:root[data-version='envelope'] .display-2,
+:root[data-version='envelope'] .env-serif {
+  font-family: var(--font-display), Georgia, 'Times New Roman', serif;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: -0.035em;
+}
+:root[data-version='envelope'] .heading {
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: -0.035em;
+}
+:root[data-version='envelope'] .label,
+:root[data-version='envelope'] .micro {
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0.01em;
+}
+:root[data-version='envelope'] .sc-brand-word {
+  font-family: var(--font-display), Georgia, serif;
+  font-weight: 400;
+  font-size: 22px;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: 0;
+  color: rgb(var(--gold-text));
+}
+
+/* ---------------------------------------------------------------- buttons */
+
+:root[data-version='envelope'] .ui-btn {
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+}
+/* the main action: a cream plate with a slow glint across it */
+:root[data-version='envelope'] .btn-primary {
+  background-color: #efeadf;
+  background-image: linear-gradient(180deg, #f7f4ec, #e9e3d6);
+  color: #0b0b0a;
+  box-shadow: none;
+  text-shadow: none;
+}
+:root[data-version='envelope'] .btn-primary:hover {
+  background-image: none;
+  background-color: #fff;
+}
+:root[data-version='envelope'] .btn-primary:disabled,
+:root[data-version='envelope'] .btn-primary[aria-disabled='true'] {
+  background-image: none;
+  background-color: rgb(var(--s3));
+  color: rgb(var(--ink-disabled));
+}
+:root[data-version='envelope'] .ui-btn-ghost {
+  border: 1px solid rgb(var(--ink));
+}
+:root[data-version='envelope'] .ui-btn-ghost:hover {
+  background-color: rgb(243 240 232 / 0.08);
+}
+:root[data-version='envelope'] .ui-btn-sheen {
+  background: linear-gradient(100deg, transparent 30%, rgb(255 255 255 / 0.7) 50%, transparent 70%);
+  transform: translateX(-160%) skewX(-18deg);
+  transition: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  :root[data-version='envelope'] .ui-btn-sheen {
+    animation: env-glint 4.8s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+  }
+  :root[data-version='envelope'] .ui-btn:hover .ui-btn-sheen {
+    animation-duration: 1.6s;
+  }
+}
+@keyframes env-glint {
+  0%,
+  62% {
+    transform: translateX(-160%) skewX(-18deg);
+  }
+  90%,
+  100% {
+    transform: translateX(380%) skewX(-18deg);
+  }
+}

@@ -38,6 +38,10 @@ export const VERSIONS = [
   // builder in ticket steps, the dashboard's show desk with take-offline. Same
   // routes and API; only the builder and the dashboard lay out differently.
   { id: 'night2', label: 'Night v2' },
+  // Envelope (review 2026-10-16): the designer's prototype brought into the app -
+  // dark room, brass and a cream ticket, Gloock as the voice of the show. Its own
+  // tokens (assets/css/envelope.css) and components (components/envelope/).
+  { id: 'envelope', label: 'Envelope' },
 ] as const
 export type Version = (typeof VERSIONS)[number]['id']
 export const VERSION_COOKIE = 'am-version'

@@ -20,7 +20,7 @@ const { onPaper } = useVersion()
     <span aria-hidden="true" class="h-6 w-px bg-hair2" />
     <span
       aria-hidden="true"
-      class="font-extrabold uppercase tracking-display text-gold"
+      class="sc-brand-word font-extrabold uppercase tracking-display text-gold"
       :class="size === 'lg' ? 'text-2xl' : 'text-lg sm:text-xl'"
     >Awards</span>
   </NuxtLink>

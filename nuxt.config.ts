@@ -49,7 +49,7 @@ export default defineNuxtConfig({
     },
   },
 
-  css: ['~/assets/css/main.css', '~/assets/css/palettes.css', '~/assets/css/zine.css'],
+  css: ['~/assets/css/main.css', '~/assets/css/palettes.css', '~/assets/css/zine.css', '~/assets/css/envelope.css'],
 
   // The static demo has no server to render on: every page is drawn in the
   // browser from demo/api.ts, the way GitHub Pages serves it anyway (404.html).
