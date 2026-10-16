@@ -75,7 +75,7 @@ useSeoMeta({ title: 'Your awards', robots: 'noindex, follow' })
       >
         <UiBadge tone="ended">Not published</UiBadge>
         <span class="text-lg font-semibold">{{ draft.name.trim() || 'Untitled awards' }}</span>
-        <span class="tnum text-sm text-ink-muted">{{ draft.nominations.length }} nominations</span>
+        <span class="tnum text-sm text-ink-muted">{{ draft.nominations.length }} {{ draft.nominations.length === 1 ? 'category' : 'categories' }}</span>
         <span class="ml-auto flex items-center gap-1.5 text-sm text-gold-text">
           Continue
           <UiIcon name="chevron-right" :size="14" />
@@ -94,7 +94,7 @@ useSeoMeta({ title: 'Your awards', robots: 'noindex, follow' })
       >
         <UiBadge :tone="badges[phaseOf(a as never, a.voters)].tone">{{ badges[phaseOf(a as never, a.voters)].text }}</UiBadge>
         <span class="text-lg font-semibold">{{ a.name }}</span>
-        <span class="tnum text-sm text-ink-muted">{{ a.categories }} nominations</span>
+        <span class="tnum text-sm text-ink-muted">{{ a.categories }} {{ a.categories === 1 ? 'category' : 'categories' }}</span>
         <!-- the ceiling is a free-plan thing; a paid show has none -->
         <span v-if="a.tier === 'paid'" class="tnum text-sm text-ink-muted">{{ a.voters }} voters</span>
         <span v-else class="tnum text-sm" :class="a.voters / FREE.maxVoters >= 0.8 ? 'text-warn' : 'text-ink-muted'">

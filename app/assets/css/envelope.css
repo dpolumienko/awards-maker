@@ -325,3 +325,11 @@
 :root[data-version='envelope'] .env-pv-band > span {
   z-index: 1;
 }
+
+/* ---------------------------------------------------------------- surfaces */
+
+/* the prototype's rule for a surface: a fill or a border, never both */
+:root[data-version='envelope'] .bg-s1.border,
+:root[data-version='envelope'] .bg-s1.border-hair {
+  border-color: transparent;
+}
