@@ -19,11 +19,11 @@ const base =
 
 <template>
   <div class="flex flex-wrap gap-2" :class="block && 'w-full'">
-    <button type="button" :class="[base, block && 'flex-1', 'bg-twitch text-white']" :disabled="disabled" :aria-label="label ? undefined : 'Sign in with Twitch'" @click="emit('choose', 'twitch')">
+    <button type="button" :class="[base, block && 'flex-1', 'sib sib-tw bg-twitch text-white']" :disabled="disabled" :aria-label="label ? undefined : 'Sign in with Twitch'" @click="emit('choose', 'twitch')">
       {{ label }} Twitch
     </button>
     <!-- Kick's own green carries black type, as Kick prints it -->
-    <button type="button" :class="[base, block && 'flex-1', 'bg-kick text-black']" :disabled="disabled" :aria-label="label ? undefined : 'Sign in with Kick'" @click="emit('choose', 'kick')">
+    <button type="button" :class="[base, block && 'flex-1', 'sib sib-kk bg-kick text-black']" :disabled="disabled" :aria-label="label ? undefined : 'Sign in with Kick'" @click="emit('choose', 'kick')">
       {{ label }} Kick
     </button>
   </div>

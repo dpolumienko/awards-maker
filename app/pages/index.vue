@@ -10,10 +10,12 @@ import PlansSection from '~/components/sections/PlansSection.vue'
 import CatalogSection from '~/components/sections/CatalogSection.vue'
 import FaqSection, { type FaqItem } from '~/components/sections/FaqSection.vue'
 import ZineLanding from '~/components/zine/ZineLanding.vue'
+// split out: only an Envelope visitor downloads its landing (and the three.js it starts)
+const EnvLanding = defineAsyncComponent(() => import('~/components/envelope/EnvLanding.vue'))
 import { useVersion } from '~/composables/useVersion'
 import { SC } from '~/data/sc'
 
-const { isZine } = useVersion()
+const { isZine, isEnvelope } = useVersion()
 
 // Copy is frozen in outputs/awards-landing-copy-2026-09-13.md - change it there first.
 const faq: FaqItem[] = [
@@ -65,6 +67,7 @@ useSchemaOrg([
        page, which is where a reader expects to find the remaining objections. -->
   <!-- the Fanzine version prints the same promise its own way (components/zine) -->
   <ZineLanding v-if="isZine" :faq="faq" />
+  <EnvLanding v-else-if="isEnvelope" :faq="faq" />
   <template v-else>
   <HeroSection />
   <AwardPagePreview />
