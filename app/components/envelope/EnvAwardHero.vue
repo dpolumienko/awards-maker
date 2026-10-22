@@ -4,10 +4,12 @@
 // the countdown, the facts and the ceremony. The card is drawn in the show's own
 // theme and accent (data/themes.ts envelopeCardCss), so the six themes of the
 // builder are the six themes here (review item 16).
+import { partnerHref } from '~/utils/partnerIcon'
 import { computed, ref } from 'vue'
 import type { Award, Partner } from '~/types/award'
 import type { Phase } from '~/composables/useVoting'
-import { envelopeCardCss } from '~/data/themes'
+import { envelopeDarkCss } from '~/data/themes'
+import { onBeforeUnmount, onMounted } from 'vue'
 import { PLATFORM_NAMES } from '~/data/platforms'
 import '~/assets/css/envelope-award.css'
 
@@ -31,7 +33,25 @@ defineEmits<{ start: [] }>()
 const PF = { twitch: 'tw', kick: 'kk', youtube: 'yt' } as const
 const pf = computed(() => PF[props.award.host.platform as keyof typeof PF] ?? 'tw')
 const stateTone = computed(() => (props.phase === 'open' ? '' : props.phase === 'revealed' ? 'res' : 'end'))
-const bg = computed(() => envelopeCardCss(props.award.look?.theme, props.accent, props.award.look?.coverUrl))
+// Full page (Ed's prototype, 2026-10-22): no card - the theme lies on the page
+// itself, full width, dark, lit from the top in the accent, fading under the hero
+const bg = computed(() => envelopeDarkCss(props.award.look?.theme, props.accent, props.award.look?.coverUrl, props.award.look?.bg, false))
+const hero = ref<HTMLElement | null>(null)
+const backdrop = ref<HTMLElement | null>(null)
+function fit() {
+  const h = hero.value, b = backdrop.value
+  if (!h || !b) return
+  const top = (b.offsetParent as HTMLElement | null)?.getBoundingClientRect().top ?? 0
+  b.style.height = Math.round(h.getBoundingClientRect().bottom - top + 48) + 'px'
+}
+let ro: ResizeObserver | null = null
+onMounted(() => {
+  fit()
+  ro = new ResizeObserver(fit)
+  if (hero.value) ro.observe(hero.value)
+})
+onBeforeUnmount(() => ro?.disconnect())
+const isSc = (name: string) => /streams\s*charts/i.test(name)
 // the prototype's slow background motions are keyed by his theme names
 const BG = { plain: 'plain', stage: 'stage', rays: 'rays', glow: 'aurora', spotlights: 'ribbons', grid: 'grid' } as const
 const bgKey = computed(() => (props.award.look?.coverUrl ? 'cover' : BG[(props.award.look?.theme ?? 'plain') as keyof typeof BG] ?? 'plain'))
@@ -70,17 +90,22 @@ async function copy() {
 </script>
 
 <template>
-  <header class="ap-hero" :data-bg="bgKey" :style="{ '--ap-bg': bg }">
+  <div ref="backdrop" class="ap-backdrop" :data-bg="award.look?.coverUrl ? 'cover' : award.look?.theme ?? 'plain'" :style="{ '--bd-bg': bg, '--ga': accent }" aria-hidden="true">
+    <span class="bd-glow" /><span class="bd-rays" /><span class="bd-vig" />
+  </div>
+  <header ref="hero" class="ap-hero env-full" :data-bg="bgKey">
     <div class="ap-intro">
-      <span class="ap-hostchip">
-        <span v-if="!award.look?.hideLogo" class="av hc-av">{{ award.host.name.slice(0, 2).toUpperCase() }}<i class="hc-pf pf" :class="pf" :aria-label="PLATFORM_NAMES[award.host.platform]" /></span>
-        <span><small class="org">Organized by</small><b>{{ award.host.name }}</b></span>
+      <span class="ap-hostchip hc-row">
+        <small class="org">Organized by</small>
+        <span v-if="!award.look?.hideLogo" class="av hc-av">{{ award.host.name.slice(0, 2).toUpperCase() }}</span>
+        <i class="hc-pf2 pf" :class="pf" :aria-label="PLATFORM_NAMES[award.host.platform]" />
+        <b>{{ award.host.name }}</b>
       </span>
       <h1 :style="headlineFont ? { fontFamily: headlineFont } : undefined">{{ award.name }}</h1>
       <p class="ap-desc">{{ award.description }}</p>
       <p v-if="partners.length" class="ap-partners">
         <span>With</span>
-        <a v-for="p in partners" :key="p.id" class="ap-pl-slot" :href="p.url || undefined" target="_blank" rel="nofollow sponsored noopener">{{ p.name }}</a>
+        <a v-for="p in partners" :key="p.id" :class="isSc(p.name) ? 'ap-pl' : 'ap-pl-slot'" :href="partnerHref(p.url) || undefined" target="_blank" rel="nofollow sponsored noopener" :aria-label="p.name"><template v-if="!isSc(p.name)">{{ p.name }}</template></a>
       </p>
       <div class="ap-ctas">
         <a class="btn p ap-down" href="#vote" @click.prevent="$emit('start')">{{ phase === 'revealed' ? 'See the winners' : phase === 'open' ? 'Start voting' : 'See the nominees' }}<i class="ap-dn" aria-hidden="true" /></a>

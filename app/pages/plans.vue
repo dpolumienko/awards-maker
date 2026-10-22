@@ -140,18 +140,18 @@ const cols = [
       </div>
     </section>
 
-    <section id="done-for-you" class="mt-16 scroll-mt-24 border-t border-hair pt-12">
-      <h2 class="heading">We run it for you</h2>
-      <p class="mt-4 max-w-copy text-lg text-ink-2">
-        For agencies, brands and big channels. We set up the show with you, run moderation through the
-        vote and send a report after. Tell us the channel and the date, and we come back with a price.
-      </p>
-      <div class="mt-6 flex flex-wrap gap-3">
-        <!-- one filled button per screen; the address is a plain link, not an upper-case button -->
-        <!-- one label per intent across the page (design-taste pre-flight) -->
-        <UiButton to="mailto:sales@streamscharts.com" variant="ghost">Talk to us</UiButton>
-        <UiButton to="/create" variant="ghost">Create your awards</UiButton>
+    <!-- a flat card, the copy on the left and the one action on the right (Ed, 2026-10-22):
+         the old full-width rule and two equal ghost buttons read as a loose section -->
+    <section id="done-for-you" class="dfy mt-16 scroll-mt-24">
+      <div>
+        <p class="dfy-k">For agencies, brands and big channels</p>
+        <h2>We run it for you</h2>
+        <p class="dfy-t">
+          We set up the show with you, run moderation through the vote and send a report after. Tell us the
+          channel and the date, and we come back with a price.
+        </p>
       </div>
+      <UiButton to="mailto:sales@streamscharts.com" variant="ghost">Talk to us</UiButton>
     </section>
 
     <section class="mt-16 border-t border-hair pt-12">
@@ -170,3 +170,11 @@ const cols = [
     </ClosingCta>
   </div>
 </template>
+
+<style scoped>
+.dfy { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 24px 48px; padding: clamp(24px, 3vw, 36px) clamp(24px, 3vw, 40px); border-radius: 12px; background: var(--e-white, #141413); }
+.dfy > div { max-width: 62ch; }
+.dfy-k { margin: 0; font-size: 13px; font-weight: 600; color: var(--e-brass-hi, #e2c48a); }
+.dfy h2 { margin: 8px 0 0; font: 600 clamp(26px, 3vw, 34px)/1.1 var(--e-sans, sans-serif); letter-spacing: -0.03em; }
+.dfy-t { margin: 10px 0 0; font-size: 16px; color: var(--e-ink-2, #c2bdb2); }
+</style>

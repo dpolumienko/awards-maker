@@ -6,13 +6,12 @@
 // dashboard; the public page is one click further, from there.
 import { computed } from 'vue'
 import UiButton from '~/components/ui/UiButton.vue'
-import UiBadge from '~/components/ui/UiBadge.vue'
-import UiIcon from '~/components/ui/UiIcon.vue'
 import { useAwardDraft } from '~/composables/useAwardDraft'
 import { useMyAwards, type AwardSummary } from '~/composables/useAwards'
 import { phaseOf } from '~/composables/useVoting'
 import { FREE } from '~/types/award'
 import { formatInZone } from '#shared/time'
+import '~/assets/css/envelope-pages.css'
 
 const { draft, load, unpublish } = useAwardDraft()
 const { data, refresh } = await useMyAwards()
@@ -28,12 +27,13 @@ async function removeAward(slug: string) {
   await refresh()
 }
 
+// the prototype's state dots: green while voting runs, brass once results are out
 const badges = {
-  soon: { tone: 'ended' as const, text: 'Not open yet' },
-  open: { tone: 'live' as const, text: 'Voting open' },
-  capped: { tone: 'ended' as const, text: 'Closed at the limit' },
-  counting: { tone: 'results' as const, text: 'Voting closed' },
-  revealed: { tone: 'results' as const, text: 'Winners announced' },
+  soon: { cls: 'end', text: 'Not open yet' },
+  open: { cls: '', text: 'Voting open' },
+  capped: { cls: 'wait', text: 'Closed at the limit' },
+  counting: { cls: 'wait', text: 'Voting closed' },
+  revealed: { cls: 'res', text: 'Results out' },
 }
 
 // UTC instants, shown in the show's own zone
@@ -50,7 +50,7 @@ function next(a: AwardSummary) {
     case 'capped':
       return 'Waiting on you: publish the winners'
     default:
-      return a.ceremonyAt ? `Announced ${fmt(a.ceremonyAt, a.timezone)}` : 'Winners announced'
+      return a.ceremonyAt ? `Ceremony done ${fmt(a.ceremonyAt, a.timezone)}` : 'Winners announced'
   }
 }
 const waiting = (a: AwardSummary) => ['counting', 'capped'].includes(phaseOf(a as never, a.voters))
@@ -63,75 +63,50 @@ useSeoMeta({ title: 'Your awards', robots: 'noindex, follow' })
 </script>
 
 <template>
-  <div class="shell py-10">
-    <h1 class="heading">Your awards</h1>
+  <div class="shell env-pg">
+    <nav class="pg-crumbs" aria-label="Breadcrumb">
+      <NuxtLink to="/">Awards Maker</NuxtLink><span aria-hidden="true">/</span><span aria-current="page">Your awards</span>
+    </nav>
+    <div class="pg-head">
+      <div>
+        <h1>Your awards</h1>
+        <p class="pg-sub">Drafts, live votes and finished shows, all in one place.</p>
+      </div>
+      <UiButton to="/create">Create your awards</UiButton>
+    </div>
 
-    <div v-if="published.length || hasDraft" class="mt-8 space-y-3">
+    <div v-if="published.length || hasDraft" class="my-list">
       <!-- unfinished first: it is the one that goes cold -->
-      <NuxtLink
-        v-if="hasDraft"
-        to="/create"
-        class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-card border border-dashed border-hair2 bg-s1 p-5 no-underline transition-colors hover:border-gold"
-      >
-        <UiBadge tone="ended">Not published</UiBadge>
-        <span class="text-lg font-semibold">{{ draft.name.trim() || 'Untitled awards' }}</span>
-        <span class="tnum text-sm text-ink-muted">{{ draft.nominations.length }} {{ draft.nominations.length === 1 ? 'category' : 'categories' }}</span>
-        <span class="ml-auto flex items-center gap-1.5 text-sm text-gold-text">
-          Continue
-          <UiIcon name="chevron-right" :size="14" />
-        </span>
+      <NuxtLink v-if="hasDraft" to="/create" class="my-row">
+        <span class="state end">Not published</span>
+        <span class="my-nm">{{ draft.name.trim() || 'Untitled awards' }}</span>
+        <span class="my-meta tnum">{{ draft.nominations.length }} {{ draft.nominations.length === 1 ? 'nomination' : 'nominations' }}</span>
+        <span class="my-meta zero">No voters yet</span>
+        <span class="my-next" />
+        <span class="my-go">Continue</span>
       </NuxtLink>
 
-      <div
-        v-for="a in published"
-        :key="a.slug"
-        class="relative"
-      >
-      <NuxtLink
-        :to="`/my-awards/${a.slug}`"
-        class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-card border bg-s1 p-5 no-underline transition-colors"
-        :class="waiting(a) ? 'border-gold-24 hover:border-gold' : 'border-hair hover:border-gold'"
-      >
-        <UiBadge :tone="badges[phaseOf(a as never, a.voters)].tone">{{ badges[phaseOf(a as never, a.voters)].text }}</UiBadge>
-        <span class="text-lg font-semibold">{{ a.name }}</span>
-        <span class="tnum text-sm text-ink-muted">{{ a.categories }} {{ a.categories === 1 ? 'category' : 'categories' }}</span>
-        <!-- the ceiling is a free-plan thing; a paid show has none -->
-        <span v-if="a.tier === 'paid'" class="tnum text-sm text-ink-muted">{{ a.voters }} voters</span>
-        <span v-else class="tnum text-sm" :class="a.voters / FREE.maxVoters >= 0.8 ? 'text-warn' : 'text-ink-muted'">
-          {{ a.voters }} / {{ FREE.maxVoters }} voters
-        </span>
-        <span v-if="a.offline" class="text-sm font-semibold text-warn">Offline</span>
-        <span v-else class="text-sm" :class="waiting(a) ? 'text-gold-text' : 'text-ink-muted'">{{ next(a) }}</span>
-        <!-- room for the Remove link laid over the row, armed label included -->
-        <span class="ml-auto flex items-center gap-1.5 pr-36 text-sm text-gold-text">
-          Dashboard
-          <UiIcon name="chevron-right" :size="14" />
-        </span>
-      </NuxtLink>
-      <!-- publishing used to be one-way: there was no way to take a test show down -->
-      <UiConfirmButton
-        variant="quiet"
-        class="absolute right-5 top-1/2 -translate-y-1/2"
-        :aria-label="'Remove ' + a.name"
-        @confirm="removeAward(a.slug)"
-      />
+      <div v-for="a in published" :key="a.slug" class="my-item has-rm">
+        <NuxtLink :to="`/my-awards/${a.slug}`" class="my-row">
+          <span class="state" :class="badges[phaseOf(a as never, a.voters)].cls">{{ badges[phaseOf(a as never, a.voters)].text }}</span>
+          <span class="my-nm">{{ a.name }}</span>
+          <span class="my-meta tnum">{{ a.categories }} {{ a.categories === 1 ? 'nomination' : 'nominations' }}</span>
+          <!-- the ceiling is a free-plan thing; a paid show has none -->
+          <span v-if="a.tier === 'paid'" class="my-meta tnum" :class="!a.voters && 'zero'">{{ a.voters ? `${a.voters} voters` : 'No voters yet' }}</span>
+          <span v-else class="my-meta tnum" :class="a.voters / FREE.maxVoters >= 0.8 && 'near'">{{ a.voters }} / {{ FREE.maxVoters }} voters</span>
+          <span v-if="a.offline" class="my-next wait">Offline</span>
+          <span v-else class="my-next" :class="waiting(a) && 'wait'">{{ next(a) }}</span>
+          <span class="my-go">Dashboard</span>
+        </NuxtLink>
+        <!-- publishing used to be one-way: there was no way to take a test show down -->
+        <UiConfirmButton variant="quiet" class="my-rm" :aria-label="'Remove ' + a.name" @confirm="removeAward(a.slug)" />
       </div>
     </div>
 
     <!-- empty: say what lands here and give the one action, in the same frame -->
-    <div v-else class="mt-8 rounded-card border border-dashed border-hair2 p-8 text-center">
-      <p class="mx-auto max-w-copy text-ink-2">
-        Nothing here yet. Awards you publish show up in this list with their state, their vote count and
-        whatever they are waiting on.
-      </p>
-      <div class="mt-5 flex justify-center">
-        <UiButton to="/create">Create your awards</UiButton>
-      </div>
-    </div>
-
-    <div v-if="published.length || hasDraft" class="mt-8 flex flex-wrap gap-3">
-      <UiButton to="/create">{{ hasDraft ? 'Continue your draft' : 'Create your awards' }}</UiButton>
-      <UiButton to="/" variant="ghost">Back to the landing</UiButton>
+    <div v-else class="pg-empty">
+      <p>Nothing here yet. Awards you publish show up in this list with their state, their vote count and whatever they are waiting on.</p>
+      <UiButton to="/create">Create your awards</UiButton>
     </div>
   </div>
 </template>

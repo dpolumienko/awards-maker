@@ -11,12 +11,12 @@
 //
 // Cards are drawn in the browser (utils/shareCard.ts) and saved as PNG. No
 // server, no waiting, and the card carries the show's own look.
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import UiButton from './UiButton.vue'
 import UiSelect from './UiSelect.vue'
-import { nomineeName } from '~/utils/nominee'
+import { channelAvatar, nomineeImage, nomineeName } from '~/utils/nominee'
 import { FORMATS, NOMINEE_CTAS, cardCopy, renderShareCard, type ShareFormat, type ShareRole } from '~/utils/shareCard'
-import type { Award } from '~/types/award'
+import type { Award, Nominee } from '~/types/award'
 import { useVersion } from '~/composables/useVersion'
 
 const { award, url, closes = '', winners = {}, isHost = false, hasVoted = false } = defineProps<{
@@ -49,21 +49,25 @@ watch(roles, (list) => {
   if (!list.some((r) => r.value === role.value)) role.value = list[0]?.value ?? 'nominee'
 }, { immediate: true })
 
+/** The nominee's picture for the card: a channel's avatar, or the image or clip still. */
+const picOf = (x?: Nominee) =>
+  !x ? {} : x.kind === 'channel' ? { pic: channelAvatar(x.channel), round: true, initials: x.channel.name.slice(0, 2).toUpperCase() } : { pic: nomineeImage(x) || undefined, round: false }
+
 /** What the card is about: the whole show or a category, a nominee, a winner. */
 const subjects = computed(() => {
   if (role.value === 'nominee') {
     return award.nominations.flatMap((n) =>
-      n.nominees.map((x) => ({ value: `${n.id}:${x.id}`, label: `${nomineeName(x)} - ${n.title}`, nomination: n.title, nominee: nomineeName(x) })),
+      n.nominees.map((x) => ({ value: `${n.id}:${x.id}`, label: `${nomineeName(x)} - ${n.title}`, nomination: n.title, nominee: nomineeName(x), ...picOf(x) })),
     )
   }
   if (role.value === 'winner') {
     return award.nominations
       .filter((n) => winners[n.id])
-      .map((n) => ({ value: n.id, label: `${n.title}: ${winners[n.id]}`, nomination: n.title, nominee: winners[n.id] }))
+      .map((n) => ({ value: n.id, label: `${n.title}: ${winners[n.id]}`, nomination: n.title, nominee: winners[n.id], ...picOf(n.nominees.find((x) => nomineeName(x) === winners[n.id])) }))
   }
   return [
-    { value: 'all', label: 'The whole show', nomination: undefined, nominee: undefined },
-    ...award.nominations.map((n) => ({ value: n.id, label: n.title, nomination: n.title, nominee: undefined })),
+    { value: 'all', label: 'The whole show', nomination: undefined, nominee: undefined, pic: undefined, round: undefined },
+    ...award.nominations.map((n) => ({ value: n.id, label: n.title, nomination: n.title, nominee: undefined, pic: undefined, round: undefined })),
   ]
 })
 const subject = ref('all')
@@ -77,8 +81,6 @@ const ctaOptions = NOMINEE_CTAS.map((c) => ({ value: c.id as string, label: c.la
 const format = ref<ShareFormat>('link')
 const formatOptions = (Object.keys(FORMATS) as ShareFormat[]).map((id) => ({ value: id, label: `${FORMATS[id].name} - ${FORMATS[id].note}` }))
 
-// the Fanzine draws flyers instead of stage cards
-const { isZine, isEnvelope } = useVersion()
 // The card shows the address the way a person reads it out: no scheme, and none
 // of the payload the link carries while there is no backend to look a show up in.
 const plainUrl = computed(() => url.replace(/^https?:\/\//, '').split('?')[0]!)
@@ -93,9 +95,11 @@ const card = computed(() => {
     url: plainUrl.value,
     href: url,
     format: format.value,
-    zine: isZine.value,
-    envelope: isEnvelope.value,
+    envelope: true,
     role: role.value,
+    image: 'pic' in s ? s.pic : undefined,
+    imageRound: 'round' in s ? s.round : undefined,
+    initials: 'initials' in s ? (s.initials as string | undefined) : undefined,
     ...cardCopy(role.value, award, { nomination: s.nomination, nominee: s.nominee, closes, cta }),
   }
 })
@@ -110,15 +114,7 @@ async function draw() {
 }
 // Drawn after mount, not during setup: flipping `drawing` before hydration
 // made the client's first render disagree with the server's.
-// a canvas cannot read CSS variables: a default-colour show is repainted when
-// the palette switches, or its card stays in the old accent
-let palette: MutationObserver | null = null
-onMounted(() => {
-  watch(card, draw, { immediate: true, deep: true })
-  palette = new MutationObserver(() => draw())
-  palette.observe(document.documentElement, { attributes: true, attributeFilter: ['data-palette', 'data-version'] })
-})
-onBeforeUnmount(() => palette?.disconnect())
+onMounted(() => watch(card, draw, { immediate: true, deep: true }))
 
 /**
  * A data: URL that long has to come off a Blob: browsers refuse to open one in
@@ -188,7 +184,7 @@ async function shareFile() {
       </div>
 
       <!-- the card, and what to do with it -->
-      <figure class="m-0" :class="format === 'story' && 'max-w-[300px]'">
+      <figure class="m-0" :class="FORMATS[format].h > FORMATS[format].w * 1.6 ? 'max-w-[300px]' : FORMATS[format].h > FORMATS[format].w ? 'max-w-[380px]' : ''">
         <img
           v-if="image"
           :src="image"

@@ -52,7 +52,6 @@ function clearCover() {
   set({ coverUrl: undefined })
 }
 // the Envelope draws every theme on its cream ticket
-const { isEnvelope } = useVersion()
 </script>
 
 <template>
@@ -86,7 +85,7 @@ const { isEnvelope } = useVersion()
           :aria-label="'Theme ' + t.name"
           @click="set({ theme: t.id === 'plain' ? undefined : t.id })"
         >
-          <span class="block h-14 w-full" :style="isEnvelope ? `background:${envelopeCardCss(t.id, accent())}` : themeCss(t.id, accent())" />
+          <span class="block h-14 w-full" :style="`background:${envelopeCardCss(t.id, accent())}`" />
           <span class="block bg-canvas px-2 py-1.5 text-[11px] uppercase leading-tight tracking-micro text-ink-muted">
             {{ t.name }}
           </span>

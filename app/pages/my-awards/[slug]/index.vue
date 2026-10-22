@@ -8,26 +8,20 @@
 // filled in - a page with no votes says so instead of drawing an empty chart.
 import { computed, nextTick, ref } from 'vue'
 import UiButton from '~/components/ui/UiButton.vue'
-import UiBadge from '~/components/ui/UiBadge.vue'
-import UiIcon from '~/components/ui/UiIcon.vue'
-import LimitMeter from '~/components/ui/LimitMeter.vue'
 import ShareRow from '~/components/ui/ShareRow.vue'
-import PlatformDot from '~/components/ui/PlatformDot.vue'
+import NomineeThumb from '~/components/ui/NomineeThumb.vue'
 import PaywallNote from '~/components/ui/PaywallNote.vue'
 import TrendArea from '~/components/ui/TrendArea.vue'
-import RankBars from '~/components/ui/RankBars.vue'
 import { useAwardPage } from '~/composables/useAwards'
 import { dailyOf, emptyTally, phaseOf, resultsOf, useVoting, votesInOf } from '~/composables/useVoting'
 import { dayIn, formatInZone } from '#shared/time'
 import { useReveal } from '~/composables/useReveal'
 import { playCue } from '~/composables/useCue'
-import { accentText, accentOf } from '~/utils/accent'
-import { nomineeName, nomineeSub } from '~/utils/nominee'
+import { accentOf, onAccent } from '~/utils/accent'
+import { avatarFallback, channelAvatar, nomineeInitials, nomineeName, nomineeTint } from '~/utils/nominee'
+import '~/assets/css/envelope-pages.css'
 import { FREE, type Nomination } from '~/types/award'
 import { DISPLAY_FONTS, useDisplayFonts } from '~/composables/useDisplayFonts'
-import { useVersion } from '~/composables/useVersion'
-import ShowDesk, { type DeskAction } from '~/components/zine/ShowDesk.vue'
-import ShowStats from '~/components/zine/ShowStats.vue'
 
 // ceremony typefaces and share cards draw in any of the headline faces
 useDisplayFonts(DISPLAY_FONTS)
@@ -44,8 +38,9 @@ const award = computed(() => data.value?.award ?? null)
 const tally = computed(() => data.value?.tally ?? emptyTally())
 const phase = computed(() => (award.value ? phaseOf(award.value, data.value?.voters ?? 0) : 'open'))
 const accent = computed(() => accentOf(award.value?.look))
-const { isZine, onPaper, isV2 } = useVersion()
-const ink = computed(() => accentText(accent.value, onPaper.value))
+// the prototype's dashboard is drawn in brass, whatever the show's own accent
+const BRASS = '#C9A45C'
+const PF = { twitch: 'tw', kick: 'kk', youtube: 'yt' } as const
 
 const voters = computed(() => data.value?.voters ?? 0)
 const trend = computed(() =>
@@ -78,13 +73,7 @@ const races = computed(() =>
       tied,
       margin: lead - runnerUp,
       leader: rows[0],
-      items: rows.map((r) => ({
-        label: nomineeName(r.nominee),
-        sub: nomineeSub(r.nominee),
-        value: r.votes,
-        valueLabel: `${r.votes} · ${r.pct}%`,
-        highlight: r.top && !tied,
-      })),
+      rows,
     }
   }),
 )
@@ -105,19 +94,11 @@ const coverage = computed(() =>
     })),
 )
 const weakest = computed(() => coverage.value[coverage.value.length - 1])
-// Night v2's table of races (components/zine/ShowStats): the same races, flat
-const raceRows = computed(() =>
-  races.value.map((r) => ({
-    id: r.nomination.id,
-    title: r.nomination.title || 'Untitled category',
-    votes: r.votes,
-    coverage: r.coverage,
-    tied: r.tied,
-    margin: r.margin,
-    leader: r.leader ? nomineeName(r.leader.nominee) : '',
-    items: r.items,
-  })),
-)
+// the day with the most ballots, for the chart's corner
+const peak = computed(() => {
+  const top = [...trend.value].sort((a, b) => b.votes - a.votes)[0]
+  return top && top.votes ? `${formatInZone(`${top.date}T12:00:00Z`, 'UTC', { month: 'short', zone: false, time: false })} · ${top.votes}` : ''
+})
 const ties = computed(() => races.value.filter((r) => r.tied).length)
 
 // dates are UTC instants; the host sees them in the show's zone, named
@@ -129,34 +110,16 @@ const daysLeft = computed(() => {
 })
 
 const badges = {
-  soon: { tone: 'ended' as const, text: 'Not open yet' },
-  open: { tone: 'live' as const, text: 'Voting open' },
-  capped: { tone: 'ended' as const, text: 'Closed at the limit' },
-  counting: { tone: 'results' as const, text: 'Voting closed' },
-  revealed: { tone: 'results' as const, text: 'Winners announced' },
+  soon: { cls: 'end', text: 'Not open yet' },
+  open: { cls: '', text: 'Voting open' },
+  capped: { cls: 'wait', text: 'Closed at the limit' },
+  counting: { cls: 'wait', text: 'Voting closed' },
+  revealed: { cls: 'res', text: 'Results out' },
 }
 
 // Both host actions are one-way, so both ask twice. What changed afterwards is
 // marked on the panel itself, not announced over the page.
-// Night v2: the show desk at the top (components/zine/ShowDesk) asks, this does
-const desk = ref<InstanceType<typeof ShowDesk> | null>(null)
 const deskBusy = ref(false)
-async function onDesk(a: DeskAction) {
-  deskBusy.value = true
-  try {
-    if (a === 'close') await closeVoting(slug.value)
-    else if (a === 'publish') await publishResults(slug.value)
-    else if (a === 'offline' || a === 'online') await setOffline(slug.value, a === 'offline')
-    else if (a === 'ceremony') return navigateTo(`/my-awards/${slug.value}/reveal`)
-    else if (a === 'delete') {
-      await $fetch(`/api/awards/${encodeURIComponent(slug.value)}`, { method: 'DELETE' })
-      return navigateTo('/my-awards')
-    }
-    await refresh()
-  } finally {
-    deskBusy.value = false
-  }
-}
 
 /** The public page with or without the vote counts - places stay either way. */
 async function onCounts(hidden: boolean) {
@@ -170,7 +133,7 @@ async function onCounts(hidden: boolean) {
 }
 
 // taken offline outranks the phase: it is what a viewer would run into
-const badge = computed(() => (award.value?.offline ? { tone: 'ended' as const, text: 'Offline' } : badges[phase.value]))
+const badge = computed(() => (award.value?.offline ? { cls: 'end', text: 'Offline' } : badges[phase.value]))
 
 const movePanel = ref<HTMLElement | null>(null)
 const { isArmed, arm: armAction } = useArm()
@@ -192,279 +155,165 @@ useSeoMeta({
 </script>
 
 <template>
-  <div ref="root" class="shell py-10">
+  <div ref="root" class="shell env-pg db">
     <template v-if="award">
-      <nav aria-label="Breadcrumb" class="mb-6">
-        <ol class="flex list-none flex-wrap items-center gap-2 p-0 text-[11px] font-semibold uppercase tracking-micro text-ink-muted">
-          <li><NuxtLink to="/my-awards" class="inline-block py-1.5 no-underline hover:text-ink">Your awards</NuxtLink></li>
-          <li aria-hidden="true">/</li>
-          <li class="text-ink-2" aria-current="page">{{ award.name }}</li>
-        </ol>
+      <nav class="pg-crumbs" aria-label="Breadcrumb">
+        <NuxtLink to="/">Awards Maker</NuxtLink><span aria-hidden="true">/</span>
+        <NuxtLink to="/my-awards">Your awards</NuxtLink><span aria-hidden="true">/</span>
+        <span aria-current="page">{{ award.name }}</span>
       </nav>
 
-      <div class="flex flex-wrap items-start justify-between gap-x-8 gap-y-4">
-        <div class="min-w-0">
-          <UiBadge :tone="badge.tone">{{ badge.text }}</UiBadge>
-          <h1 class="heading mt-2">{{ award.name }}</h1>
-          <p class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-2">
-            <span class="flex items-center gap-2">
-              {{ award.host.name }}
-              <PlatformDot :platform="award.host.platform" :label="false" />
+      <header class="db-head">
+        <div>
+          <span class="state" :class="badge.cls">{{ badge.text }}</span>
+          <h1>{{ award.name }}</h1>
+          <p class="db-meta">
+            <span class="db-host">
+              <span class="db-hav" :style="{ background: accent, color: onAccent(accent) }">{{ award.host.name.slice(0, 2).toUpperCase() }}</span>
+              {{ award.host.name }}<i class="db-pf" :class="PF[award.host.platform]" :aria-label="award.host.platform" />
             </span>
-            <span aria-hidden="true">·</span>
             <span class="tnum">{{ fmt(award.opensAt) }} - {{ fmt(award.closesAt) }}</span>
-            <span v-if="daysLeft !== null" aria-hidden="true">·</span>
-            <span v-if="daysLeft !== null" class="tnum" :style="{ color: ink }">
-              {{ daysLeft === 0 ? 'Closes today' : `${daysLeft} ${daysLeft === 1 ? 'day' : 'days'} left` }}
-            </span>
+            <b v-if="daysLeft !== null" class="tnum">{{ daysLeft === 0 ? 'Closes today' : `${daysLeft} ${daysLeft === 1 ? 'day' : 'days'} left` }}</b>
           </p>
         </div>
-        <div class="flex flex-wrap gap-3">
-          <UiButton v-if="!isV2" :to="`/a/${award.slug}`" variant="ghost" size="sm">Open public page</UiButton>
+        <div class="db-acts">
+          <UiButton :to="`/a/${award.slug}`" variant="ghost" size="sm">Open public page</UiButton>
           <UiButton to="/create" variant="ghost" size="sm">Edit</UiButton>
         </div>
-      </div>
-
-      <!-- Night v2: the controls come first, above the numbers -->
-      <ShowDesk
-        v-if="isV2"
-        ref="desk"
-        v-model:busy="deskBusy"
-        :phase="phase"
-        :offline="!!award.offline"
-        :slug="award.slug ?? slug"
-        :closes-label="fmt(award.closesAt)"
-        :hide-counts="!!award.hideCounts"
-        @act="onDesk"
-        @counts="onCounts"
-      />
+      </header>
 
       <!-- nothing to chart yet: say it once and hand over the link -->
-      <div v-if="!voters" class="js-reveal mt-10 rounded-card border border-dashed border-hair2 p-8">
-        <p class="max-w-copy text-lg text-ink-2">
+      <div v-if="!voters" class="db-card js-reveal">
+        <p class="db-empty">
           No votes yet. Numbers appear here the moment somebody submits a ballot - voters, votes per day and
           the standing in every category, all of it visible to you only.
         </p>
-        <ShareRow class="mt-6" :url="shareUrl" :text="`Vote in ${award.name}:`" />
+        <ShareRow :url="shareUrl" :text="`Vote in ${award.name}:`" />
       </div>
-
-      <!-- Night v2: stat cards, the chart with a range, the races as a table -->
-      <ShowStats
-        v-else-if="isV2"
-        class="js-reveal"
-        :voters="voters"
-        :total-votes="totalVotes"
-        :trend="trend"
-        :races="raceRows"
-        :accent="accent"
-        :free-max="award.tier !== 'paid' ? FREE.maxVoters : 0"
-        :days-left="daysLeft"
-      />
 
       <template v-else>
         <!-- the four numbers worth a glance -->
-        <dl class="js-reveal mt-10 grid gap-px overflow-hidden rounded-card border border-hair bg-hair sm:grid-cols-2 lg:grid-cols-4">
-          <div class="bg-s1 p-5">
-            <dt class="label">Voters</dt>
-            <dd class="tnum mt-1 text-3xl font-semibold">{{ voters }}</dd>
-            <dd class="mt-1 text-sm text-ink-muted">one ballot each</dd>
-          </div>
-          <div class="bg-s1 p-5">
-            <dt class="label">Votes cast</dt>
-            <dd class="tnum mt-1 text-3xl font-semibold">{{ totalVotes }}</dd>
-            <dd class="mt-1 text-sm text-ink-muted">across {{ award.nominations.length }} categories</dd>
-          </div>
-          <div class="bg-s1 p-5">
-            <dt class="label">Per ballot</dt>
-            <dd class="tnum mt-1 text-3xl font-semibold">{{ perBallot.toFixed(1) }}</dd>
-            <dd class="mt-1 text-sm text-ink-muted">categories of {{ award.nominations.length }} filled</dd>
-          </div>
+        <dl class="db-kpi js-reveal">
+          <div><dt>Voters</dt><dd class="tnum">{{ voters }}</dd><dd class="db-k-s">voted once</dd></div>
+          <div><dt>Votes cast</dt><dd class="tnum">{{ totalVotes }}</dd><dd class="db-k-s">across {{ award.nominations.length }} categories</dd></div>
+          <div><dt>Per voter</dt><dd class="tnum">{{ perBallot.toFixed(1) }}</dd><dd class="db-k-s">of {{ award.nominations.length }} categories</dd></div>
           <!-- a paid show has no ceiling to measure against -->
-          <div v-if="award.tier !== 'paid'" class="bg-s1 p-5">
-            <dt class="label">Free ceiling</dt>
-            <dd class="tnum mt-1 text-3xl font-semibold">{{ Math.round((voters / FREE.maxVoters) * 100) }}%</dd>
-            <dd class="mt-2">
-              <LimitMeter label="Voters" :used="voters" :total="FREE.maxVoters" />
-            </dd>
+          <div v-if="award.tier !== 'paid'">
+            <dt>Free ceiling</dt><dd class="tnum">{{ voters }} / {{ FREE.maxVoters }}</dd>
+            <dd class="db-k-s"><span class="db-bar"><i :style="{ width: Math.min(100, (voters / FREE.maxVoters) * 100) + '%' }" /></span></dd>
           </div>
-          <div v-else class="bg-s1 p-5">
-            <dt class="label">Plan</dt>
-            <dd class="mt-1 text-3xl font-semibold">Paid</dd>
-            <dd class="mt-1 text-sm text-ink-muted">no cap on voters</dd>
-          </div>
+          <div v-else><dt>Plan</dt><dd>Paid</dd><dd class="db-k-s">no cap on voters</dd></div>
         </dl>
 
-        <div class="mt-6 grid gap-6 lg:grid-cols-[1.6fr_1fr]">
+        <div class="db-two">
           <!-- when the votes came in -->
-          <section class="js-reveal rounded-card border border-hair bg-s1 p-5 sm:p-6">
-            <TrendArea :points="trend" :accent="accent" label="Ballots per day" />
-            <p v-if="trend.length < 2" class="text-sm text-ink-2">
-              <span class="label block">Ballots per day</span>
-              <span class="mt-3 block">
-                Voting started today. The curve needs a second day before it says anything.
-              </span>
-            </p>
+          <section class="db-card js-reveal" aria-labelledby="db-trend-h">
+            <div class="db-card-h"><h2 id="db-trend-h">Votes per day</h2><span v-if="peak" class="tnum">Busiest day {{ peak }}</span></div>
+            <TrendArea v-if="trend.length >= 2" :points="trend" :accent="BRASS" label="Ballots per day" bare />
+            <p v-else class="db-note">Voting started today. The curve needs a second day before it says anything.</p>
           </section>
 
           <!-- where the ballots stop -->
-          <section class="js-reveal rounded-card border border-hair bg-s1 p-5 sm:p-6">
-            <p class="label">Ballots reaching each category</p>
-            <RankBars class="mt-4" :items="coverage" :accent="accent" :max="voters" />
-            <p v-if="weakest && weakest.value < voters" class="mt-4 text-sm text-ink-2">
-              <span class="font-semibold">{{ weakest.label }}</span> is the one people skip -
-              {{ weakest.value }} of {{ voters }} ballots picked in it. Usually that means the category name
-              is doing the confusing, not the nominees.
+          <section class="db-card js-reveal" aria-labelledby="db-cov-h">
+            <div class="db-card-h"><h2 id="db-cov-h">Voters in each category</h2></div>
+            <ol class="db-cov">
+              <li v-for="c in coverage" :key="c.label">
+                <span class="db-cov-n">{{ c.label }}</span>
+                <span class="db-bar"><i :style="{ width: (voters ? (c.value / voters) * 100 : 0) + '%' }" /></span>
+                <span class="db-cov-v tnum">{{ c.value }}</span>
+              </li>
+            </ol>
+            <p v-if="weakest && weakest.value < voters" class="db-note">
+              <b>{{ weakest.label }}</b> is the one people skip - {{ weakest.value }} of {{ voters }} voters picked in it.
+              Usually that means the category name is doing the confusing, not the nominees.
             </p>
           </section>
         </div>
 
         <!-- the standing, category by category -->
-        <section class="mt-12">
-          <div class="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
-            <h2 class="heading">The standing</h2>
-            <p class="text-sm text-ink-muted">Yours to see. Voters get these numbers when you publish.</p>
-          </div>
-
-          <p v-if="ties" class="mt-4 rounded-card border border-hair2 bg-s1 p-4 text-sm text-ink-2">
-            <span class="font-semibold text-warn">{{ ties }} {{ ties === 1 ? 'category is' : 'categories are' }} tied.</span>
-            A tie has no automatic winner: you pick one before publishing.
-          </p>
-
-          <div class="mt-6 space-y-4">
-            <article
-              v-for="race in races"
-              :key="race.nomination.id"
-              class="js-reveal rounded-card border border-hair bg-s1 p-5 sm:p-6"
-            >
-              <div class="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-                <h3 class="text-lg font-semibold">{{ race.nomination.title || 'Untitled category' }}</h3>
-                <p class="tnum text-sm text-ink-muted">
-                  {{ race.votes }} {{ race.votes === 1 ? 'vote' : 'votes' }} · {{ race.coverage }}% of ballots
-                </p>
+        <section class="db-stand" aria-labelledby="db-st-h">
+          <div class="db-sec-h"><h2 id="db-st-h">The standing</h2><p>Yours to see. Voters get these numbers when you publish.</p></div>
+          <p v-if="ties" class="db-tie"><b>{{ ties }} {{ ties === 1 ? 'category is' : 'categories are' }} tied.</b> A tie has no automatic winner: you pick one before publishing.</p>
+          <div class="db-races">
+            <article v-for="race in races" :key="race.nomination.id" class="db-race js-reveal" :class="race.tied && 'tied'">
+              <div class="db-race-h">
+                <h3>{{ race.nomination.title || 'Untitled category' }}</h3>
+                <span class="tnum">{{ race.votes }} {{ race.votes === 1 ? 'vote' : 'votes' }} · {{ race.coverage }}% of voters</span>
               </div>
-
-              <RankBars v-if="race.votes" class="mt-4" :items="race.items" :accent="accent" />
-              <p v-else class="mt-3 text-sm text-ink-muted">Nobody has picked in this category yet.</p>
-
-              <p v-if="race.tied" class="mt-4 text-sm text-warn">Tied at the top. You decide this one.</p>
-              <p v-else-if="race.votes" class="mt-4 text-sm" :style="{ color: ink }">
-                {{ race.leader ? nomineeName(race.leader.nominee) : '' }} leads by
-                {{ race.margin }} {{ race.margin === 1 ? 'vote' : 'votes' }}.
+              <ol v-if="race.votes">
+                <li v-for="(r, i) in race.rows" :key="r.nominee.id" :class="i === 0 || r.votes === race.rows[0]!.votes ? 'lead' : ''">
+                  <span v-if="r.nominee.kind === 'media'" class="db-th"><NomineeThumb :nominee="r.nominee" :width="72" /></span>
+                  <span v-else class="db-avw">
+                    <img v-if="r.nominee.kind === 'channel'" class="db-av" :src="channelAvatar(r.nominee.channel)" @error="avatarFallback($event, r.nominee.channel.name)" alt="" loading="lazy">
+                    <span v-else class="db-av" :style="{ background: nomineeTint(r.nominee) }">{{ nomineeInitials(r.nominee) }}</span>
+                    <i v-if="r.nominee.kind === 'channel'" class="db-pf" :class="PF[r.nominee.channel.platform]" />
+                  </span>
+                  <span class="db-nm">{{ nomineeName(r.nominee) }}</span>
+                  <span class="db-bar"><i :style="{ width: (race.rows[0]!.votes ? (r.votes / race.rows[0]!.votes) * 100 : 0) + '%' }" /></span>
+                  <span class="db-v tnum">{{ r.votes }}</span>
+                  <span class="db-pc tnum">{{ r.pct }}%</span>
+                </li>
+              </ol>
+              <p v-else class="db-race-f">Nobody has picked in this category yet.</p>
+              <p v-if="race.tied" class="db-race-f">Tied at the top. You decide this one.</p>
+              <p v-else-if="race.votes" class="db-race-f">
+                <b>{{ race.leader ? nomineeName(race.leader.nominee) : '' }}</b> leads by {{ race.margin }} {{ race.margin === 1 ? 'vote' : 'votes' }}.
               </p>
             </article>
           </div>
         </section>
       </template>
 
-      <!-- the two one-way moves, and the paywall note when the ceiling is close -->
-      <section class="mt-12 grid gap-6 lg:grid-cols-2">
-        <div v-if="!isV2" ref="movePanel" class="js-reveal relative rounded-card border border-gold-24 bg-gold/[0.06] p-5 sm:p-6">
-          <p class="micro text-gold-text">Your move</p>
-          <p class="mt-3 max-w-copy text-sm text-ink-2">
+      <!-- the one-way moves, and how the numbers are counted -->
+      <section class="db-end">
+        <div ref="movePanel" class="db-move js-reveal">
+          <p class="db-move-l">Your move</p>
+          <p>
             <template v-if="phase === 'open' || phase === 'soon'">
               Voting runs to {{ fmt(award.closesAt) }} on its own. Close it earlier if your viewers have voted and
-              you want to announce sooner - votes already cast are kept.
+              you want to announce sooner. Votes already cast are kept.
             </template>
-            <template v-else-if="phase === 'revealed'">
-              The winners are on the page. The counts below stay here as the record.
-            </template>
+            <template v-else-if="phase === 'revealed'">The winners are on the page. The counts here stay as the record.</template>
             <template v-else>
-              Voting is done and nobody has seen the counts. Announce them on stream with the ceremony
-              screen - one category at a time - then publish, which puts every count on the public page
-              and cannot be undone. Check the ties first.
+              Voting is done and nobody has seen the counts. Announce them on stream with the ceremony, one category
+              at a time, then publish: every count goes on the public page and it cannot be undone. Check the ties first.
             </template>
           </p>
-          <!-- a grid, not a wrapping row: the one-way move gets the full width, the
-               two ways out share a line at equal width (review 2026-10-06) -->
-          <div class="mt-5 grid gap-3 sm:grid-cols-2">
-            <UiButton
-              v-if="phase === 'open' || phase === 'soon'"
-              variant="ghost"
-              size="sm"
-              class="w-full sm:col-span-2"
-              @click="arm('close', () => closeVoting(slug))"
-            >
-              <span class="grid">
-                <span aria-hidden="true" class="col-start-1 row-start-1 invisible">Close voting - sure?</span>
-                <span class="col-start-1 row-start-1">{{ isArmed('close') ? 'Close voting - sure?' : 'Close voting now' }}</span>
-              </span>
-            </UiButton>
-            <UiButton
-              v-if="phase === 'counting' || phase === 'capped'"
-              size="sm"
-              class="w-full sm:col-span-2"
-              @click="arm('publish', () => publishResults(slug))"
-            >
-              <span class="grid">
-                <span aria-hidden="true" class="col-start-1 row-start-1 invisible">Publish the winners</span>
-                <span class="col-start-1 row-start-1">{{ isArmed('publish') ? 'Publish - sure?' : 'Publish the winners' }}</span>
-              </span>
-            </UiButton>
-            <UiButton :to="`/my-awards/${award.slug}/reveal`" variant="ghost" size="sm" class="w-full">Run the ceremony</UiButton>
-            <UiButton :to="`/a/${award.slug}`" variant="ghost" size="sm" class="w-full">Open public page</UiButton>
+          <div class="db-move-b">
+            <UiButton :to="`/my-awards/${award.slug}/reveal`" size="sm">Run the ceremony</UiButton>
+            <button v-if="phase === 'open' || phase === 'soon'" type="button" class="db-closel" @click="arm('close', () => closeVoting(slug))">
+              <span class="db-sz"><span aria-hidden="true">Close voting - sure?</span><span>{{ isArmed('close') ? 'Close voting - sure?' : 'Close voting now' }}</span></span>
+            </button>
+            <button v-if="phase === 'counting' || phase === 'capped'" type="button" class="db-closel is-go" @click="arm('publish', () => publishResults(slug))">
+              <span class="db-sz"><span aria-hidden="true">Publish the winners</span><span>{{ isArmed('publish') ? 'Publish - sure?' : 'Publish the winners' }}</span></span>
+            </button>
           </div>
           <!-- once voting is shut: the winners with or without the numbers -->
-          <label v-if="phase !== 'open' && phase !== 'soon'" class="mt-5 flex cursor-pointer items-start gap-3 border-t border-hair pt-4 text-sm">
-            <input
-              type="checkbox"
-              :checked="!award.hideCounts"
-              :disabled="deskBusy"
-              class="mt-0.5 h-5 w-5 flex-none rounded-btn border border-hair2 bg-s2 accent-gold focus:shadow-focus focus:outline-none"
-              @change="onCounts(!($event.target as HTMLInputElement).checked)"
-            />
-            <span>
-              <b class="font-semibold">Show the vote counts</b>
-              <span class="block text-ink-muted">Off: the public page names the winners and the order, without votes or %.</span>
-            </span>
+          <label v-if="phase !== 'open' && phase !== 'soon'" class="db-counts">
+            <input type="checkbox" :checked="!award.hideCounts" :disabled="deskBusy" @change="onCounts(!($event.target as HTMLInputElement).checked)" />
+            <span><b>Show the vote counts</b>Off: the public page names the winners and the order, without votes or %.</span>
           </label>
         </div>
 
-        <div class="js-reveal rounded-card border border-hair bg-s1 p-5 sm:p-6">
-          <p class="label">How these numbers work</p>
-          <ul class="mt-4 list-none space-y-2.5 p-0 text-sm text-ink-2">
-            <li class="flex gap-2.5">
-              <UiIcon name="check" :size="14" class="mt-1 flex-none text-live" />
-              One account, one ballot. A voter picks at most one nominee per category and cannot change it.
-            </li>
-            <li class="flex gap-2.5">
-              <UiIcon name="check" :size="14" class="mt-1 flex-none text-live" />
-              You see totals, never who voted for whom - and neither does anyone else.
-            </li>
-            <li v-if="award.tier !== 'paid'" class="flex gap-2.5">
-              <UiIcon name="check" :size="14" class="mt-1 flex-none text-live" />
-              Voting stops at {{ FREE.maxVoters }} voters on the free plan, whatever the closing date says.
-            </li>
+        <div class="db-card js-reveal">
+          <div class="db-card-h"><h2>How these numbers work</h2></div>
+          <ul class="db-how">
+            <li>One account, one vote per category. A voter picks at most one nominee per category and cannot change it.</li>
+            <li>You see totals, never who voted for whom, and neither does anyone else.</li>
+            <li v-if="award.tier !== 'paid'">Voting stops at {{ FREE.maxVoters }} voters on the free plan, whatever the closing date says.</li>
+            <li v-else>On the paid plan there is no voter cap. Voting stops at the closing date.</li>
           </ul>
-          <p class="mt-4 text-sm text-ink-muted">
-            Where the traffic comes from is not here yet - that needs event tracking, which is its own card.
-          </p>
         </div>
       </section>
 
-      <PaywallNote v-if="award.tier !== 'paid' && voters / FREE.maxVoters >= 0.8" class="mt-6" reason="voters" />
-
-      <!-- Night v2: deleting is apart from everything else, and says what offline keeps -->
-      <section v-if="isV2" class="mt-10 flex flex-wrap items-center justify-between gap-4 border-2 border-dashed border-danger p-5">
-        <div>
-          <h2 class="font-bold">Delete awards</h2>
-          <p class="mt-1 text-sm text-ink-2">The page and every ballot, for good. Taking it offline keeps everything.</p>
-        </div>
-        <UiButton variant="ghost" :disabled="deskBusy" @click="desk?.ask('delete')">Delete</UiButton>
-      </section>
-
-      <div class="mt-10 flex flex-wrap gap-3">
-        <UiButton to="/my-awards" variant="ghost">All your awards</UiButton>
-      </div>
+      <PaywallNote v-if="award.tier !== 'paid' && voters / FREE.maxVoters >= 0.8" reason="voters" />
     </template>
 
     <!-- not one of theirs: this page has nothing to show and says which -->
-    <div v-else class="py-16 text-center">
-      <h1 class="heading">No dashboard for this one</h1>
-      <p class="mx-auto mt-4 max-w-copy text-ink-2">
-        Either this awards was published in another browser, or the address is wrong. Dashboards are only
-        for awards you host.
-      </p>
-      <div class="mt-6 flex flex-wrap justify-center gap-3">
+    <div v-else class="pg-empty">
+      <h1 class="db-none">No dashboard for this one</h1>
+      <p>Either this awards was published in another browser, or the address is wrong. Dashboards are only for awards you host.</p>
+      <div class="db-acts">
         <UiButton to="/my-awards">Your awards</UiButton>
         <UiButton :to="`/a/${slug}`" variant="ghost">Open the public page</UiButton>
       </div>

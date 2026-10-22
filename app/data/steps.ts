@@ -1,5 +1,5 @@
 // The three steps of running an awards, as the landing tells them. One copy for
-// both versions of the landing (StepsSection, zine/ZineLanding).
+// the landing (components/envelope/EnvLanding).
 export const STEPS = [
   {
     art: '/img/illustrations/illu-step-nominate.svg',

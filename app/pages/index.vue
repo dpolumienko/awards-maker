@@ -1,21 +1,8 @@
 <script setup lang="ts">
-import HeroSection from '~/components/sections/HeroSection.vue'
-import AwardPagePreview from '~/components/sections/AwardPagePreview.vue'
-import StepsSection from '~/components/sections/StepsSection.vue'
-import VotingTypes from '~/components/sections/VotingTypes.vue'
-import FeatureGrid from '~/components/sections/FeatureGrid.vue'
-import CtaBand from '~/components/sections/CtaBand.vue'
-import CategoryIdeas from '~/components/sections/CategoryIdeas.vue'
-import PlansSection from '~/components/sections/PlansSection.vue'
-import CatalogSection from '~/components/sections/CatalogSection.vue'
-import FaqSection, { type FaqItem } from '~/components/sections/FaqSection.vue'
-import ZineLanding from '~/components/zine/ZineLanding.vue'
-// split out: only an Envelope visitor downloads its landing (and the three.js it starts)
+import type { FaqItem } from '~/components/sections/FaqSection.vue'
+// split out: the landing's three.js loads with it, not with the shell
 const EnvLanding = defineAsyncComponent(() => import('~/components/envelope/EnvLanding.vue'))
-import { useVersion } from '~/composables/useVersion'
 import { SC } from '~/data/sc'
-
-const { isZine, isEnvelope } = useVersion()
 
 // Copy is frozen in outputs/awards-landing-copy-2026-09-13.md - change it there first.
 const faq: FaqItem[] = [
@@ -65,19 +52,5 @@ useSchemaOrg([
        The catalog sits low but not last: it is discovery and every card in it
        leads off this page, so it goes after the ask - and the FAQ closes the
        page, which is where a reader expects to find the remaining objections. -->
-  <!-- the Fanzine version prints the same promise its own way (components/zine) -->
-  <ZineLanding v-if="isZine" :faq="faq" />
-  <EnvLanding v-else-if="isEnvelope" :faq="faq" />
-  <template v-else>
-  <HeroSection />
-  <AwardPagePreview />
-  <StepsSection />
-  <VotingTypes />
-  <FeatureGrid />
-  <CategoryIdeas />
-  <PlansSection />
-  <CtaBand />
-  <CatalogSection />
-  <FaqSection :items="faq" />
-  </template>
+  <EnvLanding :faq="faq" />
 </template>

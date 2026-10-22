@@ -18,14 +18,13 @@ import UiIcon from '~/components/ui/UiIcon.vue'
 import { useAwardPage } from '~/composables/useAwards'
 import { emptyTally, phaseOf, resultsOf, useVoting, votesInOf } from '~/composables/useVoting'
 import { prefersReducedMotion, useGsap } from '~/composables/useReveal'
-import { nomineeImage, nomineeInitials, nomineeName } from '~/utils/nominee'
+import { channelAvatar, nomineeImage, nomineeInitials, nomineeName } from '~/utils/nominee'
 import CeremonySetup from '~/components/ui/CeremonySetup.vue'
 import { stageImage, useCeremony } from '~/composables/useCeremony'
 import type { Nominee } from '~/types/award'
 import { partnerHost, partnerIconUrl } from '~/utils/partnerIcon'
 import { themeCss } from '~/data/themes'
 import { accentText, accentOf, inkOnFlood, onAccent, tint } from '~/utils/accent'
-import ZinePen from '~/components/zine/ZinePen.vue'
 import { DISPLAY_FONTS, useDisplayFonts } from '~/composables/useDisplayFonts'
 import { useVersion } from '~/composables/useVersion'
 import { confetti, createCeremonySound, drumroll, stageMotes } from '~/utils/ceremonyFx'
@@ -44,14 +43,8 @@ const { data, refresh } = await useAwardPage(() => slug.value)
 const award = computed(() => data.value?.award ?? null)
 const tally = computed(() => data.value?.tally ?? emptyTally())
 const accent = computed(() => accentOf(award.value?.look))
-const { isZine, isEnvelope, onPaper } = useVersion()
-const ink = computed(() => accentText(accent.value, onPaper.value))
-// The Fanzine's ceremony floods the stage with the show's accent (blue by default)
-// and prints on it in white or black ink, whichever reads.
-const floodFg = computed(() => inkOnFlood(accent.value))
-// On the host's own cover the stage stays a dark photo under a veil, so type takes
-// the light version of the accent, as on the Current stage.
-const stageInk = computed(() => (!isZine.value ? ink.value : onCover.value ? accentText(accent.value) : floodFg.value))
+const ink = computed(() => accentText(accent.value))
+const stageInk = ink
 // The ceremony has its own stage, face and reveal - set once, kept per awards.
 const { settings, update, configured } = useCeremony(() => slug.value, () => award.value)
 const setupOpen = ref(false)
@@ -65,17 +58,15 @@ async function onStart() {
 const headlineFont = computed(() => `'${settings.value.font}', Archivo, sans-serif`)
 // the Envelope speaks the show's name in Gloock unless the host picked a face (review 2026-10-16, item 10)
 const showFont = computed(() =>
-  isEnvelope.value && !award.value?.look?.font && settings.value.font === 'Hanken Grotesk' ? "'Gloock', Georgia, serif" : headlineFont.value,
+  !award.value?.look?.font && settings.value.font === 'Hanken Grotesk' ? "'Gloock', Georgia, serif" : headlineFont.value,
 )
 
 // the show's cover, or a picture uploaded in the setup
 const picture = computed(() => stageImage(settings.value, award.value?.look?.coverUrl))
 const onCover = computed(() => !!picture.value)
 const stageCss = computed(() =>
-  isEnvelope.value && !onCover.value && (!settings.value.stage || settings.value.stage === 'plain')
+  !onCover.value && (!settings.value.stage || settings.value.stage === 'plain')
     ? 'background:#070707'
-    : isZine.value && !onCover.value
-    ? `background:radial-gradient(circle, rgba(255,255,255,.08) 40%, transparent 44%) 0 0/8px 8px, ${accent.value}`
     : themeCss(picture.value ? undefined : settings.value.stage, accent.value, picture.value),
 )
 // the partners' corner (review 2026-10-08), unless the host switched it off
@@ -87,17 +78,9 @@ const clipOf = (n: Nominee) => (n.kind === 'media' && n.url ? n.url : '')
 
 /** A nominee plate: everyone in the house colour, the winner filled and lit. */
 const plate = (won: boolean) =>
-  isEnvelope.value
-    ? won
+  won
       ? { background: accent.value, color: onAccent(accent.value), boxShadow: `0 0 6cqw ${tint(accent.value, '55')}` }
       : { background: 'rgba(246,244,238,.035)', color: '#F6F4EE', border: '0.12cqw solid rgba(246,244,238,.22)' }
-    : isZine.value
-    ? won
-      ? { background: floodFg.value, color: accent.value, boxShadow: 'none' }
-      : { background: 'transparent', color: stageInk.value, border: `0.25cqw solid ${stageInk.value}` }
-    : won
-    ? { background: accent.value, color: onAccent(accent.value), boxShadow: `0 0 0 0.5cqw ${tint(accent.value, '33')}, 0 0 7cqw ${tint(accent.value, '55')}` }
-    : { background: 'rgba(255,255,255,.07)', color: ink.value, border: `1px solid ${tint(accent.value, '55')}` }
 
 /** OBS loads this page with ?bare=1: no controls, no chrome, just the stage. */
 const bare = computed(() => 'bare' in route.query)
@@ -240,7 +223,7 @@ onMounted(() => {
   window.addEventListener('keydown', onKey)
   document.addEventListener('fullscreenchange', onFullChange)
   wake()
-  if (isEnvelope.value && motes.value && !prefersReducedMotion()) stopMotes = stageMotes(motes.value)
+  if (motes.value && !prefersReducedMotion()) stopMotes = stageMotes(motes.value)
 })
 let stopMotes: (() => void) | null = null
 onBeforeUnmount(() => {
@@ -250,6 +233,13 @@ onBeforeUnmount(() => {
   stopMotes?.()
 })
 
+// what a nominee card shows (the prototype's ceremony, Ed 2026-10-22): the channel's
+// avatar or the image/clip still, the platform badge, and one quiet line under the name
+const PF = { twitch: 'tw', kick: 'kk', youtube: 'yt' } as const
+const PFN = { twitch: 'Twitch', kick: 'Kick', youtube: 'YouTube' } as const
+const picOf = (n: Nominee) => (n.kind === 'channel' ? channelAvatar(n.channel) : nomineeImage(n))
+const subOf = (n: Nominee) => (n.kind === 'channel' ? PFN[n.channel.platform] : n.kind === 'media' ? (n.url ? 'Clip' : 'Image') : '')
+const SAY = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve']
 const titleWords = computed(() => (award.value?.name ?? '').trim().split(/\s+/).map((w) => [...w]))
 
 /** The winner lands on their screen, in the style the host picked (utils/revealMotion). */
@@ -335,26 +325,32 @@ definePageMeta({ chrome: false })
 <template>
   <!-- pinned to true black rather than the site canvas: this screen is a captured
        stage, and in OBS anything behind the host's own background is a light leak -->
-  <div class="min-h-screen text-ink" :class="isZine ? 'bg-canvas' : 'bg-black'" @mousemove="wake">
+  <div class="min-h-screen bg-black text-ink" @mousemove="wake">
     <template v-if="award && categories.length">
       <!-- THE STAGE - everything in this box is what the stream sees -->
       <div
         ref="stage"
-        class="stage relative mx-auto flex w-full flex-col items-center justify-center overflow-hidden text-center"
-        :class="[bare ? 'h-screen w-screen' : 'mt-4 aspect-video max-w-[1600px] rounded-card', isZine && 'is-zine', isEnvelope && 'env-cer', rolling && 'is-rolling']"
-        :style="[stageCss, isZine ? { color: stageInk } : {}]"
+        class="stage relative mx-auto flex w-full flex-col justify-center overflow-hidden"
+        :class="[bare ? 'h-screen w-screen' : 'mt-4 aspect-video max-w-[1600px] rounded-card', 'env-cer', rolling && 'is-rolling']"
+        :style="stageCss"
       >
-        <span v-if="(!isZine && !isEnvelope) || onCover" aria-hidden="true" class="absolute inset-0 bg-black/50" />
-        <canvas v-if="isEnvelope" ref="motes" class="env-motes" aria-hidden="true" />
+        <span v-if="onCover" aria-hidden="true" class="absolute inset-0 bg-black/50" />
+        <canvas ref="motes" class="env-motes" aria-hidden="true" />
 
-        <div class="stage-body relative flex w-full flex-col items-center" role="status" aria-live="polite">
+        <!-- the top line of every slide: the show on the left, where we are on the right -->
+        <div class="s-top" aria-hidden="true">
+          <span>{{ award.name }}</span>
+          <span>{{ slide.kind === 'category' ? `Category ${slide.index + 1} of ${categories.length}` : `Hosted by ${award.host.name}` }}</span>
+        </div>
+
+        <div class="stage-body relative flex w-full flex-col" role="status" aria-live="polite">
           <!-- title card: the same letter-by-letter arrival as the publish curtain,
                so the show opens in the language the product already speaks -->
           <template v-if="slide.kind === 'title'">
-            <p class="s-kicker" :style="{ color: stageInk }">{{ award.host.name }} presents</p>
+            <p class="s-kicker" :style="{ color: stageInk }">Tonight · live on stream</p>
             <h1 class="s-title max-w-[16ch]" :style="{ fontFamily: showFont }">
               <span class="sr-only">{{ award.name }}</span>
-              <span aria-hidden="true" class="flex flex-wrap justify-center gap-x-[0.26em]">
+              <span aria-hidden="true" class="flex flex-wrap gap-x-[0.26em]">
                 <span v-for="(word, w) in titleWords" :key="w" class="flex">
                   <span v-for="(char, c) in word" :key="c" class="block overflow-hidden">
                     <span class="js-open block">{{ char }}</span>
@@ -362,58 +358,30 @@ definePageMeta({ chrome: false })
                 </span>
               </span>
             </h1>
-            <p class="s-meta">
-              {{ categories.length }} {{ categories.length === 1 ? 'category' : 'categories' }} ·
-              {{ voters }} {{ voters === 1 ? 'ballot' : 'ballots' }} · voted by viewers
+            <p class="s-meta s-foot">
+              {{ SAY[categories.length] ?? categories.length }} {{ categories.length === 1 ? 'category' : 'categories' }}.
+              {{ voters }} {{ voters === 1 ? 'voter' : 'voters' }}. Every envelope opened on air.
             </p>
           </template>
 
-          <!-- one category, first beat: the nominees, and the pause -->
+          <!-- one category, first beat: the nominees as cards in a row, and the pause -->
           <template v-else-if="slide.kind === 'category' && current && !slide.shown">
-            <p class="s-kicker" :style="{ color: stageInk }">{{ award.name }}</p>
+            <p class="s-kicker" :style="{ color: stageInk }">The nominees for</p>
             <h2 class="s-title max-w-[18ch]" :style="{ fontFamily: headlineFont }">
               {{ current.nomination.title || 'Untitled category' }}
             </h2>
-
-            <!-- plates across the middle, or two of them facing each other; a clip
-                 or an image gets a 16:9 frame big enough to read on stream -->
-            <ul
-              v-if="current.layout !== 'list'"
-              class="s-noms m-0 flex list-none flex-wrap justify-center p-0"
-              :class="[current.layout === 'duel' && 's-noms-duel', current.media && 's-noms-media']"
-            >
-              <li v-for="row in current.rows" :key="row.nominee.id" class="js-nom s-nom flex flex-col items-center">
-                <span class="s-plate grid place-items-center overflow-hidden font-bold" :style="plate(false)">
-                  <!-- what the host actually nominated: the image, or the clip's
-                       poster frame. Initials are for channels and plain text. -->
-                  <img
-                    v-if="nomineeImage(row.nominee)"
-                    :src="nomineeImage(row.nominee)"
-                    :alt="nomineeName(row.nominee)"
-                    class="h-full w-full object-cover"
-                  />
-                  <template v-else>{{ nomineeInitials(row.nominee) }}</template>
+            <p class="s-win" :style="{ fontFamily: headlineFont }">And the winner is...</p>
+            <ul class="s-cards m-0 list-none p-0" :class="current.rows.length > 6 && 'is-many'">
+              <li v-for="row in current.rows" :key="row.nominee.id" class="js-nom s-card">
+                <span class="s-card-av" :class="row.nominee.kind !== 'channel' && picOf(row.nominee) && 'is-still'">
+                  <img v-if="picOf(row.nominee)" :src="picOf(row.nominee)" :alt="nomineeName(row.nominee)" />
+                  <span v-else class="s-card-in">{{ nomineeInitials(row.nominee) }}</span>
+                  <i v-if="row.nominee.kind === 'channel'" class="s-card-pf" :class="PF[row.nominee.channel.platform]" />
                 </span>
-                <span class="s-name break-words">{{ nomineeName(row.nominee) }}</span>
+                <b class="s-card-nm">{{ nomineeName(row.nominee) }}</b>
+                <small v-if="subOf(row.nominee)">{{ subOf(row.nominee) }}</small>
               </li>
             </ul>
-
-            <!-- numbered lines: long names fit, and the eye runs down instead of across -->
-            <ol v-else class="s-list-noms m-0 flex list-none flex-col p-0 text-left">
-              <li v-for="(row, i) in current.rows" :key="row.nominee.id" class="js-nom s-line flex items-center">
-                <span class="s-line-i tnum" :style="{ color: stageInk }">{{ String(i + 1).padStart(2, '0') }}</span>
-                <img
-                  v-if="nomineeImage(row.nominee)"
-                  :src="nomineeImage(row.nominee)"
-                  alt=""
-                  aria-hidden="true"
-                  class="s-line-thumb flex-none object-cover"
-                />
-                <span class="s-line-name min-w-0 flex-1 truncate">{{ nomineeName(row.nominee) }}</span>
-              </li>
-            </ol>
-
-            <p class="s-win" :style="{ color: stageInk, fontFamily: headlineFont }">And the winner is...</p>
           </template>
 
           <!-- second beat: the winner's own screen -->
@@ -428,10 +396,10 @@ definePageMeta({ chrome: false })
                   <span
                     v-else
                     class="s-champ-media grid place-items-center overflow-hidden font-bold"
-                    :class="!nomineeImage(w.nominee) && 's-champ-initials'"
+                    :class="[!picOf(w.nominee) && 's-champ-initials', w.nominee.kind === 'channel' && 's-champ-av']"
                     :style="plate(true)"
                   >
-                    <img v-if="nomineeImage(w.nominee)" :src="nomineeImage(w.nominee)" :alt="nomineeName(w.nominee)" class="h-full w-full object-cover" />
+                    <img v-if="picOf(w.nominee)" :src="picOf(w.nominee)" :alt="nomineeName(w.nominee)" class="h-full w-full object-cover" />
                     <template v-else>{{ nomineeInitials(w.nominee) }}</template>
                   </span>
                 </figure>
@@ -440,7 +408,7 @@ definePageMeta({ chrome: false })
               <p class="js-winner-line s-champ-name" :style="{ color: stageInk, fontFamily: headlineFont }">
                 <span v-if="reel.length" class="s-reel-box"><span class="js-reel s-reel"><span v-for="(n, k) in reel" :key="k">{{ n }}</span></span></span>
                 <template v-else-if="current.tied">{{ current.winners.map((w) => nomineeName(w.nominee)).join(' & ') }} · tied</template>
-                <ZinePen v-else>{{ nomineeName(current.winners[0]!.nominee) }}</ZinePen>
+                <template v-else>{{ nomineeName(current.winners[0]!.nominee) }}</template>
               </p>
               <p v-if="settings.counts" class="s-win-sub tnum">
                 {{ current.winners[0]!.votes }} of {{ current.votes }} votes · {{ current.winners[0]!.pct }}%
@@ -482,10 +450,10 @@ definePageMeta({ chrome: false })
 
         <!-- the category number, set big and quiet behind the content -->
         <span
-          v-if="slide.kind === 'category'"
+          v-if="false"
           aria-hidden="true"
           class="s-index absolute"
-          :style="{ color: isZine ? stageInk : accent, fontFamily: headlineFont }"
+          :style="{ color: accent, fontFamily: headlineFont }"
         >{{ String(slide.index + 1).padStart(2, '0') }}</span>
 
         <span class="s-mark tnum absolute text-ink-muted" style="bottom: 2.4cqh; left: 2cqw">
@@ -500,7 +468,7 @@ definePageMeta({ chrome: false })
         <span aria-hidden="true" class="absolute inset-x-0 bottom-0 h-[0.5cqh] bg-white/10">
           <span
             class="block h-full origin-left transition-transform duration-700 ease-gala"
-            :style="{ background: isZine ? stageInk : accent, transform: `scaleX(${(step + 1) / slides.length})` }"
+            :style="{ background: accent, transform: `scaleX(${(step + 1) / slides.length})` }"
           />
         </span>
       </div>
@@ -528,9 +496,10 @@ definePageMeta({ chrome: false })
 
           <button
             type="button"
-            class="ml-auto h-11 rounded-btn border border-hair px-4 text-sm font-bold uppercase tracking-button transition-colors hover:border-gold hover:text-gold-text"
+            class="obs-copy ml-auto inline-flex h-11 items-center gap-2 rounded-btn border border-hair px-4 text-sm font-semibold transition-colors hover:border-gold hover:text-gold-text"
             @click="copyObs"
           >
+            <i aria-hidden="true" />
             <span class="grid">
               <span aria-hidden="true" class="col-start-1 row-start-1 invisible">Copy OBS link</span>
               <span class="col-start-1 row-start-1">{{ copied ? 'Link copied' : 'Copy OBS link' }}</span>
@@ -805,22 +774,6 @@ definePageMeta({ chrome: false })
   border-radius: 0.5cqw;
 }
 
-/* the Fanzine: one ink on a flooded page; the quiet greys become the same ink */
-.is-zine .s-meta,
-.is-zine .s-win-sub,
-.is-zine .text-ink-2,
-.is-zine .text-ink-muted {
-  color: inherit;
-  opacity: 0.85;
-}
-.is-zine .s-plate {
-  border-radius: 0;
-}
-.is-zine :deep(.zine-pen-line) {
-  mix-blend-mode: normal;
-  stroke-width: 6;
-}
-
 /* the category number, behind everything */
 .s-index {
   right: 3cqw;
@@ -838,4 +791,6 @@ definePageMeta({ chrome: false })
 .s-mark {
   font-size: 1.1cqw;
 }
+/* the library's copy glyph, in the button's own colour (Ed, 2026-10-22) */
+.obs-copy i { width: 16px; height: 16px; flex: none; background: currentColor; -webkit-mask: url('~/assets/envelope/sys/copy.svg') center/contain no-repeat; mask: url('~/assets/envelope/sys/copy.svg') center/contain no-repeat; }
 </style>

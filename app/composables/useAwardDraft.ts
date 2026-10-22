@@ -2,7 +2,7 @@ import { uploadInlineImages } from '~/utils/image'
 import { computed, ref, watch } from 'vue'
 import { FREE, PUBLISH, type Award, type Nomination, type Nominee, type Partner } from '~/types/award'
 import { canonicalZone, localTimeZone } from '#shared/time'
-import { INDEX, TRADEMARK } from '#shared/indexable'
+import { TRADEMARK } from '#shared/indexable'
 
 // The draft a host is building. It is still edited locally and reactively - a
 // builder that awaited the network on every keystroke would feel broken - but it
@@ -35,6 +35,31 @@ const emptyDraft = (): Award => ({
 
 const draft = ref<Award>(emptyDraft())
 const loaded = ref(false)
+
+/**
+ * Which channel nominees exist, by platform and name (Ed, 2026-10-22: a channel
+ * that does not exist cannot be nominated). Each is looked up once through the
+ * same search the builder uses - the server checks again on publish. A name not
+ * answered yet counts as fine; only a channel the search could not find fails.
+ */
+const channelKey = (c: { name: string; platform: string }) => `${c.platform}:${c.name.trim().toLowerCase().replace(/\s+/g, '')}`
+const known = ref<Record<string, boolean>>({})
+async function checkChannel(c: { name: string; platform: string }) {
+  const key = channelKey(c)
+  if (key in known.value) return
+  known.value = { ...known.value, [key]: true }
+  try {
+    const res = await $fetch<{ channels: { name: string; platform: string }[] }>('/api/channels/search', { query: { q: c.name.trim() } })
+    known.value = { ...known.value, [key]: res.channels.some((x) => channelKey(x) === key) }
+  } catch {
+    // the search being down is not proof the channel is missing; publish checks again
+  }
+}
+watch(
+  () => draft.value.nominations.flatMap((n) => n.nominees).filter((x) => x.kind === 'channel').map((x) => (x as { channel: { name: string; platform: string } }).channel),
+  (list) => { if (import.meta.client) list.forEach(checkChannel) },
+  { deep: true, immediate: true },
+)
 const saving = ref(false)
 let watching = false
 
@@ -254,6 +279,16 @@ export function useAwardDraft() {
     d.look = {}
   }
 
+  /** channel nominees the search could not find */
+  const missingChannels = computed(() => [
+    ...new Set(
+      draft.value.nominations
+        .flatMap((n) => n.nominees)
+        .filter((x) => x.kind === 'channel' && known.value[channelKey(x.channel)] === false)
+        .map((x) => (x.kind === 'channel' ? x.channel.name : '')),
+    ),
+  ])
+
   /** Publishing rules are the indexing thresholds - same numbers on purpose. */
   const checks = computed(() => {
     const d = draft.value
@@ -262,12 +297,13 @@ export function useAwardDraft() {
       { id: 'name', label: 'Awards name', ok: !!d.name.trim() && d.name.length <= FREE.nameLimit },
       {
         id: 'description',
-        label: `A description (${INDEX.minDescription}+ characters)`,
-        ok: d.description.trim().length >= INDEX.minDescription,
+        // any length (Ed, 2026-10-22); the 80-character bar is only for search indexing
+        label: 'A description',
+        ok: !!d.description.trim(),
       },
       {
         id: 'nominations',
-        label: `At least ${PUBLISH.minNominations} categories`,
+        label: PUBLISH.minNominations === 1 ? 'At least one category' : `At least ${PUBLISH.minNominations} categories`,
         ok: filled.length >= PUBLISH.minNominations,
       },
       {
@@ -276,6 +312,11 @@ export function useAwardDraft() {
         ok: filled.length > 0 && filled.every((n) => n.nominees.length >= PUBLISH.minNomineesPerNomination),
       },
       { id: 'dates', label: 'Voting dates in order', ok: datesOk(d) },
+      {
+        id: 'channels',
+        label: missingChannels.value.length ? `Only real channels - remove ${missingChannels.value.join(', ')}` : 'Only real channels',
+        ok: !missingChannels.value.length,
+      },
     ]
   })
   const canPublish = computed(() => checks.value.every((c) => c.ok))

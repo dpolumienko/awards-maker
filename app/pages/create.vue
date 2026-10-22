@@ -4,25 +4,27 @@
 // channel search runs on mock data, but the shape is the future API shape.
 import { computed, onMounted, ref, watch } from 'vue'
 import UiField from '~/components/ui/UiField.vue'
-import UiDateTimeField from '~/components/ui/UiDateTimeField.vue'
 import UiTextarea from '~/components/ui/UiTextarea.vue'
 import UiButton from '~/components/ui/UiButton.vue'
-import SignInButtons from '~/components/ui/SignInButtons.vue'
-import BuilderTickets, { type BuilderStep } from '~/components/zine/BuilderTickets.vue'
-import BuilderMissing from '~/components/zine/BuilderMissing.vue'
-import { useVersion } from '~/composables/useVersion'
+import BuilderTickets, { type BuilderStep } from '~/components/builder/BuilderTickets.vue'
+import BuilderMissing from '~/components/builder/BuilderMissing.vue'
 import NominationCard from '~/components/ui/NominationCard.vue'
-import AwardPreview from '~/components/ui/AwardPreview.vue'
-import PublishPanel from '~/components/ui/PublishPanel.vue'
 import TemplatePicker from '~/components/ui/TemplatePicker.vue'
 import PaywallNote from '~/components/ui/PaywallNote.vue'
-import LookSection from '~/components/ui/LookSection.vue'
+import EnvLookSection from '~/components/envelope/EnvLookSection.vue'
+import EnvBuilderPreview from '~/components/envelope/EnvBuilderPreview.vue'
+import EnvFullPreview from '~/components/envelope/EnvFullPreview.vue'
+import EnvCrBasics from '~/components/envelope/EnvCrBasics.vue'
+import EnvCrNominations from '~/components/envelope/EnvCrNominations.vue'
+import EnvCrPartners from '~/components/envelope/EnvCrPartners.vue'
+import EnvCrPublish from '~/components/envelope/EnvCrPublish.vue'
+import '~/assets/css/envelope-cr.css'
 import InteractiveAccordion from '~/components/ui/InteractiveAccordion.vue'
 import type { AwardTemplate } from '~/data/templates'
+import EnvConfirm from '~/components/envelope/EnvConfirm.vue'
 import { ideaGroup } from '~/data/ideas'
 import { useAwardDraft } from '~/composables/useAwardDraft'
 import { FIELD, FREE } from '~/types/award'
-import { INDEX } from '#shared/indexable'
 import { allTimeZones, utcToZoned, zoneCity, zoneOffset, zonedToUtc } from '#shared/time'
 import { DISPLAY_FONTS, useDisplayFonts } from '~/composables/useDisplayFonts'
 
@@ -64,7 +66,7 @@ async function createDemoAward() {
     await nextTick()
     // v2 shows the filled categories step; elsewhere the page stays put - jumping
     // 2 500 px down to the nominations read as a broken anchor (review 2026-10-08)
-    if (stepped.value) goStep('cats')
+    goStep('cats')
   } finally {
     demoBusy.value = false
   }
@@ -106,7 +108,8 @@ onMounted(async () => {
   await load()
   applyIdeasFromQuery()
 })
-const tab = ref<'form' | 'preview'>('form')
+// Envelope: the whole page in a popup, from the preview or the floating button on a phone
+const fullOpen = ref(false)
 const cards = ref<InstanceType<typeof NominationCard>[]>([])
 const paywallOpen = ref(false)
 
@@ -122,12 +125,62 @@ async function onAddNomination() {
   cards.value[cards.value.length - 1]?.focusTitle()
 }
 
-// Night v2: the same form, one ticket at a time (components/zine/BuilderTickets).
-// Every section stays mounted - v-show, not v-if - so nothing typed is lost when
-// a step is left, and the other versions keep the single long page.
-const { isV2, isEnvelope } = useVersion()
-// the builder in steps: Night v2's tickets, and the Envelope's stepper (review 2026-10-16, item 2)
-const stepped = computed(() => isV2.value || isEnvelope.value)
+// The form in steps. Every section stays mounted - v-show, not v-if - so nothing
+// typed is lost when a step is left.
+
+// Envelope on a phone (Ed's prototype, 2026-10-22): the hint under a field folds
+// into an (i) by its label and opens as a tooltip, so the form stays short.
+onMounted(() => {
+  const tip = document.createElement('div')
+  tip.className = 'eb-tip'
+  tip.setAttribute('role', 'tooltip')
+  tip.hidden = true
+  document.body.appendChild(tip)
+  let cur: HTMLElement | null = null
+  const close = () => {
+    tip.hidden = true
+    cur?.setAttribute('aria-expanded', 'false')
+    cur = null
+  }
+  const openFor = (b: HTMLElement, text: string) => {
+    if (cur === b) return close()
+    close()
+    cur = b
+    b.setAttribute('aria-expanded', 'true')
+    tip.textContent = text
+    tip.hidden = false
+    const r = b.getBoundingClientRect(), W = Math.min(280, innerWidth - 24)
+    let x = r.left + r.width / 2 - W / 2
+    x = Math.max(12, Math.min(innerWidth - W - 12, x))
+    tip.style.width = W + 'px'
+    tip.style.left = x + 'px'
+    tip.style.top = r.top + scrollY - tip.offsetHeight - 10 + 'px'
+    tip.style.setProperty('--ax', r.left + r.width / 2 - x + 'px')
+  }
+  document.querySelectorAll<HTMLElement>('.env-builder [id$="-help"], .env-builder .elk-k small').forEach((h) => {
+    let box: HTMLElement | null = h.parentElement
+    const SEL = ':scope > .label, :scope > div > .label, :scope > b, :scope > legend'
+    while (box && !box.querySelector(SEL)) box = box.parentElement
+    const label = box?.querySelector<HTMLElement>(SEL)
+    if (!label || label.querySelector('.eb-ii')) return
+    h.classList.add('eb-hint')
+    const b = document.createElement('button')
+    b.type = 'button'
+    b.className = 'eb-ii'
+    b.setAttribute('aria-label', 'About this field')
+    b.setAttribute('aria-expanded', 'false')
+    b.addEventListener('click', (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      openFor(b, h.textContent || '')
+    })
+    label.appendChild(b)
+  })
+  document.addEventListener('click', (e) => {
+    if (cur && !(e.target as HTMLElement).closest('.eb-ii')) close()
+  })
+  addEventListener('scroll', close, { passive: true })
+})
 const STEPS = [
   { id: 'show', title: 'Setup', sub: 'Name and a pack' },
   { id: 'cats', title: 'Categories', sub: 'And who is nominated' },
@@ -140,7 +193,7 @@ const step = ref<StepId>('show')
 const visited = ref(new Set<StepId>(['show']))
 // what each ticket needs from the publish checks; Look and Publish need nothing
 // of their own (Publish lists every check itself)
-const NEEDS: Record<StepId, string[]> = { show: ['name', 'description'], cats: ['nominations', 'nominees'], when: ['dates'], look: [], go: [] }
+const NEEDS: Record<StepId, string[]> = { show: ['name', 'description'], cats: ['nominations', 'nominees', 'channels'], when: ['dates'], look: [], go: [] }
 /** a ticket that just got something from another step - a pack picked on the first */
 const flashed = ref<StepId | null>(null)
 const tickets = computed(() => {
@@ -159,16 +212,23 @@ const tickets = computed(() => {
       state,
       missing: short.join(', '),
       flash: flashed.value === s.id,
+      paid: s.id === 'look',
     }
   })
 })
+const NEEDS_BY: Record<string, StepId> = { name: 'show', description: 'show', nominations: 'cats', nominees: 'cats', channels: 'cats', dates: 'when' }
+async function fixFromPublish(id: string) {
+  goStep(NEEDS_BY[id] ?? step.value)
+  await nextTick()
+  setTimeout(() => fixMissing(id), 350)
+}
 const stepIndex = computed(() => STEPS.findIndex((s) => s.id === step.value))
-/** Shown in this version's current step - always true outside v2. */
-const at = (...ids: StepId[]) => !stepped.value || ids.includes(step.value)
+/** Shown in the current step. */
+const at = (...ids: StepId[]) => ids.includes(step.value)
 /** steps left at least once: coming back to one that is still short shows what it lacks */
 const left = ref(new Set<StepId>())
 const missingHere = computed(() =>
-  stepped.value && left.value.has(step.value)
+  left.value.has(step.value)
     ? checks.value.filter((c) => NEEDS[step.value].includes(c.id) && !c.ok).map(({ id, label }) => ({ id, label }))
     : [],
 )
@@ -177,7 +237,7 @@ const isMissing = (id: string) => missingHere.value.some((m) => m.id === id)
 function fixMissing(id: string) {
   const el = document.querySelector<HTMLElement>(`[data-check="${id}"]`)
   el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-  el?.querySelector<HTMLElement>('input, textarea, select, button')?.focus({ preventScroll: true })
+  ;(el?.querySelector<HTMLElement>('input, textarea, select') ?? el?.querySelector<HTMLElement>('button:not(.eb-ii)'))?.focus({ preventScroll: true })
 }
 function goStep(id: string) {
   if (id !== step.value) left.value.add(step.value)
@@ -192,30 +252,35 @@ async function onPublishFree() {
   await onPublish()
 }
 
-/** A template fills the empty rows first, then appends up to the Free limit. */
+/**
+ * A pack replaces the categories with its own (Ed, 2026-10-22). When there is work
+ * in them - nominees added, or titles that are not this pack's - it asks first,
+ * because switching wipes it.
+ */
+const packAsk = ref<AwardTemplate | null>(null)
 function applyTemplate(t: AwardTemplate) {
-  const titles = t.nominations.slice(0, FREE.maxNominations)
-  draft.value.nominations = draft.value.nominations.filter((n) => n.title.trim() || n.nominees.length)
-  titles.forEach((title) => {
-    const empty = draft.value.nominations.find((n) => !n.title.trim() && !n.nominees.length)
-    if (empty) empty.title = title
-    else if (draft.value.nominations.length < FREE.maxNominations) {
-      addNomination()
-      draft.value.nominations[draft.value.nominations.length - 1]!.title = title
-    }
+  // the pack already in use: nothing to switch, nothing to lose
+  if (draft.value.templateId === t.id) return
+  const worked = draft.value.nominations.some((n) => n.nominees.length || (n.title.trim() && !t.nominations.includes(n.title.trim())))
+  if (worked) {
+    packAsk.value = t
+    return
+  }
+  usePack(t)
+}
+function usePack(t: AwardTemplate) {
+  packAsk.value = null
+  draft.value.nominations = []
+  t.nominations.slice(0, FREE.maxNominations).forEach((title) => {
+    addNomination()
+    draft.value.nominations[draft.value.nominations.length - 1]!.title = title
   })
   if (!draft.value.name.trim()) draft.value.name = `${draft.value.host.name} Awards ${new Date().getFullYear()}`
-  // A set is a starting point for the whole page, not only the category list, so
-  // it brings its own theme, colour and face - switching sets visibly changes the
-  // preview. An uploaded cover is the streamer's own asset and survives.
-  // Categories only. A preset used to bring its own theme, colour and font too,
-  // and the Look is paid - so one click on a free-looking preset made the whole
-  // show paid (review 2026-09-24: "paid things scare people off at once").
+  // Categories only: the Look is paid, so a pack never brings a theme, colour or
+  // font - one click on a free-looking pack must not make the show paid.
   draft.value.templateId = t.id
-  if (stepped.value) {
-    flashed.value = 'cats'
-    setTimeout(() => (flashed.value = null), 1200)
-  }
+  flashed.value = 'cats'
+  setTimeout(() => (flashed.value = null), 1200)
 }
 
 /**
@@ -229,7 +294,7 @@ function applyIdeasFromQuery() {
   // the whole set, not the free slice: a set that runs past the ceiling is how the
   // page said it would behave, and the paywall note explains the rest
   group.items.slice(0, group.set).forEach(addIdea)
-  if (stepped.value) step.value = 'cats'
+  step.value = 'cats'
   // once applied, drop it from the URL so a reload does not add the set twice
   navigateTo({ query: { ...route.query, ideas: undefined } }, { replace: true })
 }
@@ -254,8 +319,8 @@ async function onPublish() {
   // Running a show needs the channel scopes, which the voter sign-in does not
   // grant. Sending them through the wider consent here beats a 403 after they
   // have filled in the whole form.
-  // Signed out, there are two accounts to choose from, so the page takes them to
-  // the pair of sign-in buttons instead of picking Twitch for them.
+  // Signed out, there are two accounts to choose from: the Publish step shows the
+  // pair of sign-in buttons in place of the publish button (Ed, 2026-10-22).
   if (!signedIn.value) {
     const box = document.getElementById('host-signin')
     box?.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -294,11 +359,11 @@ const faq = [
   },
   {
     q: 'Can I edit the awards after publishing?',
-    a: 'Names and descriptions, yes. Nominees stay put once voting is open, because changing the ballot mid-vote would invalidate the votes already cast.',
+    a: 'Names and descriptions, yes. Nominees stay put once voting is open, because changing the nominees mid-vote would invalidate the votes already cast.',
   },
   {
     q: 'When does my awards page show up in search?',
-    a: `Once it has at least three nominations, two nominees in each and a description of ${INDEX.minDescription}+ characters. The checklist above the publish button is exactly that rule.`,
+    a: `Once it has at least one category with two nominees and a description. The checklist above the publish button is exactly that rule.`,
   },
 ]
 
@@ -312,227 +377,61 @@ useSeoMeta({
 </script>
 
 <template>
-  <div class="shell" :class="stepped ? 'pb-10 pt-6' : 'py-10'">
+  <div class="shell env-builder pb-10 pt-6">
+    <div class="eb-head">
     <h1 class="heading">Create your own awards show</h1>
-    <!-- Night v2 keeps the first step on one screen: no lead, the two strips side by side -->
-    <p v-if="!isV2" class="mt-3 max-w-copy text-lg text-ink-2">
+    <!-- Envelope: the demo is a quiet aside by the title, not a strip of its own -->
+    <div v-if="demo" class="eb-demo">
+      <span><b>Demo</b> A test host and a show with every feature.</span>
+      <button type="button" class="eb-demo-btn" :disabled="demoBusy" @click="createDemoAward">Create demo award</button>
+    </div>
+    </div>
+    <p class="mt-3 max-w-copy text-lg text-ink-2">
       Start from a pack or write your own categories, nominate any channel or meme, and publish a page your viewers
       vote on.
     </p>
 
-    <div :class="stepped && ['mt-6 grid gap-3', !signedIn && 'lg:grid-cols-2']">
-      <!-- demo build only: skip Twitch and fill everything in -->
-      <div
-        v-if="demo"
-        class="flex flex-wrap items-center gap-4 rounded-card border border-dashed border-gold-24 bg-gold/[0.06]"
-        :class="stepped ? 'p-3' : 'mt-8 p-5'"
-      >
-        <p v-if="stepped" class="min-w-0 flex-1 text-sm text-ink-2"><b class="text-ink">Demo.</b> A test host and a show with every feature.</p>
-        <p v-else class="min-w-0 flex-1 text-sm text-ink-2">
-          <b class="text-ink">Demo.</b> Signs you in as a test host and fills a show with every feature:
-          channels, images, clips, cover, partners, dates. Then publish, vote, close and run the ceremony.
-        </p>
-        <UiButton class="ml-auto" :disabled="demoBusy" @click="createDemoAward">Create demo award</UiButton>
-      </div>
-
-      <!-- signed out: nothing is blocked except publishing, the way the flow was designed -->
-      <div
-        v-if="!signedIn"
-        id="host-signin"
-        class="flex flex-wrap items-center gap-4 rounded-card border border-hair bg-s1"
-        :class="stepped ? 'p-3' : 'mt-8 p-5'"
-      >
-        <p class="min-w-0 flex-1 text-sm text-ink-2">
-          {{ stepped ? 'Login is asked when you publish.' : 'You can build the whole thing first. A Twitch or Kick login is asked when you publish.' }}
-        </p>
-        <SignInButtons class="ml-auto" @choose="signInAsHost" />
-      </div>
-    </div>
-
-    <!-- mobile switch between the form and the preview -->
-    <div class="mt-8 flex gap-2 lg:hidden" role="tablist" aria-label="Builder view">
-      <button
-        v-for="t in (['form', 'preview'] as const)"
-        :key="t"
-        type="button"
-        role="tab"
-        :aria-selected="tab === t"
-        class="h-11 flex-1 rounded-btn border text-sm font-bold uppercase tracking-button transition-colors"
-        :class="tab === t ? 'border-gold bg-gold/[0.12] text-gold-text' : 'border-hair text-ink-muted'"
-        @click="tab = t"
-      >
-        {{ t }}
-      </button>
-    </div>
-
-    <!-- Night v2: the steps, as tickets -->
-    <BuilderTickets v-if="stepped" id="builder" class="mt-6 scroll-mt-24" :steps="tickets" :current="step" @go="goStep" />
+    <!-- the steps -->
+    <BuilderTickets id="builder" class="mt-6 scroll-mt-24" :steps="tickets" :current="step" @go="goStep" />
 
     <!-- the form is where the work is; the preview is read-only and can be narrower -->
     <div class="mt-8 grid items-start gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
       <!-- FORM -->
-      <div :class="tab === 'preview' && 'hidden lg:block'" class="space-y-8">
+      <!-- flex + gap, not space-y: the steps are v-show, and space-y counted the hidden ones, so the
+           first visible block of a step got a top margin on some steps and not others (Ed: it jumped) -->
+      <div class="env-cr cr cr-form flex flex-col gap-8">
         <BuilderMissing v-if="missingHere.length" :items="missingHere" @fix="fixMissing" />
         <TemplatePicker
           v-show="at('show')"
+          :env="true"
           :used="nominationsUsed"
           :active="draft.templateId"
-          :compact="stepped"
+          :compact="true"
           @apply="applyTemplate"
           @add-idea="addIdea"
         />
 
-        <section v-show="at('show', 'when')" class="rounded-card border border-hair bg-s1 p-6">
-          <!-- in Night v2 the ticket above already names the step -->
-          <h2 v-if="!stepped" class="text-xl font-semibold">The basics</h2>
-          <div class="space-y-5" :class="!stepped && 'mt-5'">
-            <UiField
-              v-show="at('show')"
-              v-model="draft.name"
-              label="Awards name"
-              placeholder="Chat Awards 2026"
-              :limit="FREE.nameLimit"
-              :error="nameError || (isMissing('name') ? 'Give the awards a name.' : '')"
-              data-check="name"
-              :warning="nameWarning"
-              helper="Shown as the page title and on every share image."
-            />
-            <UiTextarea
-              v-show="at('show')"
-              v-model="draft.description"
-              label="Description"
-              placeholder="What these awards are for, and who votes."
-              :limit="FIELD.descriptionLimit"
-              :rows="stepped ? 2 : 4"
-              :error="isMissing('description') ? 'Needs a few more words: what the awards are for and who votes.' : ''"
-              data-check="description"
-              helper="A description is required before publishing. Two sentences is plenty."
-            />
-            <!-- dates are moments in the show's zone, not whole days (review 2026-09-24) -->
-            <div v-show="at('when')" class="space-y-5">
-            <div>
-              <label for="show-zone" class="label mb-2 block">Time zone</label>
-              <select
-                id="show-zone"
-                v-model="draft.timezone"
-                class="h-12 w-full rounded-btn border border-hair2 bg-s2 px-4 text-base text-ink transition-colors hover:border-ink-muted focus:border-gold focus:shadow-focus focus:outline-none"
-                aria-describedby="show-zone-help"
-              >
-                <option v-for="z in zones" :key="z.id" :value="z.id">{{ z.label }}</option>
-              </select>
-              <p id="show-zone-help" class="mt-2 text-sm text-ink-muted">
-                Every date on the page is shown in this zone, and says so.
-              </p>
-            </div>
-            <!-- one per row: a date and a time side by side do not fit two to a row
-                 in the form column, and the browser clipped them to "mm/dd/y" -->
-            <div class="grid gap-4" data-check="dates">
-              <p v-if="isMissing('dates')" class="text-sm font-semibold text-danger">Voting has to open before it closes, and the ceremony comes after.</p>
-              <UiDateTimeField v-model="draft.opensAt" label="Voting opens" :time-zone="draft.timezone" default-time="12:00" />
-              <UiDateTimeField v-model="draft.closesAt" label="Voting closes" :time-zone="draft.timezone" default-time="21:00" />
-              <UiDateTimeField v-model="draft.ceremonyAt" label="Ceremony" :time-zone="draft.timezone" default-time="20:00" />
-            </div>
-            </div>
-          </div>
-        </section>
+                  <EnvCrBasics v-show="at('show')" part="show" :missing="missingHere.map((m) => m.id)" />
+          <EnvCrBasics v-show="at('when')" part="when" :missing="missingHere.map((m) => m.id)" />
+        
 
-        <LookSection
+        <EnvLookSection
+         
           v-show="at('look')"
           :look="draft.look"
           @update:look="draft.look = $event"
         />
 
-        <section v-show="at('cats')" id="nominations" data-check="nominations">
-          <span data-check="nominees" class="sr-only" />
-          <div class="flex items-end justify-between gap-4">
-            <h2 class="text-xl font-semibold">Categories</h2>
-            <!-- past the free five this is a paid feature in use, not an error:
-                 the count says what is free and what is paid, in those words -->
-            <span class="flex items-center gap-2 text-sm">
-              <span class="tnum text-ink-muted">{{ nominationsUsed }} {{ nominationsUsed === 1 ? 'category' : 'categories' }}</span>
-              <span
-                v-if="nominationsUsed > FREE.maxNominations"
-                class="rounded-pill border border-gold-24 px-2 py-0.5 text-[11px] font-bold uppercase tracking-micro text-gold-text"
-              >
-                {{ nominationsUsed - FREE.maxNominations }} paid
-              </span>
-              <span v-else class="tnum text-ink-muted">of {{ FREE.maxNominations }} free</span>
-            </span>
-          </div>
+        <EnvCrNominations v-show="at('cats')" />
 
-          <div class="mt-5 space-y-4">
-            <NominationCard
-              v-for="(n, i) in draft.nominations"
-              :key="n.id"
-              ref="cards"
-              :nomination="n"
-              :index="i"
-              :over-free-limit="i >= FREE.maxNominations"
-              @update:title="n.title = $event"
-              @remove="removeNomination(n.id)"
-              @add-channel="addNominee(n.id, { kind: 'channel', channel: $event })"
-              @add-text="addNominee(n.id, { kind: 'text', text: $event })"
-              @add-media="addNominee(n.id, { kind: 'media', text: $event.text, url: $event.url, image: $event.image })"
-              @remove-nominee="removeNominee(n.id, $event)"
-            />
-          </div>
+        <EnvCrPartners v-show="at('look')" />
 
-          <div class="mt-4">
-            <UiButton variant="ghost" @click="onAddNomination">Add category</UiButton>
-          </div>
-
-          <!-- the 6th nomination is where the paid version starts -->
-          <div v-if="paywallOpen" class="mt-4">
-            <PaywallNote @dismiss="paywallOpen = false" />
-          </div>
-        </section>
-
-        <section v-show="at('look')" class="rounded-card border border-hair bg-s1 p-6">
-          <div class="flex items-end justify-between gap-4">
-            <h2 class="text-xl font-semibold">Partners</h2>
-            <span class="text-sm text-ink-muted">Optional</span>
-          </div>
-          <p class="mt-1 text-sm text-ink-2">Anyone backing the show. Links are checked before they go live.</p>
-
-          <div v-if="draft.partners.length" class="mt-5 space-y-3">
-            <div v-for="p in draft.partners" :key="p.id" class="flex flex-wrap items-end gap-3">
-              <div class="min-w-[160px] flex-1">
-                <UiField v-model="p.name" label="Name" placeholder="Loot Energy" />
-              </div>
-              <div class="min-w-[200px] flex-[2]">
-                <UiField v-model="p.url" label="Link" placeholder="https://" />
-              </div>
-              <!-- as tall as the inputs it sits beside, bottom edges lined up -->
-              <UiConfirmButton
-                class="!h-12"
-                :aria-label="'Remove partner ' + (p.name || 'row')"
-                :confirm-aria-label="'Confirm removing partner ' + (p.name || 'row')"
-                @confirm="removePartner(p.id)"
-              />
-            </div>
-          </div>
-
-          <div class="mt-4">
-            <UiButton variant="ghost" size="sm" @click="addPartner">Add partner</UiButton>
-          </div>
-        </section>
-
-        <PublishPanel
-          v-show="at('go')"
-          :checks="checks"
-          :can-publish="canPublish"
-          :nominations-used="nominationsUsed"
-          :paid-features="paidFeatures"
-          :error="publishError"
-          @publish="onPublish"
-          @upgrade="checkout"
-          @downgrade="onPublishFree"
-        />
+        <EnvCrPublish v-show="at('go')" :signed-in="signedIn" :error="publishError" @sign-in="signInAsHost" @publish="onPublish" @fix="fixFromPublish" />
         <!-- the payment goes straight to checkout from here; Stripe off answers 503 and says so -->
         <p v-if="checkoutError" class="mt-3 text-sm text-danger" role="alert">{{ checkoutError }}</p>
 
         <!-- the stepped builder: back and next under every step -->
-        <div v-if="stepped" class="builder-steps-bar flex justify-between gap-3 border-t-2 border-ink pt-5">
+        <div class="builder-steps-bar flex justify-between gap-3 border-t-2 border-ink pt-5">
           <UiButton v-if="stepIndex > 0" variant="ghost" @click="goStep(STEPS[stepIndex - 1]!.id)">Back</UiButton>
           <span v-else />
           <UiButton v-if="stepIndex < STEPS.length - 1" @click="goStep(STEPS[stepIndex + 1]!.id)">Next: {{ STEPS[stepIndex + 1]!.title }}</UiButton>
@@ -544,13 +443,12 @@ useSeoMeta({
            under the fold and the bottom of it was unreachable while the form scrolled.
            It still scrolls, but shows no scrollbar (review 2026-10-06). -->
       <div
-        :class="tab === 'form' && 'hidden lg:block'"
-        class="lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        class="hidden lg:block lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         <!-- no label over the panel: a line of micro type here pushed the preview
              three rows below the form column and the two stopped lining up. The
              panel says what it is on its own chip. -->
-        <AwardPreview :award="draft" :signed-in="signedIn" />
+        <EnvBuilderPreview :award="draft" :signed-in="signedIn" @full="fullOpen = true" />
       </div>
     </div>
 
@@ -570,6 +468,18 @@ useSeoMeta({
         explains how voting works, what a published page looks like and what other streamers are running right now.
       </p>
     </section>
+
+          <EnvFullPreview :award="draft" :open="fullOpen" @close="fullOpen = false" />
+          <EnvConfirm
+            :open="!!packAsk"
+            :title="`Switch to ${packAsk?.name ?? 'this pack'}?`"
+            text="Its categories replace yours. The categories and nominees you have set up now will be erased."
+            confirm-label="Erase and switch"
+            @cancel="packAsk = null"
+            @confirm="packAsk && usePack(packAsk)"
+          />
+      <button type="button" class="eb-fab" :class="fullOpen && 'is-hidden'" @click="fullOpen = true"><i aria-hidden="true" />Preview</button>
+    
   </div>
 
 </template>

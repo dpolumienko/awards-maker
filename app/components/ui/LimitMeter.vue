@@ -15,8 +15,7 @@ const near = computed(() => used / total >= 0.8)
 // The Fanzine prints the ceiling as a print run: one square per voter the plan
 // allows, inked as ballots come in. Past a few hundred squares it is a smudge, so
 // a bigger ceiling keeps the bar.
-const { isZine } = useVersion()
-const run = computed(() => isZine.value && total <= 400)
+const run = computed(() => false)
 </script>
 
 <template>

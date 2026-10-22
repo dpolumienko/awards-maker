@@ -47,14 +47,13 @@ export function stageImage(s: CeremonySettings, cover?: string) {
 export function useCeremony(slug: () => string, award: () => Award | null) {
   const stored = ref<CeremonySettings | null>(null)
   // the Envelope's own defaults: its interface face, and the drumroll it was designed with
-  const { isEnvelope } = useVersion()
   const configured = computed(() => stored.value !== null)
 
   /** Falls back to the show's own Look, so an unconfigured ceremony still fits. */
   const settings = computed<CeremonySettings>(() => ({
     stage: stored.value?.stage ?? (award()?.look?.coverUrl ? COVER : (award()?.look?.theme ?? 'stage')),
-    font: stored.value?.font ?? award()?.look?.font ?? (isEnvelope.value ? 'Hanken Grotesk' : 'Anton'),
-    reveal: stored.value?.reveal ?? (isEnvelope.value ? 'drumroll' : 'cut'),
+    font: stored.value?.font ?? award()?.look?.font ?? 'Hanken Grotesk',
+    reveal: stored.value?.reveal ?? 'drumroll',
     image: stored.value?.image,
     partners: stored.value?.partners ?? true,
     counts: stored.value?.counts ?? true,

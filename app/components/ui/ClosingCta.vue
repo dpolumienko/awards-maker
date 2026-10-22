@@ -1,19 +1,22 @@
 <script setup lang="ts">
-// The last ask on a content page (/ideas, /plans): a title, a line, two buttons.
-// One component instead of the same panel copied page to page. In the Fanzine
-// versions it is the landing's admission ticket (review 2026-10-08: the pages
-// still wore the old soft card while the landing had moved on).
-import { useVersion } from '~/composables/useVersion'
+// The last ask on a content page (/ideas, /plans): a title, a line, the actions.
+// Drawn like the landing's closing call (Ed, 2026-10-22): one flat panel, centred,
+// the title in Gloock, the line under it, then the buttons.
 
 defineProps<{ title: string }>()
-const { isZine } = useVersion()
 </script>
 
 <template>
-  <div class="relative mt-12 p-6 sm:p-8" :class="isZine ? 'zine-ticket' : 'rounded-card border border-gold-24 bg-gold/[0.06]'">
-    <span v-if="isZine" class="zine-ticket-tag" aria-hidden="true">Admit one</span>
-    <h2 class="text-2xl font-bold">{{ title }}</h2>
-    <p class="mt-3 max-w-copy text-ink-2"><slot /></p>
-    <div class="mt-6 flex flex-wrap gap-3"><slot name="actions" /></div>
-  </div>
+  <section class="ccta">
+    <h2>{{ title }}</h2>
+    <p><slot /></p>
+    <div class="ccta-b"><slot name="actions" /></div>
+  </section>
 </template>
+
+<style scoped>
+.ccta { margin-top: clamp(56px, 7vw, 96px); padding: clamp(48px, 6vw, 80px) 24px; border-radius: 12px; background: radial-gradient(60% 90% at 50% 0%, rgba(201, 164, 92, 0.14), transparent 70%), var(--e-white, #141413); display: grid; justify-items: center; gap: 16px; text-align: center; }
+.ccta h2 { margin: 0; font: 400 clamp(36px, 4.6vw, 64px)/1 var(--e-serif, Georgia, serif); letter-spacing: -0.03em; max-width: 18ch; }
+.ccta p { margin: 0; max-width: 52ch; font-size: 17px; color: var(--e-ink-2, #c2bdb2); }
+.ccta-b { margin-top: 8px; display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+</style>
