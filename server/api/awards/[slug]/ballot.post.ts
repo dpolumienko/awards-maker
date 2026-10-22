@@ -10,7 +10,8 @@ import { queryOne } from '../../../utils/db'
  * One ballot per person per show, enforced by a unique index rather than by this
  * handler - two requests racing each other end with one row and the loser is
  * told. Until now "you already voted" meant "this browser has a localStorage
- * key", which a private window defeated.
+ * key", which a private window defeated. Coming back for the categories skipped
+ * the first time adds to the same ballot (utils/votes castBallot).
  */
 export default defineEventHandler(async (event) => {
   const user = await requireUser(event)
@@ -30,11 +31,12 @@ export default defineEventHandler(async (event) => {
   }
 
   if (award.tier === 'free') {
-    const voters = await queryOne<{ n: number }>(
-      `SELECT COUNT(*) AS n FROM ballots WHERE award_id = ?`,
-      [award.id],
+    // a voter already in is not a new voter: they can finish their ballot at the ceiling
+    const voters = await queryOne<{ n: number; mine: number | null }>(
+      `SELECT COUNT(*) AS n, SUM(user_id = ?) AS mine FROM ballots WHERE award_id = ?`,
+      [user.id, award.id],
     )
-    if (Number(voters?.n ?? 0) >= FREE.maxVoters) {
+    if (Number(voters?.n ?? 0) >= FREE.maxVoters && !Number(voters?.mine ?? 0)) {
       throw createError({ statusCode: 409, statusMessage: 'This show has reached its free ceiling' })
     }
   }
@@ -43,7 +45,7 @@ export default defineEventHandler(async (event) => {
     return await castBallot(award.id, user.id, picks)
   } catch (error) {
     if (error instanceof AlreadyVoted) {
-      throw createError({ statusCode: 409, statusMessage: 'You have already voted here' })
+      throw createError({ statusCode: 409, statusMessage: 'You have already voted in these categories' })
     }
     throw error
   }

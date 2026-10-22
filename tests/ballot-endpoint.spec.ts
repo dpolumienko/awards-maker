@@ -102,6 +102,13 @@ describe('POST /api/awards/:slug/ballot', () => {
     expect(castBallot).not.toHaveBeenCalled()
   })
 
+  it('lets a voter already in finish their ballot at the ceiling', async () => {
+    vi.mocked(awardBySlug).mockResolvedValue({ ...openAward, tier: 'free' } as never)
+    vi.mocked(queryOne).mockResolvedValue({ n: 200, mine: 1 } as never)
+    await handler({})
+    expect(castBallot).toHaveBeenCalled()
+  })
+
   it('casts the ballot for the session user, never for an id from the body', async () => {
     const result = await handler({})
     expect(castBallot).toHaveBeenCalledWith(1, 7, { '10': '20' })

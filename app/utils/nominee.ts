@@ -21,6 +21,13 @@ export const nomineeSub = (n: Nominee) =>
 
 export const nomineeInitials = (n: Nominee) => nomineeName(n).slice(0, 2).toUpperCase()
 
+/** A nominee without a picture gets its own colour behind its initials, the same on every visit. */
+export function nomineeTint(n: Nominee) {
+  let h = 0
+  for (const ch of nomineeName(n)) h = (h * 31 + ch.charCodeAt(0)) % 360
+  return `hsl(${h} 55% 32%)`
+}
+
 /**
  * The picture that stands for a nominee: an uploaded image, or the poster frame
  * of the clip. Channels and plain text have none - those fall back to initials.
@@ -39,5 +46,16 @@ export function nomineeImage(n: Nominee): string {
   if (clip.poster) return clip.poster
   // YouTube publishes a thumbnail for every video id at a fixed address
   const yt = /youtube\.com\/embed\/([\w-]+)/.exec(clip.embed ?? '')
-  return yt ? `https://i.ytimg.com/vi/${yt[1]}/hqdefault.jpg` : ''
+  if (yt) return `https://i.ytimg.com/vi/${yt[1]}/hqdefault.jpg`
+  // Twitch only tells its API, which our server asks (server/api/clip-poster);
+  // the static demo has no server - NomineeThumb shows the embed there instead
+  return clip.platform === 'twitch' && !isDemo() ? `/api/clip-poster?url=${encodeURIComponent(n.url)}` : ''
+}
+
+function isDemo(): boolean {
+  try {
+    return !!useRuntimeConfig().public.demo
+  } catch {
+    return false
+  }
 }

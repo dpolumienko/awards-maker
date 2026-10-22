@@ -48,7 +48,9 @@ const describedBy = computed(() => [error && `${id}-err`, warning && `${id}-warn
       :class="error ? 'border-danger' : 'border-hair2 hover:border-ink-muted'"
       @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
     />
-    <div class="mt-2 flex items-start gap-3">
+    <!-- only when there is something to say: an empty line under every input
+         pushed it off the bottom edge its row's buttons line up with -->
+    <div v-if="error || warning || helper || limit" class="mt-2 flex items-start gap-3">
       <p v-if="error" :id="`${id}-err`" class="text-sm font-semibold text-danger">{{ error }}</p>
       <p v-else-if="warning" :id="`${id}-warn`" class="text-sm text-warn">{{ warning }}</p>
       <p v-else-if="helper" :id="`${id}-help`" class="text-sm text-ink-muted">{{ helper }}</p>

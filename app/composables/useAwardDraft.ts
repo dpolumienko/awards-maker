@@ -2,6 +2,7 @@ import { uploadInlineImages } from '~/utils/image'
 import { computed, ref, watch } from 'vue'
 import { FREE, PUBLISH, type Award, type Nomination, type Nominee, type Partner } from '~/types/award'
 import { canonicalZone, localTimeZone } from '#shared/time'
+import { INDEX, TRADEMARK } from '#shared/indexable'
 
 // The draft a host is building. It is still edited locally and reactively - a
 // builder that awaited the network on every keystroke would feel broken - but it
@@ -118,7 +119,7 @@ function toPayload(a: Award) {
       title: n.title,
       nominees: n.nominees.map((x) =>
         x.kind === 'channel'
-          ? { kind: 'channel' as const, channel: { name: x.channel.name, platform: x.channel.platform, followers: x.channel.followers } }
+          ? { kind: 'channel' as const, channel: { name: x.channel.name, platform: x.channel.platform, followers: x.channel.followers, avatar: x.channel.avatar } }
           : x.kind === 'media'
             ? { kind: 'media' as const, text: x.text, url: x.url, image: x.image }
             : { kind: 'text' as const, text: x.text },
@@ -229,11 +230,11 @@ export function useAwardDraft() {
     if ((d.nominations?.length ?? 0) > FREE.maxNominations) {
       out.push({
         id: 'nominations',
-        label: `${d.nominations.length} nominations`,
+        label: `${d.nominations.length} categories`,
         detail: `Free covers ${FREE.maxNominations}. The last ${d.nominations.length - FREE.maxNominations} would be dropped.`,
       })
     }
-    const look = [d.look?.theme && 'theme', d.look?.accent && 'colour', d.look?.font && 'type', d.look?.coverUrl && 'cover'].filter(Boolean)
+    const look = [d.look?.theme && 'theme', d.look?.accent && 'colour', d.look?.font && 'type', d.look?.coverUrl && 'cover', d.look?.hideLogo && 'page without the channel logo'].filter(Boolean)
     if (look.length) {
       out.push({ id: 'look', label: `Your own ${look.join(', ')}`, detail: 'Free awards use the standard page.' })
     }
@@ -259,10 +260,14 @@ export function useAwardDraft() {
     const filled = d.nominations.filter((n) => n.title.trim() && n.nominees.length)
     return [
       { id: 'name', label: 'Awards name', ok: !!d.name.trim() && d.name.length <= FREE.nameLimit },
-      { id: 'description', label: 'A description', ok: d.description.trim().length >= 20 },
+      {
+        id: 'description',
+        label: `A description (${INDEX.minDescription}+ characters)`,
+        ok: d.description.trim().length >= INDEX.minDescription,
+      },
       {
         id: 'nominations',
-        label: `At least ${PUBLISH.minNominations} nominations`,
+        label: `At least ${PUBLISH.minNominations} categories`,
         ok: filled.length >= PUBLISH.minNominations,
       },
       {
@@ -277,7 +282,7 @@ export function useAwardDraft() {
 
   /** Names containing "Streamer Awards" go out noindex - warn while it can still be changed. */
   const nameWarning = computed(() =>
-    /streamer\s+awards/i.test(draft.value.name)
+    TRADEMARK.test(draft.value.name)
       ? 'Names containing "Streamer Awards" are kept out of search to avoid clashing with the show of that name.'
       : '',
   )

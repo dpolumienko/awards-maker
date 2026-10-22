@@ -6,12 +6,13 @@ import { computed, ref, watch } from 'vue'
 import UiBadge from './UiBadge.vue'
 import PlatformDot from './PlatformDot.vue'
 import { nomineeName, nomineeSub } from '~/utils/nominee'
-import { themeCss } from '~/data/themes'
+import { envelopeCardCss, themeCss } from '~/data/themes'
 import { accentText, accentOf, onAccent } from '~/utils/accent'
 import { FREE, type Award } from '~/types/award'
 import UiIcon from './UiIcon.vue'
 import PartnerChip from './PartnerChip.vue'
 import MediaLightbox from './MediaLightbox.vue'
+import NomineeThumb from './NomineeThumb.vue'
 import { formatInZone } from '#shared/time'
 import { useVersion } from '~/composables/useVersion'
 
@@ -28,8 +29,14 @@ const viewing = ref<{ src?: string; url?: string; title: string } | null>(null)
 // the whole point of letting people try them before the bill.
 const accent = computed(() => accentOf(award.look))
 // Accent as type has to clear 4.5:1; as a fill it stays exactly as picked.
-const { isZine } = useVersion()
-const ink = computed(() => accentText(accent.value, isZine.value))
+const { isZine, isEnvelope, onPaper } = useVersion()
+// the Envelope page opens on a cream ticket in the show's theme; the preview shows the same
+const band = computed(() =>
+  isEnvelope.value
+    ? `background:${envelopeCardCss(award.look?.theme, accent.value, award.look?.coverUrl)}`
+    : themeCss(award.look?.theme, accent.value, award.look?.coverUrl),
+)
+const ink = computed(() => accentText(accent.value, onPaper.value))
 const headlineFont = computed(() =>
   award.look?.font ? `'${award.look.font}', Archivo, sans-serif` : undefined,
 )
@@ -83,21 +90,21 @@ const countdown = computed(() => {
 <template>
   <div class="overflow-hidden rounded-card border border-hair bg-s1">
     <!-- cover band, the same treatment a published page gets -->
-    <div class="relative h-28" :style="themeCss(award.look?.theme, accent, award.look?.coverUrl)">
+    <div class="relative h-28" :class="isEnvelope && ['env-pv-band', award.look?.coverUrl && 'has-cover']" :style="band">
       <img
-        v-if="!award.look?.coverUrl && !award.look?.theme"
+        v-if="!isEnvelope && !award.look?.coverUrl && !award.look?.theme"
         :src="asset('/img/icons/cat-clip.svg')"
         alt=""
         aria-hidden="true"
         class="absolute -right-4 -top-3 h-32 w-32 opacity-20"
       />
-      <span aria-hidden="true" class="absolute inset-0 bg-[linear-gradient(180deg,transparent,rgba(0,0,0,.85))]" />
+      <span v-if="!isEnvelope" aria-hidden="true" class="absolute inset-0 bg-[linear-gradient(180deg,transparent,rgba(0,0,0,.85))]" />
       <!-- the host reads as a channel, not as a user chip: their name at reading
            size with the platform cue, and the avatar only once there is an
            account behind it -->
       <span class="absolute bottom-3 left-5 flex items-center gap-2">
         <span
-          v-if="signedIn"
+          v-if="signedIn && !award.look?.hideLogo"
           aria-hidden="true"
           class="grid h-6 w-6 place-items-center rounded-pill text-[11px] font-bold"
           :style="{ background: accent, color: onAccent(accent) }"
@@ -115,7 +122,7 @@ const countdown = computed(() => {
     <div class="p-6">
       <p
         class="text-[32px] font-bold uppercase leading-[1.05] tracking-heading"
-        :class="!award.name.trim() && 'text-ink-muted'"
+        :class="[!award.name.trim() && 'text-ink-muted', isEnvelope && 'env-serif']"
         :style="{ fontFamily: headlineFont }"
       >
         {{ title }}
@@ -161,7 +168,7 @@ const countdown = computed(() => {
           :style="picked === n.id ? { borderColor: accent } : undefined"
           @click="picked = n.id"
         >
-          <img v-if="n.kind === 'media' && n.image" :src="n.image" alt="" class="h-10 w-14 flex-none rounded-btn object-cover" />
+          <NomineeThumb v-if="n.kind === 'media'" :nominee="n" :width="64" />
           <span v-else aria-hidden="true" class="grid h-8 w-8 flex-none place-items-center rounded-pill bg-s3 text-[13px] font-bold text-ink-muted">
             {{ nomineeName(n).slice(0, 2).toUpperCase() }}
           </span>
@@ -197,7 +204,7 @@ const countdown = computed(() => {
       <div v-else class="mt-3 rounded-btn border border-dashed border-hair2 px-4 py-6 text-center text-sm text-ink-muted">
         Nominees you add appear here, as your viewers will see them.
       </div>
-      <p class="mt-4 text-sm text-ink-muted">One vote per category, Twitch login on submit</p>
+      <p class="mt-4 text-sm text-ink-muted">One vote per category, Twitch or Kick login on submit</p>
 
       <!-- everything below the ballot: dates, the rest of the card -->
       <div class="mt-6 grid gap-6 border-t border-hair pt-6 sm:grid-cols-2">

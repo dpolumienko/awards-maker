@@ -4,7 +4,7 @@
 // weight with the font, which is why they never line up with anything.
 // One 16px box, one 1.6 stroke, currentColor.
 const { name, size = 16 } = defineProps<{
-  name: 'check' | 'close' | 'chevron-left' | 'chevron-right' | 'pin'
+  name: 'check' | 'close' | 'chevron-left' | 'chevron-right' | 'chevron-down' | 'pin'
   size?: number
 }>()
 
@@ -13,6 +13,7 @@ const paths: Record<string, string> = {
   close: 'M4 4l8 8M12 4l-8 8',
   'chevron-left': 'M10 3 5 8l5 5',
   'chevron-right': 'M6 3l5 5-5 5',
+  'chevron-down': 'M3 6l5 5 5-5',
   // a push pin, head down
   pin: 'M6 2h4M8 2v4.2L5 9h6L8 6.2M8 11v3',
 }

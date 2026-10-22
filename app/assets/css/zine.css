@@ -57,6 +57,115 @@
   --canvas: 250 250 247;
 }
 
+/* the follow-spot (components/zine/ZineSpotlight.vue) only ever adds light, and
+   only a little. Cool, close to white (review 2026-10-06: the yellow was too
+   warm). White light cannot show on white paper, so on the Fanzine's paper the
+   beam is a pale press blue multiplied in; on Night's black it is near-white added. */
+.zine-spot {
+  --spot: 150 190 235;
+  mix-blend-mode: multiply;
+  opacity: 0.22;
+}
+:root[data-ink='night'] .zine-spot {
+  --spot: 235 241 255;
+  mix-blend-mode: screen;
+  opacity: 0.16;
+}
+/* the lamp itself is solid metal: never blended, never see-through */
+.zine-lamp {
+  /* centred on FROM_RIGHT in ZineSpotlight.vue */
+  right: 26px;
+}
+.zine-lamp-can {
+  fill: #26262b;
+  stroke: rgb(var(--ink));
+  stroke-width: 1.5;
+}
+.zine-lamp-lens {
+  fill: rgb(235 241 255);
+  stroke: rgb(var(--ink));
+  stroke-width: 1;
+}
+.zine-lamp.is-off .zine-lamp-lens {
+  fill: #55555c;
+}
+.zine-lamp-rig {
+  fill: rgb(var(--ink));
+}
+/* the switch: small, right of the lamp, on the same rail */
+.zine-spot-switch {
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid rgb(var(--ink));
+  border-radius: 50%;
+  background: rgb(var(--canvas));
+  color: rgb(var(--ink));
+}
+.zine-spot-switch svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.zine-spot-switch[aria-pressed='false'] {
+  color: rgb(var(--ink-muted));
+  border-style: dashed;
+}
+.zine-spot-switch:focus-visible {
+  outline: 2px solid rgb(var(--gold));
+  outline-offset: 2px;
+}
+/* a phone has no pointer to follow and no margin to hang the lamp in */
+@media (max-width: 767px) {
+  .zine-lamp,
+  .zine-spot-switch {
+    display: none;
+  }
+}
+
+/* Fanzine Night (review 2026-10-06): the same press on black stock, under a
+   follow-spot. The inks swap places - the
+   paper is black, the type is paper - and the blue and pink are pulled light
+   enough to read as type on black. */
+:root[data-version='zine'][data-ink='night'],
+:root[data-version='zine'][data-ink='night'] body,
+:root[data-version='zine'][data-ink='night'] body[data-stage] {
+  --canvas: 17 17 19;
+  --s1: 17 17 19;
+  --s2: 30 30 33;
+  --s3: 44 44 48;
+  --hair: 64 64 70;
+  --hair2: 242 242 236;
+  --ink: 242 242 236;
+  --ink-2: 196 196 190;
+  --ink-muted: 160 160 158;
+  --ink-disabled: 112 112 116;
+  --live: 92 172 232;
+  --warn: 240 168 64;
+  --danger: 255 112 112;
+  --gold-text: 92 172 232;
+  --ivory: 242 242 236;
+  --pink-ink: 255 122 200;
+  --bar: 160 160 158;
+}
+:root[data-version='zine'][data-ink='night'] input,
+:root[data-version='zine'][data-ink='night'] textarea,
+:root[data-version='zine'][data-ink='night'] select {
+  color-scheme: dark !important;
+}
+/* On black, multiply would print nothing: the pen adds light instead */
+:root[data-ink='night'] .zine-pen-line {
+  mix-blend-mode: screen;
+}
+/* blue type on black takes the lighter blue, so it reads under the dimmed room too */
+:root[data-ink='night'] :is(.zl-h1, .zl-h2, .zi-h, .zh-h, .zb2-h, .zv-cat, .zh-card-body b, .zc-mark, .idea-title) {
+  color: rgb(var(--gold-text));
+}
+
+
 :root[data-version='zine'] input,
 :root[data-version='zine'] textarea,
 :root[data-version='zine'] select {
@@ -94,12 +203,11 @@
 :root[data-version='zine'] .btn-primary {
   background-color: rgb(var(--ink));
   background-image: none;
-  color: #fff;
+  color: rgb(var(--canvas));
   box-shadow: none;
   text-shadow: none;
 }
 :root[data-version='zine'] .btn-primary:hover {
-  background-color: #000;
   background-image: none;
 }
 :root[data-version='zine'] .btn-primary:disabled,
@@ -124,7 +232,7 @@
   overflow: visible;
   pointer-events: none;
   fill: none;
-  stroke: rgb(var(--pink));
+  stroke: rgb(var(--pen, var(--pink)));
   stroke-width: 4;
   stroke-linecap: round;
   mix-blend-mode: multiply;
@@ -145,25 +253,6 @@
   .zine-pen-line.is-inked {
     animation: none;
   }
-}
-
-/* ---------------------------------------------------------------- two plates */
-
-.zine-plate {
-  position: relative;
-  isolation: isolate;
-  color: rgb(var(--gold));
-}
-.zine-plate-1 {
-  display: block;
-}
-.zine-plate-2 {
-  position: absolute;
-  inset: 0;
-  color: rgb(var(--pink));
-  transform: translate(0.045em, 0.035em);
-  mix-blend-mode: multiply;
-  pointer-events: none;
 }
 
 /* ---------------------------------------------------------------- stamps */
@@ -195,4 +284,196 @@
 :root[data-version='zine'] .truncate:has(> .zine-pen) {
   overflow: visible;
   white-space: normal;
+}
+
+/* ---------------------------------------------------------------- the header */
+
+/* The masthead is printed: solid paper and an ink rule, never see-through. An
+   awards' cover band used to run up under a transparent bar and the halftone
+   swallowed the navigation. */
+:root[data-version='zine'] .site-header {
+  background: rgb(var(--canvas));
+  border-bottom: 2px solid rgb(var(--ink));
+  backdrop-filter: none;
+}
+
+/* ---------------------------------------------------------------- hovers
+
+   One rule per kind of control, the same on every page (review 2026-10-06: five
+   random marker strokes read as noise, and a highlighter belongs to homework,
+   not to an awards night). Print has two moves and the site uses only those:
+   ink turns press blue, an outline fills with ink. */
+:root[data-version='zine'] .ui-btn-sheen {
+  display: none;
+}
+/* the main action: black ink that turns press blue */
+:root[data-version='zine'] .btn-primary:hover,
+:root[data-version='zine'] .btn-primary:focus-visible {
+  background-color: rgb(var(--gold));
+  color: #fff;
+}
+/* the second action, and every row of the account slip: an outline that fills with ink */
+:root[data-version='zine'] .ui-btn-ghost {
+  border: 2px solid rgb(var(--ink));
+}
+:root[data-version='zine'] .ui-btn-ghost:hover,
+:root[data-version='zine'] .ui-btn-ghost:focus-visible,
+:root[data-version='zine'] .account-item:hover,
+:root[data-version='zine'] .account-item:focus-visible {
+  background-color: rgb(var(--ink));
+  border-color: rgb(var(--ink));
+  color: rgb(var(--canvas));
+}
+/* a text action: the underline thickens and goes to ink */
+:root[data-version='zine'] .ui-btn-text:hover,
+:root[data-version='zine'] .ui-btn-text:focus-visible {
+  color: rgb(var(--ink));
+  text-decoration-thickness: 3px;
+}
+/* the nav: a straight press-blue rule under the page you are on, as in a printed programme */
+:root[data-version='zine'] .nav-link .nav-bar {
+  height: 3px;
+}
+:root[data-version='zine'] .nav-link.router-link-active {
+  color: rgb(var(--ink));
+}
+:root[data-version='zine'] .nav-link.router-link-active .nav-bar {
+  transform: scaleX(1);
+}
+
+/* ---------------------------------------------------------------- the ticket
+
+   An offer is an admission ticket to the show, not a coupon to cut out
+   (review 2026-10-06): a perforated edge, a notch each side, "Admit one". */
+.zine-ticket {
+  position: relative;
+  border: 3px dashed rgb(var(--ink));
+}
+.zine-ticket::before,
+.zine-ticket::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 30px;
+  height: 30px;
+  margin-top: -15px;
+  border: 3px solid rgb(var(--ink));
+  border-radius: 50%;
+  background: rgb(var(--canvas));
+}
+.zine-ticket::before {
+  left: -16.5px;
+  clip-path: inset(0 0 0 50%);
+}
+.zine-ticket::after {
+  right: -16.5px;
+  clip-path: inset(0 50% 0 0);
+}
+.zine-ticket-tag {
+  position: absolute;
+  top: -13px;
+  left: 24px;
+  padding: 0 8px;
+  background: rgb(var(--canvas));
+  font: 800 12px/22px var(--font-display), sans-serif;
+  font-stretch: 115%;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgb(var(--ink));
+}
+
+/* ---------------------------------------------------------------- the account */
+
+/* the account chip and its menu are a slip of paper, not a floating card */
+:root[data-version='zine'] .account-chip {
+  border-radius: 0;
+  border: 2px solid rgb(var(--ink));
+  color: rgb(var(--ink));
+}
+:root[data-version='zine'] .account-av {
+  border-radius: 0;
+  background: rgb(var(--gold));
+  color: #fff;
+  font-family: var(--font-display), sans-serif;
+  font-stretch: 112%;
+}
+:root[data-version='zine'] .account-menu {
+  width: 16.5rem;
+  padding: 0;
+  border-radius: 0;
+  border: 2.5px solid rgb(var(--ink));
+  background: rgb(var(--canvas));
+  box-shadow: none;
+}
+:root[data-version='zine'] .account-who {
+  padding: 12px 14px 10px;
+  border-bottom: 2px solid rgb(var(--ink));
+  font: 700 11px/1.2 var(--font-body), sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(var(--ink-2));
+}
+:root[data-version='zine'] .account-who span:first-of-type {
+  color: rgb(var(--ink));
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 14px;
+}
+:root[data-version='zine'] .account-item {
+  position: relative;
+  isolation: isolate;
+  margin: 0;
+  padding: 11px 14px;
+  border-radius: 0;
+  border-top: 1.5px dashed rgb(var(--hair));
+  font-family: var(--font-display), sans-serif;
+  font-weight: 800;
+  font-stretch: 115%;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: rgb(var(--ink));
+}
+:root[data-version='zine'] .account-who + .account-item {
+  border-top: 0;
+}
+:root[data-version='zine'] .account-item > * {
+  position: relative;
+  z-index: 1;
+}
+/* signing out is the end of the slip: a cut line above it */
+:root[data-version='zine'] .account-out {
+  border-top: 2px dashed rgb(var(--ink));
+  color: rgb(var(--ink-2));
+}
+
+/* ---------------------------------------------------------------- /ideas */
+
+/* the ideas are a printed list: no emoji, ink rules, dashed rows */
+:root[data-version='zine'] .idea-emoji {
+  display: none;
+}
+:root[data-version='zine'] .idea-group {
+  border: 2.5px solid rgb(var(--ink));
+  background: rgb(var(--canvas));
+}
+:root[data-version='zine'] .idea-title {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 900;
+  font-stretch: 120%;
+  text-transform: uppercase;
+  color: rgb(var(--gold));
+}
+:root[data-version='zine'] .idea-row {
+  border: 0;
+  border-bottom: 1.5px dashed rgb(var(--hair));
+  background: none;
+  padding-left: 0;
+}
+
+:root[data-version='zine'] .idea-jump {
+  border-radius: 0;
+  border: 2px solid rgb(var(--ink));
+  color: rgb(var(--ink));
+  font-weight: 600;
 }

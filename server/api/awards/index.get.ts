@@ -2,5 +2,5 @@ import { awardSummaries } from '../../utils/awards'
 
 /** The public catalog. Anonymous, cacheable, and the reason /catalog is SSR again. */
 export default defineEventHandler(async () => ({
-  awards: await awardSummaries(`a.status = 'published'`),
+  awards: await awardSummaries(`a.status = 'published' AND a.offline_at IS NULL`),
 }))

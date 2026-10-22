@@ -15,6 +15,7 @@ import { useCatalog } from '~/composables/useAwards'
 import { phaseOf } from '~/composables/useVoting'
 import { useReveal } from '~/composables/useReveal'
 import { CATALOG, FREE, PAID, PUBLISH } from '~/types/award'
+import { INDEX } from '#shared/indexable'
 
 const route = useRoute()
 const router = useRouter()
@@ -74,11 +75,11 @@ const totals = computed(() => ({
 const faq = [
   {
     q: 'How does an awards get into this catalog?',
-    a: `By being published. Every awards published with Awards Maker is listed here - there is no submission and no approval queue, and nothing can be hidden from the catalog. What it needs is substance: at least ${PUBLISH.minNominations} categories, ${PUBLISH.minNomineesPerNomination} nominees in each and a description. That is also the bar for appearing in search.`,
+    a: `By being published. Every awards published with Awards Maker is listed here - there is no submission and no approval queue, and nothing can be hidden from the catalog. What it needs is substance: at least ${PUBLISH.minNominations} categories, ${PUBLISH.minNomineesPerNomination} nominees in each and a description of ${INDEX.minDescription}+ characters. That is also the bar for appearing in search.`,
   },
   {
     q: 'Can I vote in someone else’s awards?',
-    a: 'Yes. Open the page, pick a nominee in each category and submit with a Twitch login. One ballot per account, one vote per category, and the counts stay hidden until the host announces the winners.',
+    a: 'Yes. Open the page, pick a nominee in each category and submit with a Twitch or Kick login. One ballot per account, one vote per category, and the counts stay hidden until the host announces the winners.',
   },
   {
     q: 'What does it cost to run my own?',
@@ -87,7 +88,7 @@ const faq = [
 ]
 
 useSeoMeta({
-  title: 'Community Awards Catalog: Streamer Awards',
+  title: 'Community Awards Run by Streamers',
   description:
     'Every awards show streamers are running with Awards Maker: open votes you can take part in, and results once the winners are out. Free to start your own.',
   ogImage: ogCard('catalog'),
@@ -98,6 +99,7 @@ useSchemaOrg([
   defineWebPage({ '@type': ['WebPage', 'FAQPage'], name: 'Community awards catalog' }),
   defineBreadcrumb({
     itemListElement: [
+      { name: 'Streams Charts', item: 'https://streamscharts.com' },
       { name: 'Awards Maker', item: '/' },
       { name: 'Catalog' },
     ],

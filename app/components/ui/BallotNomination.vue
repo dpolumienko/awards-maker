@@ -7,9 +7,10 @@ import { computed, ref } from 'vue'
 import PlatformDot from './PlatformDot.vue'
 import LivePill from './LivePill.vue'
 import MediaLightbox from './MediaLightbox.vue'
+import NomineeThumb from './NomineeThumb.vue'
 import UiIcon from './UiIcon.vue'
 import ZinePen from '~/components/zine/ZinePen.vue'
-import { nomineeInitials, nomineeName, nomineeSub } from '~/utils/nominee'
+import { nomineeInitials, nomineeName, nomineeSub, nomineeTint } from '~/utils/nominee'
 import { accentText } from '~/utils/accent'
 import type { Result } from '~/composables/useVoting'
 import type { Nomination } from '~/types/award'
@@ -23,6 +24,7 @@ const {
   picked = null,
   results = [],
   votesIn = 0,
+  numbers = true,
 } = defineProps<{
   nomination: Nomination
   index: number
@@ -32,6 +34,8 @@ const {
   picked?: string | null
   results?: Result[]
   votesIn?: number
+  /** false: the host hid the counts - places and the winner, no votes, no bars, no % */
+  numbers?: boolean
 }>()
 
 const emit = defineEmits<{ pick: [string] }>()
@@ -45,8 +49,8 @@ const radios = ref<HTMLButtonElement[]>([])
 const num = computed(() => String(index + 1).padStart(2, '0'))
 const winners = computed(() => results.filter((r) => r.top))
 // Fills keep the streamer's colour; anything that is type takes the readable one.
-const { isZine } = useVersion()
-const ink = computed(() => accentText(accent, isZine.value))
+const { isZine, onPaper } = useVersion()
+const ink = computed(() => accentText(accent, onPaper.value))
 // Only one row sits in the tab order and the arrows move between them. That is
 // the radio-group pattern, and it keeps a ten-category page from eating forty tabs.
 const tabTarget = computed(() => {
@@ -70,7 +74,7 @@ function onKey(e: KeyboardEvent, i: number) {
       <span aria-hidden="true" class="tnum text-sm font-bold" :style="{ color: ink }">{{ num }}</span>
       <h2 :id="'nom-' + nomination.id" class="text-xl font-semibold">{{ nomination.title }}</h2>
       <span class="ml-auto text-sm text-ink-muted">
-        <template v-if="mode === 'results'">{{ votesIn }} {{ votesIn === 1 ? 'vote' : 'votes' }}</template>
+        <template v-if="mode === 'results'">{{ numbers ? `${votesIn} ${votesIn === 1 ? 'vote' : 'votes'}` : '' }}</template>
         <template v-else-if="picked">{{ mode === 'vote' ? 'Picked' : 'Your pick' }}</template>
         <template v-else-if="mode === 'vote'">Pick one</template>
       </span>
@@ -86,12 +90,13 @@ function onKey(e: KeyboardEvent, i: number) {
         :style="r.top ? { borderColor: accent } : undefined"
       >
         <span
+          v-if="numbers"
           aria-hidden="true"
           class="absolute inset-y-0 left-0 w-full origin-left transition-transform duration-700 ease-gala"
           :style="{ transform: `scaleX(${r.pct / 100})`, background: accent, opacity: r.top ? 0.18 : 0.08 }"
         />
         <span class="relative flex items-center gap-3">
-          <span aria-hidden="true" class="grid h-8 w-8 flex-none place-items-center rounded-pill bg-s3 text-[13px] font-bold text-ink-2">
+          <span aria-hidden="true" class="grid h-10 w-10 flex-none place-items-center rounded-pill text-sm font-bold text-white" :style="{ background: nomineeTint(r.nominee) }">
             {{ nomineeInitials(r.nominee) }}
           </span>
           <span class="min-w-0">
@@ -106,7 +111,7 @@ function onKey(e: KeyboardEvent, i: number) {
           >
             {{ winners.length > 1 ? 'Tied' : 'Winner' }}
           </span>
-          <span class="tnum flex-none text-sm" :class="r.top ? 'ml-3 font-bold text-ink' : 'ml-auto text-ink-muted'">
+          <span v-if="numbers" class="tnum flex-none text-sm" :class="r.top ? 'ml-3 font-bold text-ink' : 'ml-auto text-ink-muted'">
             {{ r.pct }}%
           </span>
         </span>
@@ -135,13 +140,9 @@ function onKey(e: KeyboardEvent, i: number) {
         @click="mode === 'vote' && emit('pick', n.id)"
         @keydown="onKey($event, i)"
       >
-        <img
-          v-if="n.kind === 'media' && n.image"
-          :src="n.image"
-          alt=""
-          class="h-12 w-16 flex-none rounded-btn object-cover"
-        />
-        <span v-else aria-hidden="true" class="grid h-10 w-10 flex-none place-items-center rounded-pill bg-s3 text-sm font-bold text-ink-2">
+        <NomineeThumb v-if="n.kind === 'media'" :nominee="n" :width="80" />
+        <!-- big enough to read as a person, not a bullet (review 2026-10-06) -->
+        <span v-else aria-hidden="true" class="grid h-14 w-14 flex-none place-items-center rounded-pill text-lg font-bold text-white" :style="{ background: nomineeTint(n) }">
           {{ nomineeInitials(n) }}
         </span>
         <span class="min-w-0">

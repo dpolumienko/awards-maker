@@ -9,6 +9,10 @@
 import UiButton from './UiButton.vue'
 import UiIcon from './UiIcon.vue'
 import { PLANS } from '~/data/plans'
+import { useVersion } from '~/composables/useVersion'
+
+// in the Fanzine versions the paid plan is the landing's admission ticket
+const { isZine } = useVersion()
 
 // h3 under the landing's section h2; /plans puts the cards straight under its h1
 const { level = 'h3' } = defineProps<{ level?: 'h2' | 'h3' }>()
@@ -20,13 +24,14 @@ const { level = 'h3' } = defineProps<{ level?: 'h2' | 'h3' }>()
       v-for="p in PLANS"
       :key="p.id"
       class="js-reveal relative flex flex-col rounded-card border p-6"
-      :class="p.featured ? 'border-gold-24 bg-gold/[0.06] lg:-mt-4 lg:pb-10 lg:pt-10' : 'border-hair bg-s1'"
+      :class="[p.featured ? 'border-gold-24 bg-gold/[0.06] lg:-mt-4 lg:pb-10 lg:pt-10' : 'border-hair bg-s1', p.featured && isZine && 'zine-ticket']"
     >
       <span
         v-if="p.featured"
         aria-hidden="true"
         class="absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgb(var(--gold)),transparent)]"
       />
+      <span v-if="p.featured && isZine" class="zine-ticket-tag" aria-hidden="true">Admit one</span>
       <component :is="level" class="text-xl font-semibold">{{ p.name }}</component>
       <p class="mt-4 flex items-baseline gap-2">
         <span class="tnum text-[44px] font-extrabold leading-none tracking-heading" :class="p.featured && 'text-gold-text'">{{ p.price }}</span>

@@ -99,8 +99,9 @@ onBeforeUnmount(() => clearInterval(timer))
       <!-- 3. the login, asked once -->
       <div class="js-reveal overflow-hidden rounded-card border border-hair bg-s1">
         <div class="flex h-48 flex-col items-center justify-center gap-3 p-5">
-          <span class="flex w-full items-center justify-center gap-2 rounded-btn bg-twitch px-4 py-3 text-sm font-bold uppercase tracking-button text-white">
-            Sign in with Twitch
+          <span class="flex w-full gap-2">
+            <span class="flex flex-1 items-center justify-center rounded-btn bg-twitch px-3 py-3 text-sm font-bold uppercase tracking-button text-white">Twitch</span>
+            <span class="flex flex-1 items-center justify-center rounded-btn bg-kick px-3 py-3 text-sm font-bold uppercase tracking-button text-black">Kick</span>
           </span>
           <p class="text-center text-sm text-ink-muted">Asked once, at submit</p>
           <span class="tnum rounded-pill border border-live/50 px-3 py-1 text-xs text-live">1 vote per category</span>

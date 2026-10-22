@@ -12,6 +12,7 @@
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import UiButton from './ui/UiButton.vue'
 import UiIcon from './ui/UiIcon.vue'
+import SignInButtons from './ui/SignInButtons.vue'
 import PlatformDot from './ui/PlatformDot.vue'
 import ScBrand from './ScBrand.vue'
 import { useCatalogOpen, useMyAwards } from '~/composables/useAwards'
@@ -72,7 +73,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 <template>
   <header
     :class="[
-      'sticky top-0 z-40 border-b transition-[background-color,border-color] duration-300',
+      'site-header sticky top-0 z-40 border-b transition-[background-color,border-color] duration-300',
       stuck || open ? 'border-hair bg-canvas/90 backdrop-blur' : 'border-transparent bg-transparent',
     ]"
   >
@@ -84,12 +85,12 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
           v-for="l in links"
           :key="l.to"
           :to="l.to"
-          class="group relative py-2 text-xs font-semibold uppercase tracking-label text-ink-2 no-underline transition-colors hover:text-ink"
+          class="nav-link group relative py-2 text-xs font-semibold uppercase tracking-label text-ink-2 no-underline transition-colors hover:text-ink"
         >
           {{ l.label }}
           <span
             aria-hidden="true"
-            class="absolute inset-x-0 bottom-0 h-0.5 origin-left scale-x-0 bg-gold transition-transform duration-300 ease-gala group-hover:scale-x-100"
+            class="nav-bar absolute inset-x-0 bottom-0 h-0.5 origin-left scale-x-0 bg-gold transition-transform duration-300 ease-gala group-hover:scale-x-100"
           />
         </NuxtLink>
       </nav>
@@ -101,58 +102,51 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
             v-if="signedIn"
             ref="accountBtn"
             type="button"
-            class="flex items-center gap-2 rounded-pill border border-hair py-1.5 pl-1.5 pr-3 text-sm text-ink-2 transition-colors hover:border-hair2 hover:text-ink"
+            class="account-chip flex items-center gap-2 rounded-pill border border-hair py-1.5 pl-1.5 pr-3 text-sm text-ink-2 transition-colors hover:border-hair2 hover:text-ink"
             :aria-expanded="menuOpen"
             aria-controls="account-menu"
             @click="menuOpen = !menuOpen"
           >
             <span
               aria-hidden="true"
-              class="grid h-7 w-7 flex-none place-items-center rounded-pill bg-s3 text-[11px] font-bold text-ink"
+              class="account-av grid h-7 w-7 flex-none place-items-center rounded-pill bg-s3 text-[11px] font-bold text-ink"
             >{{ initials }}</span>
             <span class="tnum">{{ mine || '' }}</span>
             <UiIcon name="chevron-right" :size="12" class="rotate-90" />
             <span class="sr-only">Your account, {{ host }}</span>
           </button>
 
-          <!-- signed out: the one thing there is to do -->
-          <button
-            v-else
-            type="button"
-            class="flex h-11 items-center gap-2 rounded-btn border border-twitch px-4 text-[13px] font-bold uppercase tracking-button text-ink transition-colors hover:bg-twitch/15"
-            @click="signIn"
-          >
-            Sign in with Twitch
-          </button>
+          <!-- signed out: the one thing there is to do, with either account -->
+          <SignInButtons v-else label="" @choose="signIn" />
 
           <div
             v-show="menuOpen && signedIn"
             id="account-menu"
-            class="absolute right-0 top-full z-50 mt-2 w-60 rounded-card border border-hair bg-s1 p-2 shadow-modal"
+            class="account-menu absolute right-0 top-full z-50 mt-2 w-60 rounded-card border border-hair bg-s1 p-2 shadow-modal"
           >
-            <p class="flex items-center gap-2 px-3 py-2 text-xs text-ink-muted">
+            <p class="account-who flex items-center gap-2 px-3 py-2 text-xs text-ink-muted">
               Signed in as <span class="text-ink-2">{{ host }}</span>
               <PlatformDot :platform="channel.platform" :label="false" />
             </p>
             <NuxtLink
               to="/my-awards"
-              class="flex items-center justify-between gap-2 rounded-btn px-3 py-2 text-sm text-ink-2 no-underline transition-colors hover:bg-s2 hover:text-ink"
+              class="account-item flex items-center justify-between gap-2 rounded-btn px-3 py-2 text-sm text-ink-2 no-underline transition-colors hover:bg-s2 hover:text-ink"
             >
               Your awards
               <span class="tnum text-xs text-ink-muted">{{ mine }}</span>
             </NuxtLink>
             <NuxtLink
               to="/create"
-              class="block rounded-btn px-3 py-2 text-sm text-ink-2 no-underline transition-colors hover:bg-s2 hover:text-ink"
+              class="account-item block rounded-btn px-3 py-2 text-sm text-ink-2 no-underline transition-colors hover:bg-s2 hover:text-ink"
             >Create your awards</NuxtLink>
             <NuxtLink
               v-if="catalogOpen"
               to="/catalog"
-              class="block rounded-btn px-3 py-2 text-sm text-ink-2 no-underline transition-colors hover:bg-s2 hover:text-ink"
+              class="account-item block rounded-btn px-3 py-2 text-sm text-ink-2 no-underline transition-colors hover:bg-s2 hover:text-ink"
             >Browse the catalog</NuxtLink>
             <button
               type="button"
-              class="mt-1 block w-full rounded-btn border-t border-hair px-3 py-2 text-left text-sm text-ink-muted transition-colors hover:bg-s2 hover:text-ink"
+              class="account-item account-out mt-1 block w-full rounded-btn border-t border-hair px-3 py-2 text-left text-sm text-ink-muted transition-colors hover:bg-s2 hover:text-ink"
               @click="signOut(); menuOpen = false"
             >
               Sign out
@@ -234,14 +228,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
             Sign out, {{ host }}
           </button>
         </template>
-        <button
-          v-else
-          type="button"
-          class="mt-4 flex h-11 w-full items-center justify-center rounded-btn bg-twitch text-sm font-bold uppercase tracking-button text-white"
-          @click="signIn"
-        >
-          Sign in with Twitch
-        </button>
+        <SignInButtons v-else block class="mt-4" @choose="signIn" />
       </ClientOnly>
       <UiButton to="/create" size="sm" class="mt-5 w-full">Create your awards</UiButton>
     </nav>

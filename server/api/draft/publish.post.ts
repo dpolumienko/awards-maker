@@ -88,7 +88,7 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  const row = await draftFor(user.id, { name: user.name, platform: 'twitch' })
+  const row = await draftFor(user.id, { name: user.name, platform: user.platform })
   // a paid show spends one order; an admin's is on the house
   if (tier === 'paid' && user.role !== 'admin' && !(await claimOrder(user.id, row.id))) {
     throw createError({ statusCode: 402, statusMessage: 'This show needs its own $50 payment' })

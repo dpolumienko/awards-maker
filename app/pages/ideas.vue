@@ -7,6 +7,7 @@
 // written for search cannot be behind JavaScript.
 import { ref } from 'vue'
 import UiButton from '~/components/ui/UiButton.vue'
+import ClosingCta from '~/components/ui/ClosingCta.vue'
 import UiIcon from '~/components/ui/UiIcon.vue'
 import InteractiveAccordion from '~/components/ui/InteractiveAccordion.vue'
 import { useReveal } from '~/composables/useReveal'
@@ -16,8 +17,8 @@ const catalogOpen = useCatalogOpen()
 import { IDEA_GROUPS, IDEA_TOTAL, ideaEmoji } from '~/data/ideas'
 
 const root = ref<HTMLElement | null>(null)
-const SHOWN = 6
-const ideaRow = 'flex items-center gap-3 rounded-card border border-hair bg-canvas px-4 py-3 text-[15px] font-medium text-ink'
+const SHOWN = 5
+const ideaRow = 'idea-row flex items-center gap-3 rounded-card border border-hair bg-canvas px-4 py-3 text-[15px] font-medium text-ink'
 useReveal(root, { stagger: 0.04 })
 
 const faq = [
@@ -47,9 +48,9 @@ useSeoMeta({
 
 
 useSchemaOrg([
-  defineWebPage({ '@type': ['WebPage', 'FAQPage'], name: 'End of year awards category ideas' }),
+  defineWebPage({ '@type': ['WebPage', 'FAQPage'], name: 'Award Category Ideas for Streamers' }),
   defineBreadcrumb({
-    itemListElement: [{ name: 'Awards Maker', item: '/' }, { name: 'Category ideas' }],
+    itemListElement: [{ name: 'Streams Charts', item: 'https://streamscharts.com' }, { name: 'Awards Maker', item: '/' }, { name: 'Category ideas' }],
   }),
   ...faq.map((f) => defineQuestion({ name: f.q, acceptedAnswer: f.a })),
   defineItemList({
@@ -73,14 +74,14 @@ useSchemaOrg([
       </ol>
     </nav>
 
-    <h1 class="heading max-w-[22ch]">End of year awards category ideas</h1>
+    <h1 class="heading max-w-[22ch]">Award Category Ideas for Streamers</h1>
     <p class="mt-4 max-w-copy text-lg text-ink-2">
       {{ IDEA_TOTAL }} categories for a streamer awards show, in four groups. Open a group as a draft,
       keep the ones that fit your channel, rename the rest.
     </p>
 
     <div class="mt-6 flex flex-wrap gap-3">
-      <UiButton to="/create">Start your awards</UiButton>
+      <UiButton to="/create">Create your awards</UiButton>
       <UiButton v-if="catalogOpen" to="/catalog" variant="ghost">See shows running now</UiButton>
     </div>
 
@@ -90,9 +91,9 @@ useSchemaOrg([
         v-for="g in IDEA_GROUPS"
         :key="g.id"
         :href="`#${g.id}`"
-        class="rounded-pill border border-hair px-4 py-2 text-sm text-ink-2 no-underline transition-colors hover:border-gold hover:text-ink"
+        class="idea-jump rounded-pill border border-hair px-4 py-2 text-sm text-ink-2 no-underline transition-colors hover:border-gold hover:text-ink"
       >
-        <span aria-hidden="true" class="mr-1">{{ g.emoji }}</span>{{ g.title }}
+        <span aria-hidden="true" class="idea-emoji mr-1">{{ g.emoji }}</span>{{ g.title }}
         <span class="tnum ml-1 text-ink-muted">{{ g.items.length }}</span>
       </a>
     </nav>
@@ -104,12 +105,12 @@ useSchemaOrg([
       v-for="g in IDEA_GROUPS"
       :id="g.id"
       :key="g.id"
-      class="js-reveal mt-12 scroll-mt-24 rounded-card border border-hair bg-s1 p-5 sm:p-6"
+      class="idea-group js-reveal mt-12 scroll-mt-24 rounded-card border border-hair bg-s1 p-5 sm:p-6"
     >
       <div class="flex flex-wrap items-center gap-4">
-        <span aria-hidden="true" class="grid h-14 w-14 flex-none place-items-center rounded-card border border-hair bg-s2 text-[30px] leading-none">{{ g.emoji }}</span>
+        <span aria-hidden="true" class="idea-emoji grid h-14 w-14 flex-none place-items-center rounded-card border border-hair bg-s2 text-[30px] leading-none">{{ g.emoji }}</span>
         <div class="min-w-0">
-          <h2 class="text-2xl font-bold">{{ g.title }}</h2>
+          <h2 class="idea-title text-2xl font-bold">{{ g.title }}</h2>
           <p class="m-0 mt-1 max-w-copy text-ink-2">{{ g.blurb }}</p>
         </div>
         <UiButton :to="`/create?ideas=${g.id}`" variant="ghost" size="sm" class="sm:ml-auto">
@@ -122,7 +123,7 @@ useSchemaOrg([
            read by search engines. -->
       <ul class="mt-6 grid list-none gap-2 p-0 sm:grid-cols-2 lg:grid-cols-3">
         <li v-for="item in g.items.slice(0, SHOWN)" :key="item" :class="ideaRow">
-          <span aria-hidden="true" class="text-xl leading-none">{{ ideaEmoji(item, g) }}</span>
+          <span aria-hidden="true" class="idea-emoji text-xl leading-none">{{ ideaEmoji(item, g) }}</span>
           {{ item }}
         </li>
       </ul>
@@ -136,7 +137,7 @@ useSchemaOrg([
         </summary>
         <ul class="mt-2 grid list-none gap-2 p-0 sm:grid-cols-2 lg:grid-cols-3">
           <li v-for="item in g.items.slice(SHOWN)" :key="item" :class="ideaRow">
-            <span aria-hidden="true" class="text-xl leading-none">{{ ideaEmoji(item, g) }}</span>
+            <span aria-hidden="true" class="idea-emoji text-xl leading-none">{{ ideaEmoji(item, g) }}</span>
             {{ item }}
           </li>
         </ul>
@@ -150,16 +151,12 @@ useSchemaOrg([
       </div>
     </section>
 
-    <div class="mt-12 rounded-card border border-gold-24 bg-gold/[0.06] p-6 sm:p-8">
-      <h2 class="text-2xl font-bold">Take five and run the show</h2>
-      <p class="mt-3 max-w-copy text-ink-2">
-        Start from a draft, nominate any channel Streams Charts tracks, and your awards get a public
-        page your viewers can vote on. Free with a Twitch login.
-      </p>
-      <div class="mt-6 flex flex-wrap gap-3">
+    <ClosingCta title="Take five and run the show">
+      Start from a draft, nominate any channel, and your viewers vote on a page of its own. Free with a Twitch or Kick login.
+      <template #actions>
         <UiButton to="/create">Create your awards</UiButton>
         <UiButton to="/" variant="ghost">How it works</UiButton>
-      </div>
-    </div>
+      </template>
+    </ClosingCta>
   </div>
 </template>

@@ -22,7 +22,7 @@ const paused = ref(false)
 <template>
   <SectionShell
     id="ideas"
-    heading="End of year awards category ideas"
+    heading="Category ideas to start from"
     :intro="`Stuck? Here are 30 of them, in three groups - all ${IDEA_TOTAL} are one page away.`"
   >
     <div class="js-reveal mt-6">

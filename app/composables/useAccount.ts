@@ -1,11 +1,14 @@
 import { computed } from 'vue'
 import type { Platform } from '~/types/award'
 
+/** The providers an account can sign in with; nominees can be on YouTube too. */
+export type SignInProvider = 'twitch' | 'kick'
+
 /**
- * Who is signed in - now a real Twitch session rather than a name in
+ * Who is signed in - a real Twitch or Kick session rather than a name in
  * localStorage.
  *
- * Two doors into the same provider. Voting asks for an identity and nothing
+ * Two doors into each provider. Voting asks for an identity and nothing
  * else; running a show asks for the channel's subscribers and followers, which
  * is a ten-permission consent screen and not something to put in front of
  * someone who only wants to click one radio button. `host` says which door this
@@ -23,11 +26,11 @@ export function useAccount() {
   const isHost = computed(() => Boolean(user.value?.host))
   const isAdmin = computed(() => user.value?.role === 'admin')
 
-  // Every channel we sign in is a Twitch channel: that is the only provider the
-  // login speaks. A host can still nominate channels on Kick and YouTube.
+  // The channel is the account signed in with, Twitch or Kick. A host can still
+  // nominate channels on any platform, YouTube included.
   const channel = computed<Account>(() => ({
     name: user.value?.name ?? user.value?.login ?? '',
-    platform: 'twitch',
+    platform: (user.value?.platform as SignInProvider | undefined) ?? 'twitch',
   }))
 
   /** Comes back here afterwards - the callback reads this cookie, not a query. */
@@ -39,25 +42,25 @@ export function useAccount() {
   // The static demo on GitHub Pages has no server: /auth/* is not there, and
   // sending someone to it ended on GitHub's own 404 (review 2026-09-25).
   const demo = !!useRuntimeConfig().public.demo
-  // There, "sign in" skips Twitch and signs in a demo host (app/demo/api.ts).
-  async function demoStop() {
+  // There, "sign in" skips the provider and signs in a demo host (app/demo/api.ts).
+  async function demoStop(provider: SignInProvider) {
     const { demoSignIn } = await import('~/demo/api')
-    demoSignIn()
+    demoSignIn(provider)
     await useUserSession().fetch()
   }
 
-  function signIn() {
+  function signIn(provider: SignInProvider = 'twitch') {
     if (!import.meta.client) return
-    if (demo) return demoStop()
+    if (demo) return demoStop(provider)
     rememberReturn()
-    window.location.href = '/auth/twitch'
+    window.location.href = `/auth/${provider}`
   }
 
   /** The wider consent, for someone who is about to run a show. */
-  function signInAsHost() {
+  function signInAsHost(provider: SignInProvider = 'twitch') {
     if (!import.meta.client) return
-    if (demo) return demoStop()
-    window.location.href = '/auth/twitch-host'
+    if (demo) return demoStop(provider)
+    window.location.href = `/auth/${provider}-host`
   }
 
   async function signOut() {

@@ -9,6 +9,8 @@ export default defineConfig({
       // Nuxt provides this alias at build time; vitest runs the handlers on
       // their own and has to be told where shared/ is.
       '#shared': fileURLToPath(new URL('./shared', import.meta.url)),
+      // and where the app's own modules are, for the pure utils tested directly
+      '~': fileURLToPath(new URL('./app', import.meta.url)),
     },
   },
   test: {

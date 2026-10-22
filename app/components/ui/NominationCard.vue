@@ -10,6 +10,7 @@ import { fmtFollowers } from '~/data/channels.mock'
 import { FREE, PUBLISH, type Channel, type Nomination } from '~/types/award'
 import UiIcon from './UiIcon.vue'
 import UiMaskIcon from './UiMaskIcon.vue'
+import NomineeThumb from './NomineeThumb.vue'
 
 const { nomination, index, overFreeLimit = false } = defineProps<{
   nomination: Nomination
@@ -113,14 +114,14 @@ const shortMeta = (n: Nomination['nominees'][number]) =>
         ref="titleInput"
         :value="nomination.title"
         type="text"
-        :aria-label="'Nomination ' + (index + 1) + ' title'"
-        placeholder="Nomination title, e.g. Best moment of the year"
+        :aria-label="'Category ' + (index + 1) + ' title'"
+        placeholder="Category title, e.g. Best moment of the year"
         class="h-11 min-w-0 flex-1 basis-[12rem] rounded-btn border border-hair2 bg-s2 px-3 text-base font-semibold text-ink placeholder:font-normal placeholder:text-ink-disabled hover:border-hair2 focus:border-gold focus:shadow-focus focus:outline-none"
         @input="emit('update:title', ($event.target as HTMLInputElement).value)"
       />
       <UiConfirmButton
-        :aria-label="'Remove nomination ' + (index + 1)"
-        :confirm-aria-label="'Confirm removing nomination ' + (index + 1) + ' and its nominees'"
+        :aria-label="'Remove category ' + (index + 1)"
+        :confirm-aria-label="'Confirm removing category ' + (index + 1) + ' and its nominees'"
         @confirm="emit('remove')"
       />
     </div>
@@ -131,12 +132,7 @@ const shortMeta = (n: Nomination['nominees'][number]) =>
         :key="n.id"
         class="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-btn border border-hair bg-canvas px-3 py-2.5 text-sm"
       >
-        <img
-          v-if="n.kind === 'media' && n.image"
-          :src="n.image"
-          alt=""
-          class="h-7 w-7 flex-none rounded-pill object-cover"
-        />
+        <NomineeThumb v-if="n.kind === 'media'" :nominee="n" :width="64" />
         <span v-else aria-hidden="true" class="grid h-7 w-7 flex-none place-items-center rounded-pill bg-s3 text-[11px] font-bold text-ink-muted">
           {{ shortMeta(n).slice(0, 2).toUpperCase() }}
         </span>
@@ -247,7 +243,7 @@ const shortMeta = (n: Nomination['nominees'][number]) =>
               v-model="mediaUrl"
               type="url"
               :disabled="!!mediaImage"
-              :aria-label="'Clip link for nomination ' + (index + 1)"
+              :aria-label="'Clip link for category ' + (index + 1)"
               placeholder="https://clips.twitch.tv/..."
               class="h-11 w-full rounded-btn border border-hair bg-s2 px-3 text-sm text-ink placeholder:text-ink-disabled focus:border-gold focus:shadow-focus focus:outline-none disabled:opacity-40"
             />

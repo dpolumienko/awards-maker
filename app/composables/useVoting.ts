@@ -116,5 +116,13 @@ export function useVoting() {
   const publishResults = (slug: string) =>
     $fetch(`/api/awards/${encodeURIComponent(slug)}/results`, { method: 'POST' })
 
-  return { castBallot, closeVoting, publishResults }
+  /** Takes the show offline (page, catalog and voting gone; ballots kept) or back online. */
+  const setOffline = (slug: string, offline: boolean) =>
+    $fetch(`/api/awards/${encodeURIComponent(slug)}/offline`, { method: 'POST', body: { offline } })
+
+  /** Keeps the vote counts off the public page (places only), or puts them back. */
+  const setHideCounts = (slug: string, hidden: boolean) =>
+    $fetch(`/api/awards/${encodeURIComponent(slug)}/counts`, { method: 'POST', body: { hidden } })
+
+  return { castBallot, closeVoting, publishResults, setOffline, setHideCounts }
 }

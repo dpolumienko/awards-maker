@@ -1,26 +1,19 @@
 <script setup lang="ts">
-// A partner reads better with its own mark on it. We pull the favicon straight
-// from the link the streamer gave - the request goes to the partner's own domain,
-// not through a third-party icon service, so nobody's visitors get logged
-// somewhere else. Anything missing or broken falls back to the initial.
-// With a backend this gets fetched and cached on our side; the shape stays.
+// A partner reads better with its own mark on it (utils/partnerIcon.ts says
+// where the icon comes from). Anything missing or broken falls back to the initial.
 import { tint } from '~/utils/accent'
-import { computed, ref } from 'vue'
+import { partnerHost, partnerIconUrl } from '~/utils/partnerIcon'
+import { computed, ref, watch } from 'vue'
 import type { Partner } from '~/types/award'
 
 const { partner, accent } = defineProps<{ partner: Partner; accent: string }>()
 
+const demo = !!useRuntimeConfig().public.demo
 const failed = ref(false)
-const host = computed(() => {
-  const raw = partner.url?.trim()
-  if (!raw) return ''
-  try {
-    return new URL(raw.startsWith('http') ? raw : `https://${raw}`).host
-  } catch {
-    return ''
-  }
-})
-const icon = computed(() => (host.value && !failed.value ? `https://${host.value}/favicon.ico` : ''))
+const host = computed(() => partnerHost(partner.url))
+const icon = computed(() => (failed.value ? '' : partnerIconUrl(host.value, demo)))
+// the builder's preview edits the link live: a new host gets a fresh try
+watch(host, () => (failed.value = false))
 // Only an http(s) address becomes a link - never javascript: or data:, whatever
 // is stored. A bare domain is read as https (the API normalises new ones).
 const href = computed(() => {
