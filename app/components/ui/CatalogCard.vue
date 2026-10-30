@@ -25,8 +25,7 @@ const { award, phase, voters } = defineProps<{
 }>()
 
 const accent = computed(() => accentOf(award.look))
-const { isZine, onPaper } = useVersion()
-const ink = computed(() => accentText(accent.value, onPaper.value))
+const ink = computed(() => accentText(accent.value))
 const nominees = computed(() => award.categories)
 
 const STATE: Record<Phase, { tone: 'live' | 'results' | 'ended'; text: string }> = {

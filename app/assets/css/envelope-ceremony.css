@@ -135,3 +135,32 @@
 :root[data-version='envelope'] .env-cer .s-index {
   opacity: 0.05;
 }
+
+/* The prototype's ceremony layout (Ed, 2026-10-22): everything set to the left,
+   a top line with the show and the category count, the nominees as a row of
+   cards with avatar, platform badge, name and platform. */
+:root[data-version='envelope'] .env-cer { align-items: stretch; text-align: left; padding: 0 7cqw; }
+:root[data-version='envelope'] .env-cer .stage-body { align-items: flex-start; }
+:root[data-version='envelope'] .env-cer .s-top { position: absolute; left: 7cqw; right: 7cqw; top: 4.5cqh; display: flex; justify-content: space-between; gap: 2cqw; font-size: 1.35cqw; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: #a39e93; z-index: 2; }
+:root[data-version='envelope'] .env-cer .s-kicker { font-size: 1.6cqw; text-transform: uppercase; margin: 0; }
+:root[data-version='envelope'] .env-cer .s-title { font-size: 5.4cqw; line-height: 1.02; margin: 1.6cqh 0 0; text-align: left; }
+:root[data-version='envelope'] .env-cer .s-win { font-size: 3.4cqw; line-height: 1.1; margin: 3.4cqh 0 0; text-align: left; }
+:root[data-version='envelope'] .env-cer .s-foot { position: absolute; left: 0; bottom: -28cqh; margin: 0; font-size: 1.6cqw; }
+:root[data-version='envelope'] .env-cer .s-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(12.5cqw, 1fr)); gap: 1.2cqw; width: 100%; margin-top: 4.2cqh; }
+:root[data-version='envelope'] .env-cer .s-cards.is-many { grid-template-columns: repeat(auto-fill, minmax(10cqw, 1fr)); }
+:root[data-version='envelope'] .env-cer .s-card { display: grid; gap: 0.5cqw; align-content: start; padding: 1.4cqw; border-radius: 1cqw; background: rgba(246, 244, 238, 0.035); box-shadow: inset 0 0 0 1px rgba(246, 244, 238, 0.16); transition: opacity 0.25s, background-color 0.25s, box-shadow 0.25s, transform 0.25s; }
+:root[data-version='envelope'] .env-cer .s-card-av { position: relative; width: 3.4cqw; height: 3.4cqw; margin-bottom: 0.6cqw; }
+:root[data-version='envelope'] .env-cer .s-card-av img, :root[data-version='envelope'] .env-cer .s-card-in { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: grid; place-items: center; background: #2a2a27; font-size: 1.1cqw; font-weight: 700; color: #f6f4ee; }
+:root[data-version='envelope'] .env-cer .s-card-av.is-still { width: 6.8cqw; height: 4.4cqw; }
+:root[data-version='envelope'] .env-cer .s-card-av.is-still img { border-radius: 0.6cqw; }
+:root[data-version='envelope'] .env-cer .s-card-pf { position: absolute; right: -0.35cqw; bottom: -0.35cqw; width: 1.5cqw; height: 1.5cqw; border-radius: 50%; background: #141413 var(--i) center/0.95cqw no-repeat; }
+:root[data-version='envelope'] .env-cer .s-card-pf.tw { --i: var(--e-pf-tw); }
+:root[data-version='envelope'] .env-cer .s-card-pf.kk { --i: var(--e-pf-kk); }
+:root[data-version='envelope'] .env-cer .s-card-pf.yt { --i: var(--e-pf-yt); }
+:root[data-version='envelope'] .env-cer .s-card-nm { font-size: 1.55cqw; font-weight: 600; color: #f6f4ee; line-height: 1.2; overflow-wrap: anywhere; }
+:root[data-version='envelope'] .env-cer .s-card small { font-size: 1.05cqw; color: #a39e93; }
+/* the drumroll: the lit card brass-framed, the rest dimmed */
+:root[data-version='envelope'] .env-cer.is-rolling .s-card { opacity: 0.4; }
+:root[data-version='envelope'] .env-cer .s-card.is-hot { opacity: 1; background: rgba(201, 164, 92, 0.12); box-shadow: inset 0 0 0 1.5px #e2c48a, 0 0 3cqw rgba(201, 164, 92, 0.25); transform: translateY(-0.3cqw); }
+/* a channel wins as itself: its avatar round, not stretched to a 16:9 frame */
+:root[data-version='envelope'] .env-cer .s-champ-media.s-champ-av { width: 16cqw !important; height: 16cqw !important; aspect-ratio: 1 !important; border-radius: 50% !important; }

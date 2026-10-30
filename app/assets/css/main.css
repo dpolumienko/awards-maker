@@ -153,3 +153,45 @@
   }
 }
 
+
+/* base tokens and the primary button, kept from the retired palette switcher (2026-10-22) */
+:root {
+  --gold: 217 164 65;
+  --gold-pressed: 185 134 46;
+  --gold-text: 239 201 122;
+  --on-gold: 10 10 12;
+  --on-gold-soft: 42 28 6;
+  --ivory: 255 247 230;
+  --s1: 21 21 26;
+  --s2: 30 30 36;
+  --s3: 41 41 48;
+  --hair: 50 50 58;
+  --hair2: 72 72 81;
+}
+
+/*
+  SC Blue - the product's parent brand. The header now carries the Streams
+  Charts logo; this palette takes its light blue as the accent, and cools the
+  surfaces a step towards navy so the blue does not sit on warm greys. Violet,
+  the other end of SC's gradient, is left out on purpose: it is Twitch's
+  colour, and the sign-in button would stop being distinct.
+
+.btn-primary {
+  background-color: rgb(var(--gold));
+  color: rgb(var(--on-gold));
+}
+.btn-primary:hover {
+  background-color: rgb(var(--gold-pressed));
+}
+
+/* warm - a lit plate: the fill runs light to deep, and the type is a dark
+   brown of the accent rather than a black cut out of it */
+.btn-primary:disabled,
+.btn-primary[aria-disabled='true'] {
+  background-color: rgb(var(--s3));
+  background-image: none;
+  color: rgb(138 138 147);
+  box-shadow: none;
+  opacity: 1;
+}
+

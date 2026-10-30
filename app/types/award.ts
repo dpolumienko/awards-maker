@@ -32,6 +32,20 @@ export interface AwardLook {
   logoUrl?: string
   /** paid: the page shows the channel name without its avatar (review 2026-10-08) */
   hideLogo?: boolean
+  /** paid, Envelope: the Custom theme's own pattern and light (data/themes.ts CustomBg) */
+  bg?: CustomBg
+}
+
+/** The Custom theme of the Envelope builder: a pattern and a light, both in the accent unless given a colour. */
+export interface CustomBg {
+  pattern: 'none' | 'rays' | 'rings' | 'dots' | 'grid' | 'stripes' | 'bokeh'
+  strength: number
+  size: number
+  angle: number
+  glow: 'top' | 'corner' | 'center' | 'bottom' | 'none'
+  glowStrength: number
+  /** the pattern's own colour; the accent when empty */
+  color?: string
 }
 
 export interface Nomination {

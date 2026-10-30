@@ -1,5 +1,6 @@
 <script setup lang="ts">
 // One nomination: its title, its nominees, and the two ways to add one.
+import { channelAvatar, avatarFallback } from '~/utils/nominee'
 import { computed, nextTick, ref } from 'vue'
 import { ImageError, fileToStoredImage } from '~/utils/image'
 import ChannelSearch from './ChannelSearch.vue'
@@ -11,6 +12,7 @@ import { FREE, PUBLISH, type Channel, type Nomination } from '~/types/award'
 import UiIcon from './UiIcon.vue'
 import UiMaskIcon from './UiMaskIcon.vue'
 import NomineeThumb from './NomineeThumb.vue'
+import { useVersion } from '~/composables/useVersion'
 
 const { nomination, index, overFreeLimit = false } = defineProps<{
   nomination: Nomination
@@ -133,12 +135,14 @@ const shortMeta = (n: Nomination['nominees'][number]) =>
         class="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-btn border border-hair bg-canvas px-3 py-2.5 text-sm"
       >
         <NomineeThumb v-if="n.kind === 'media'" :nominee="n" :width="64" />
+        <img v-else-if="n.kind === 'channel'" :src="channelAvatar(n.channel)" @error="avatarFallback($event, n.channel.name)" alt="" class="h-7 w-7 flex-none rounded-pill object-cover" />
         <span v-else aria-hidden="true" class="grid h-7 w-7 flex-none place-items-center rounded-pill bg-s3 text-[11px] font-bold text-ink-muted">
           {{ shortMeta(n).slice(0, 2).toUpperCase() }}
         </span>
         <template v-if="n.kind === 'channel'">
           <span class="font-semibold">{{ n.channel.name }}</span>
-          <PlatformDot :platform="n.channel.platform" :label="false" />
+          <i class="ecs-pf" :class="{ twitch: 'tw', kick: 'kk', youtube: 'yt' }[n.channel.platform]" :aria-label="n.channel.platform" />
+          <PlatformDot v-else :platform="n.channel.platform" :label="false" />
           <LivePill v-if="n.channel.live" />
           <span v-if="n.channel.followers" class="text-sm text-ink-2">{{ fmtFollowers(n.channel.followers) }} followers</span>
         </template>
@@ -166,7 +170,7 @@ const shortMeta = (n: Nomination['nominees'][number]) =>
     </ul>
 
     <div class="mt-3">
-      <ChannelSearch @pick="emit('addChannel', $event)" @pick-text="emit('addText', $event)" />
+      <ChannelSearch :env="true" :title="nomination.title" @pick="emit('addChannel', $event)" @pick-text="emit('addText', $event)" @pick-media="emit('addMedia', $event)" />
     </div>
 
     <div class="mt-3">

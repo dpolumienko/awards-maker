@@ -45,10 +45,10 @@ function picture(w: number, h: number, from: string, to: string, label: string, 
   return c.toDataURL('image/jpeg', 0.85)
 }
 
-const channel = (name: string, platform: 'twitch' | 'kick' | 'youtube', followers: number): Nominee => ({
+const channel = (name: string, platform: 'twitch' | 'kick' | 'youtube', followers: number, avatar?: string): Nominee => ({
   id: id(),
   kind: 'channel',
-  channel: { id: id(), name, platform, followers },
+  channel: { id: id(), name, platform, followers, avatar },
 })
 const text = (t: string): Nominee => ({ id: id(), kind: 'text', text: t })
 const image = (t: string, src: string): Nominee => ({ id: id(), kind: 'media', text: t, image: src })
@@ -61,19 +61,19 @@ export function demoAward(host: string): Award {
     slug: '',
     name: `Demo Awards ${new Date().getFullYear()}`,
     description:
-      'A test show with every feature switched on: channels from all three platforms, text, image and clip nominees, a cover, partners and a custom look.',
+      'A test show with every feature switched on: channels from all three platforms, text, image and clip nominees, partners and a custom look.',
     templateId: undefined,
     // open an hour ago, so the ballot works right away
     opensAt: at(-hour),
     closesAt: at(7 * 24 * hour),
     ceremonyAt: at(8 * 24 * hour),
     timezone: 'Europe/Kyiv',
+    // only what the Look settings can make (Ed, 2026-10-22): a theme, an accent from the
+    // palette and a listed face - the generated cover it had could not be made in the builder
     look: {
       theme: 'glow',
-      accent: '#9B6DFF',
-      font: 'Anton',
-      // no lettering: the cover runs up under the site header
-      coverUrl: picture(1800, 770, '#2b1055', '#d53369', ''),
+      accent: '#9B7BFF',
+      font: 'Gloock',
     },
     host: { name: host, platform: 'twitch' },
     partners: [
@@ -85,7 +85,8 @@ export function demoAward(host: string): Award {
       {
         id: id(),
         title: 'Streamer of the Year',
-        nominees: [channel('ishowspeed', 'youtube', 41_200_000), channel('vika_plays', 'twitch', 188_000), channel('dzvin_tv', 'kick', 88_100)],
+        // real streamers with their avatars (Ed, 2026-10-22): a demo of nameless initials showed nothing
+        nominees: [channel('IShowSpeed', 'youtube', 40_000_000, '/img/avatars/youtube-ishowspeed.webp'), channel('kaicenat', 'twitch', 14_000_000, '/img/avatars/twitch-kaicenat.webp'), channel('xQc', 'kick', 1_400_000, '/img/avatars/kick-xqc.webp'), channel('pokimane', 'twitch', 9_300_000, '/img/avatars/twitch-pokimane.webp')],
       },
       {
         id: id(),
@@ -115,7 +116,7 @@ export function demoAward(host: string): Award {
       {
         id: id(),
         title: 'Rising Star',
-        nominees: [channel('n1ghtowl', 'twitch', 41_900), channel('ka1ra', 'kick', 15_800), channel('nazar_speed', 'youtube', 76_500)],
+        nominees: [channel('jynxzi', 'twitch', 7_800_000, '/img/avatars/twitch-jynxzi.webp'), channel('caseoh_', 'twitch', 5_100_000, '/img/avatars/twitch-caseoh_.webp'), channel('Adin Ross', 'kick', 1_900_000, '/img/avatars/kick-adinross.webp'), channel('ohnePixel', 'twitch', 1_900_000, '/img/avatars/twitch-ohnepixel.webp')],
       },
       {
         id: id(),

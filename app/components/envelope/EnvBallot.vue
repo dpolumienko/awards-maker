@@ -1,20 +1,19 @@
 <script setup lang="ts">
-// The Envelope ballot (review 2026-10-16, item 1): a stepper, not a scroll. One
-// category on screen at a time, the progress as the prototype's brass dashes,
-// Back / Next / Skip, a pick slides on to the next category, and the last step is
-// a check of every pick before the one sign-in. After a ballot is in, the steps
-// are only the categories that were skipped; once voting is shut the same steps
-// show the nominees locked, and after the ceremony the results.
-// State and submit are the page's (composables/useBallot.ts), shared by every version.
-import { computed, nextTick, ref, watch } from 'vue'
+// The Envelope ballot as Ed's prototype draws it (2026-10-22): every category on
+// one page, a sticky list of them on the left that ticks as you pick, and a bar
+// at the foot with the progress and the one submit. A first pick in a category
+// scrolls on to the next open one. Once voting is shut the same list shows the
+// nominees locked, and after the ceremony the results, most votes first.
+// State and submit are the page's (composables/useBallot.ts).
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import type { Award, Nomination, Nominee } from '~/types/award'
-import type { Result, Tally } from '~/composables/useVoting'
+import type { Tally } from '~/composables/useVoting'
 import { resultsOf } from '~/composables/useVoting'
 import type { SignInProvider } from '~/composables/useAccount'
-import SignInButtons from '~/components/ui/SignInButtons.vue'
 import NomineeThumb from '~/components/ui/NomineeThumb.vue'
 import MediaLightbox from '~/components/ui/MediaLightbox.vue'
-import { nomineeInitials, nomineeName, nomineeSub, nomineeTint } from '~/utils/nominee'
+import EnvSignIn from './EnvSignIn.vue'
+import { avatarFallback, channelAvatar, nomineeInitials, nomineeName, nomineeSub, nomineeTint } from '~/utils/nominee'
 import '~/assets/css/envelope-award.css'
 
 const props = defineProps<{
@@ -36,125 +35,121 @@ const emit = defineEmits<{ pick: [nominationId: string, nomineeId: string]; subm
 const PF = { twitch: 'tw', kick: 'kk', youtube: 'yt' } as const
 const CHURL = { twitch: (n: string) => `https://www.twitch.tv/${n}`, kick: (n: string) => `https://kick.com/${n}`, youtube: (n: string) => `https://www.youtube.com/@${n}` }
 
-// back after a first ballot: only what was skipped is still to do
-const cats = computed<Nomination[]>(() =>
-  props.mode === 'vote' && props.voted ? props.award.nominations.filter((n) => !props.cast[n.id]) : props.award.nominations,
-)
-const reviewing = computed(() => props.mode === 'vote')
-const total = computed(() => cats.value.length + (reviewing.value ? 1 : 0))
-const step = ref(0)
-const dir = ref(1)
-watch(total, (t) => { if (step.value > t - 1) step.value = Math.max(0, t - 1) })
-// a ballot just went in: start again from the first category still open
-watch(() => Object.keys(props.cast).length, () => { dir.value = -1; step.value = 0 })
-const cat = computed(() => cats.value[step.value])
-const onReview = computed(() => reviewing.value && step.value === cats.value.length)
-const results = computed<Result[]>(() => (cat.value && props.mode === 'results' ? resultsOf(props.tally, cat.value) : []))
+const cats = computed<Nomination[]>(() => props.award.nominations)
 const numbers = computed(() => !props.award.hideCounts)
-const winners = computed(() => results.value.filter((r) => r.top))
-const ordered = computed<Nominee[]>(() => (props.mode === 'results' ? results.value.map((r) => r.nominee) : cat.value?.nominees ?? []))
-const resultOf = (id: string) => results.value.find((r) => r.nominee.id === id)
+const resultsBy = computed(() => Object.fromEntries(cats.value.map((c) => [c.id, props.mode === 'results' ? resultsOf(props.tally, c) : []])))
+const ordered = (c: Nomination): Nominee[] => (props.mode === 'results' ? resultsBy.value[c.id]!.map((r) => r.nominee) : c.nominees)
+const resultOf = (c: Nomination, id: string) => resultsBy.value[c.id]!.find((r) => r.nominee.id === id)
+const winnersIn = (c: Nomination) => resultsBy.value[c.id]!.filter((r) => r.top)
+
+const picked = computed(() => cats.value.filter((c) => props.shown[c.id]).length)
+const pending = computed(() => cats.value.filter((c) => props.shown[c.id] && !props.cast[c.id]).length)
+const sent = computed(() => cats.value.filter((c) => props.cast[c.id]).length)
 
 const root = ref<HTMLElement | null>(null)
-function go(i: number, focus = true) {
-  const to = Math.min(Math.max(0, i), total.value - 1)
-  if (to === step.value) return
-  dir.value = to > step.value ? 1 : -1
-  step.value = to
-  if (focus) nextTick(() => root.value?.querySelector<HTMLElement>('[data-step-focus]')?.focus({ preventScroll: true }))
-  const top = root.value?.getBoundingClientRect().top ?? 0
-  if (top < 0 || top > innerHeight * 0.5) root.value?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })
+const reduce = () => matchMedia('(prefers-reduced-motion: reduce)').matches
+function goCat(i: number) {
+  root.value?.querySelector(`#cat-${i}`)?.scrollIntoView({ behavior: reduce() ? 'auto' : 'smooth', block: 'start' })
 }
-// "Start voting" in the masthead: bring the ballot up, the current step in focus
+// "Start voting" in the masthead
 function start() {
-  root.value?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })
-  root.value?.querySelector<HTMLElement>('[data-step-focus]')?.focus({ preventScroll: true })
+  root.value?.scrollIntoView({ behavior: reduce() ? 'auto' : 'smooth', block: 'start' })
+  root.value?.querySelector<HTMLElement>('.ap-nom[tabindex="0"]')?.focus({ preventScroll: true })
 }
-defineExpose({ go, start })
+defineExpose({ start, go: goCat })
 
-let advance: ReturnType<typeof setTimeout> | undefined
-function pick(n: Nominee) {
-  const c = cat.value
-  if (!c || props.mode !== 'vote' || props.cast[c.id]) return
+function pick(c: Nomination, n: Nominee) {
+  if (props.mode !== 'vote' || props.cast[c.id]) return
   const first = !props.shown[c.id]
   emit('pick', c.id, n.id)
-  // the first pick in a category moves on by itself; changing a pick does not
-  clearTimeout(advance)
-  if (first) advance = setTimeout(() => go(step.value + 1), 420)
+  // first pick in a category: bring the next open one into view
+  if (first) {
+    const ci = cats.value.indexOf(c)
+    const nx = cats.value.findIndex((x, k) => k > ci && !props.shown[x.id])
+    if (nx >= 0) setTimeout(() => goCat(nx), 380)
+  }
 }
-function onKey(e: KeyboardEvent, i: number) {
-  const list = ordered.value
-  if ((e.key === ' ' || e.key === 'Enter') && list[i]) { e.preventDefault(); pick(list[i]); return }
+function onKey(e: KeyboardEvent, c: Nomination, i: number) {
+  const list = ordered(c)
+  if ((e.key === ' ' || e.key === 'Enter') && list[i]) { e.preventDefault(); pick(c, list[i]); return }
   const d = ({ ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 } as Record<string, number>)[e.key]
   if (!d) return
   e.preventDefault()
-  const next = (i + d + list.length) % list.length
-  root.value?.querySelectorAll<HTMLElement>('.ap-nom')[next]?.focus()
+  const box = (e.currentTarget as HTMLElement).parentElement!
+  box.querySelectorAll<HTMLElement>('.ap-nom')[(i + d + list.length) % list.length]?.focus()
+}
+
+// which category is under the reader, and whether the bar has anything to say yet
+const cur = ref(0)
+const far = ref(true)
+const barOff = computed(() => picked.value === 0 && far.value)
+function mark() {
+  const els = root.value ? [...root.value.querySelectorAll<HTMLElement>('.ap-cat')] : []
+  let k = 0
+  els.forEach((el, i) => { if (el.getBoundingClientRect().top < innerHeight * 0.45) k = i })
+  cur.value = k
+  const top = root.value?.getBoundingClientRect().top ?? 0
+  far.value = top > innerHeight * 0.6
+}
+// capture: the full preview scrolls inside its popup, not the window
+onMounted(() => { mark(); addEventListener('scroll', mark, { passive: true, capture: true }) })
+onBeforeUnmount(() => removeEventListener('scroll', mark, { capture: true }))
+
+const signing = ref(false)
+function submit() {
+  if (props.signedIn) emit('submit')
+  else signing.value = true
+}
+function signIn(p: SignInProvider) {
+  signing.value = false
+  emit('submit', p)
 }
 
 const viewing = ref<{ src?: string; url?: string; title: string } | null>(null)
-const pickedName = (c: Nomination) => {
-  const id = props.shown[c.id]
-  const n = c.nominees.find((x) => x.id === id)
-  return n ? nomineeName(n) : ''
-}
 const status = (c: Nomination) =>
-  props.mode === 'results' ? '' : props.cast[c.id] ? 'Your vote is in' : props.shown[c.id] ? 'Picked' : props.mode === 'vote' ? 'Pick one' : ''
-const nextLabel = computed(() => {
-  if (!cat.value) return ''
-  if (!reviewing.value) return step.value < total.value - 1 ? 'Next category' : ''
-  if (step.value === cats.value.length - 1) return 'Check your picks'
-  return props.shown[cat.value.id] ? 'Next category' : 'Skip'
-})
+  props.mode === 'results' ? '' : props.cast[c.id] ? 'Your vote is in' : props.shown[c.id] ? 'Picked' : props.mode === 'vote' ? (props.voted ? 'Still open' : 'Pick one') : ''
 </script>
 
 <template>
-  <section id="vote" ref="root" class="ap-ballot env-stepper" aria-labelledby="ballot-h">
+  <section id="vote" ref="root" class="ap-ballot" aria-labelledby="ballot-h">
     <div class="ap-ballot-h">
-      <h2 id="ballot-h">{{ mode === 'results' ? 'The winners' : mode === 'locked' ? 'The nominees' : voted ? 'Still open to you' : 'Your votes' }}</h2>
+      <h2 id="ballot-h">{{ mode === 'results' ? 'The winners' : mode === 'locked' ? 'The nominees' : 'Your votes' }}</h2>
       <p v-if="note && mode === 'locked'">{{ note }}</p>
-      <p v-if="mode === 'vote' && !voted">Pick one nominee in each category. Skip any you like: they stay open until voting closes.</p>
-      <p v-else-if="mode === 'vote'">Your picks are in. The categories you skipped stay open until voting closes.</p>
+      <p v-if="mode === 'vote'">Pick one nominee in each category. Skip any you like: they stay open until voting closes.</p>
       <p v-else-if="mode === 'results'">{{ numbers ? 'Every category, most votes first.' : 'Every category, in finishing order. The host kept the counts private.' }}</p>
     </div>
 
-    <!-- the steps: one dash each, the review last; every dash goes to its step -->
-    <nav class="env-steps" aria-label="Categories">
-      <button
-        v-for="(c, i) in cats"
-        :key="c.id"
-        type="button"
-        :class="{ on: !!shown[c.id] || (mode === 'results'), cur: i === step }"
-        :aria-current="i === step ? 'step' : undefined"
-        :aria-label="`Category ${i + 1}: ${c.title}${shown[c.id] ? ', picked' : ''}`"
-        @click="go(i)"
-      />
-      <button v-if="reviewing" type="button" class="rev" :class="{ cur: onReview }" :aria-current="onReview ? 'step' : undefined" aria-label="Check your picks" @click="go(cats.length)" />
-    </nav>
+    <div class="ap-grid">
+      <nav class="ap-nav" aria-label="Categories">
+        <p class="ap-nav-p">{{ picked }} of {{ cats.length }} {{ voted ? 'counted' : mode === 'vote' ? 'picked' : 'categories' }}</p>
+        <ol>
+          <li v-for="(c, i) in cats" :key="c.id">
+            <a :href="`#cat-${i}`" :class="{ ok: !!shown[c.id] || mode === 'results', cur: i === cur }" @click.prevent="goCat(i)"><i />{{ c.title || 'Untitled category' }}</a>
+          </li>
+        </ol>
+      </nav>
 
-    <div class="env-stage">
-      <Transition :name="dir > 0 ? 'env-next' : 'env-prev'" mode="out-in">
-        <!-- one category -->
-        <div v-if="cat && !onReview" :key="cat.id" class="ap-cat">
+      <div class="cats">
+        <section v-for="(c, ci) in cats" :id="`cat-${ci}`" :key="c.id" class="ap-cat" :aria-labelledby="`cat-h-${ci}`">
           <div class="ap-cat-h">
-            <h3 tabindex="-1" data-step-focus><small>Category {{ step + 1 }} of {{ cats.length }}</small>{{ cat.title }}</h3>
-            <span class="lbl" :class="{ ok: !!shown[cat.id] }">
-              <template v-if="mode === 'results'">{{ numbers ? `${results.reduce((s, r) => s + r.votes, 0)} votes` : winners.length > 1 ? 'Tied' : '' }}</template>
-              <template v-else>{{ status(cat) }}</template>
+            <h3 :id="`cat-h-${ci}`"><small>Category {{ ci + 1 }} of {{ cats.length }}</small>{{ c.title || 'Untitled category' }}</h3>
+            <span class="lbl" :class="{ ok: !!shown[c.id] }">
+              <template v-if="mode === 'results'">{{ numbers ? `${resultsBy[c.id]!.reduce((s, r) => s + r.votes, 0)} votes` : winnersIn(c).length > 1 ? 'Tied' : '' }}</template>
+              <template v-else>{{ status(c) }}</template>
             </span>
           </div>
-          <div class="ap-noms" :role="mode === 'results' ? 'list' : 'radiogroup'" :aria-labelledby="'ballot-h'">
+          <div class="ap-noms" :role="mode === 'results' ? 'list' : 'radiogroup'" :aria-labelledby="`cat-h-${ci}`">
             <div
-              v-for="(n, i) in ordered"
+              v-for="(n, i) in ordered(c)"
               :key="n.id"
               class="ap-nom"
-              :class="{ win: resultOf(n.id)?.top }"
+              :class="{ win: resultOf(c, n.id)?.top }"
               :role="mode === 'results' ? 'listitem' : 'radio'"
-              :tabindex="mode === 'results' ? -1 : (shown[cat.id] ? shown[cat.id] === n.id : i === 0) ? 0 : -1"
-              :aria-checked="mode === 'results' ? undefined : shown[cat.id] === n.id"
-              :aria-disabled="mode !== 'vote' || !!cast[cat.id] ? 'true' : undefined"
-              @click="pick(n)"
-              @keydown="onKey($event, i)"
+              :tabindex="mode === 'results' ? -1 : (shown[c.id] ? shown[c.id] === n.id : i === 0) ? 0 : -1"
+              :aria-checked="mode === 'results' ? undefined : shown[c.id] === n.id"
+              :aria-disabled="mode !== 'vote' || !!cast[c.id] ? 'true' : undefined"
+              @click="pick(c, n)"
+              @keydown="onKey($event, c, i)"
             >
               <span v-if="n.kind === 'media'" class="ap-media art" :class="n.image && 'is-img'">
                 <NomineeThumb :nominee="n" :width="320" />
@@ -169,7 +164,7 @@ const nextLabel = computed(() => {
               </span>
               <span v-else class="ap-media pers">
                 <span class="ap-avw">
-                  <img v-if="n.kind === 'channel' && n.channel.avatar" class="av env-avimg" :src="n.channel.avatar" alt="" loading="lazy">
+                  <img v-if="n.kind === 'channel'" class="av env-avimg" :src="channelAvatar(n.channel)" alt="" loading="lazy" @error="avatarFallback($event, n.channel.name)">
                   <span v-else class="av" :style="{ background: nomineeTint(n) }">{{ nomineeInitials(n) }}</span>
                   <span v-if="n.kind === 'channel'" class="ap-pf" :class="PF[n.channel.platform]" />
                 </span>
@@ -184,61 +179,35 @@ const nextLabel = computed(() => {
                 :aria-label="`Open ${n.channel.name}`"
                 @click.stop
               />
-              <!-- after the ceremony: the place, the bar and the share, unless the host kept the counts -->
               <span v-if="mode === 'results'" class="env-res">
-                <b>{{ resultOf(n.id)?.top ? (winners.length > 1 ? 'Tied' : 'Winner') : `#${i + 1}` }}</b>
+                <b>{{ resultOf(c, n.id)?.top ? (winnersIn(c).length > 1 ? 'Tied' : 'Winner') : `#${i + 1}` }}</b>
                 <template v-if="numbers">
-                  <i :style="{ '--p': `${resultOf(n.id)?.pct ?? 0}%` }" /><span class="tnum">{{ resultOf(n.id)?.pct ?? 0 }}%</span>
+                  <i :style="{ '--p': `${resultOf(c, n.id)?.pct ?? 0}%` }" /><span class="tnum">{{ resultOf(c, n.id)?.pct ?? 0 }}%</span>
                 </template>
               </span>
               <span v-else class="tick" />
             </div>
           </div>
-        </div>
-
-        <!-- the check before the one sign-in -->
-        <div v-else-if="onReview" key="review" class="ap-cat env-review">
-          <div class="ap-cat-h"><h3 tabindex="-1" data-step-focus><small>Last step</small>Check your picks</h3></div>
-          <ol class="env-picks">
-            <li v-for="(c, i) in cats" :key="c.id">
-              <span class="env-pk-t">{{ c.title }}</span>
-              <b v-if="shown[c.id]">{{ pickedName(c) }}</b>
-              <span v-else class="env-pk-skip">Skipped, stays open</span>
-              <button type="button" class="link" @click="go(i)">{{ shown[c.id] ? 'Change' : 'Pick' }}</button>
-            </li>
-          </ol>
-          <p class="env-note">Each pick is final once it is in. One ballot per Twitch or Kick account.</p>
-          <div class="env-send">
-            <SignInButtons
-              v-if="!signedIn"
-              label="Vote with"
-              :disabled="!pickedCount"
-              @choose="emit('submit', $event)"
-            />
-            <button v-else class="btn p" type="button" :disabled="!pickedCount" @click="emit('submit')">
-              {{ pickedCount ? `Submit ${pickedCount} ${pickedCount === 1 ? 'vote' : 'votes'}` : 'Pick at least one' }}
-            </button>
-          </div>
-          <p v-if="voteError" class="env-err" role="alert">{{ voteError }}</p>
-        </div>
-      </Transition>
-    </div>
-
-    <!-- the bar: where you are, and the way on -->
-    <div class="ap-bar env-bar">
-      <div class="ap-bar-in">
-        <div class="ap-prog" aria-hidden="true"><i v-for="c in cats" :key="c.id" :class="{ on: !!shown[c.id] || mode === 'results' }" /></div>
-        <p aria-live="polite">
-          <template v-if="mode === 'vote'"><b class="tnum">{{ cats.filter((c) => shown[c.id]).length }} of {{ cats.length }}</b> picked<span class="env-hide-sm"> · skipped ones stay open</span></template>
-          <template v-else><b class="tnum">{{ step + 1 }} of {{ cats.length }}</b> categories</template>
-        </p>
-        <div class="env-nav">
-          <button class="btn sm" type="button" :disabled="step === 0" @click="go(step - 1)">Back</button>
-          <button v-if="nextLabel" class="btn sm" :class="!reviewing || shown[cat?.id ?? ''] ? 'p' : ''" type="button" @click="go(step + 1)">{{ nextLabel }}</button>
-        </div>
+        </section>
       </div>
     </div>
 
+    <!-- the bar: progress and the one submit -->
+    <div v-if="mode === 'vote'" class="ap-bar env-bar" :class="{ off: barOff }" aria-live="polite">
+      <div class="ap-bar-in">
+        <div class="ap-prog" aria-hidden="true"><i v-for="c in cats" :key="c.id" :class="{ on: !!shown[c.id] }" /></div>
+        <p v-if="voted && !pending"><b>Your votes are in.</b> {{ sent }} of {{ cats.length }} categories counted.{{ sent < cats.length ? ' The rest stay open until voting closes.' : ' Results come out at the ceremony.' }}</p>
+        <p v-else-if="voted"><b>{{ pending }} new {{ pending === 1 ? 'pick' : 'picks' }}</b> · {{ sent }} already counted</p>
+        <p v-else-if="picked"><b class="tnum">{{ picked }} of {{ cats.length }}</b> picked<span class="env-hide-sm"> · skipped ones stay open</span></p>
+        <p v-else><b class="tnum">0 of {{ cats.length }}</b> picked<span class="env-hide-sm"> · choose a nominee to start</span></p>
+        <button v-if="!voted || pending" class="btn p" type="button" :disabled="!pickedCount" @click="submit">
+          {{ !pickedCount ? 'Pick at least one' : voted ? `Add ${pending} ${pending === 1 ? 'vote' : 'votes'}` : `Submit ${pickedCount} ${pickedCount === 1 ? 'vote' : 'votes'}` }}
+        </button>
+      </div>
+      <p v-if="voteError" class="env-err" role="alert">{{ voteError }}</p>
+    </div>
+
+    <ClientOnly><EnvSignIn :open="signing" @close="signing = false" @choose="signIn" /></ClientOnly>
     <MediaLightbox
       :open="!!viewing"
       :src="viewing?.src ?? ''"

@@ -17,14 +17,13 @@ const { points, accent = DEFAULT_ACCENT, label, bare = false } = defineProps<{
   accent?: string
   /** What the curve counts, for the screen-reader table and the hover tooltip. */
   label: string
-  /** no caption: the parent's panel already names the chart (Night v2's ShowStats) */
+  /** no caption: the parent's panel already names the chart */
   bare?: boolean
 }>()
 
 // one gradient per instance; two charts on a page must not share a fill
 const gradientId = `trend-fill-${useId()}`
 // print has no glow: in the Fanzine the area is one flat tint of the ink
-const { isZine } = useVersion()
 
 const max = computed(() => {
   const top = Math.max(...points.map((p) => p.votes), 1)
@@ -137,8 +136,8 @@ const ticks = computed(() => {
       >
         <defs>
           <linearGradient :id="gradientId" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" :stop-color="accent" :stop-opacity="isZine ? 0.28 : 0.34" />
-            <stop offset="100%" :stop-color="accent" :stop-opacity="isZine ? 0.28 : 0" />
+            <stop offset="0%" :stop-color="accent" :stop-opacity="0.34" />
+            <stop offset="100%" :stop-color="accent" :stop-opacity="0" />
           </linearGradient>
         </defs>
         <g class="js-trend">

@@ -11,6 +11,8 @@ export const TRADEMARK = /streamer'?s?\s*awards/i
 export const INDEX = {
   /** Two real sentences. A one-word description is the thin page Google skips. */
   minDescription: 80,
+  /** a one-category show is fine to run, too thin to rank */
+  minNominations: 3,
 } as const
 
 export interface IndexableShape {
@@ -24,7 +26,7 @@ export interface IndexableShape {
 
 export function isIndexable(a: IndexableShape): boolean {
   return (
-    a.categories >= PUBLISH.minNominations &&
+    a.categories >= INDEX.minNominations &&
     a.minNominees >= PUBLISH.minNomineesPerNomination &&
     a.description.trim().length >= INDEX.minDescription &&
     // anything trading on the name of the show we do not own stays out

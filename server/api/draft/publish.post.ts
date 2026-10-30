@@ -5,6 +5,7 @@ import { claimOrder, paidFeaturesOf, tierFor } from '../../utils/billing'
 import { queryOne } from '../../utils/db'
 import { DEFAULT_TIME_ZONE, toInstant } from '#shared/time'
 import { requireHost } from '../../utils/users'
+import { channelExists } from '../../utils/channels'
 
 /**
  * Turns the draft into a live show.
@@ -42,8 +43,18 @@ export default defineEventHandler(async (event) => {
   if (filled.length < PUBLISH.minNominations) {
     throw createError({
       statusCode: 400,
-      statusMessage: `A show needs ${PUBLISH.minNominations} categories with ${PUBLISH.minNomineesPerNomination} nominees each`,
+      statusMessage: `A show needs at least ${PUBLISH.minNominations} ${PUBLISH.minNominations === 1 ? 'category' : 'categories'} with ${PUBLISH.minNomineesPerNomination} nominees each`,
     })
+  }
+
+  // only channels that exist (Ed, 2026-10-22): the builder offers nothing else,
+  // and a POST that did not come from the builder is checked here
+  const channels = filled.flatMap((n) => n.nominees).filter((x) => x.kind === 'channel' && x.channel)
+  const missing = (
+    await Promise.all(channels.map(async (x) => ((await channelExists(x.channel!.name, x.channel!.platform)) ? null : x.channel!.name)))
+  ).filter((v): v is string => !!v)
+  if (missing.length) {
+    throw createError({ statusCode: 400, statusMessage: `We could not find these channels: ${[...new Set(missing)].join(', ')}` })
   }
 
   // opens before it closes, and no ceremony before the last vote is in

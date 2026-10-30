@@ -401,3 +401,108 @@
 .env-ap .ap-nom[aria-disabled="true"]:not([aria-checked="true"]) .tick { opacity:.35 }
 /* an image nominee (an emote, a meme) is shown whole, lifted off the frame as in the prototype; a clip's frame fills it */
 .env-ap .ap-media.is-img img { object-fit:contain;padding:12%;filter:drop-shadow(0 8px 14px rgba(0,0,0,.5)) }
+
+/* ===================================================================== app: Full page (Ed's prototype, 2026-10-22)
+   No cream card: the show's theme lies on the page itself, full width, dark,
+   lit from the top in the accent and fading out under the hero. Overrides the
+   ticket rules above. */
+.env-ap { position:relative }
+.env-ap .ap-backdrop { position:absolute;left:50%;top:0;width:100vw;transform:translateX(-50%);height:760px;z-index:0;pointer-events:none;overflow:hidden;background:#070707;
+  -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 45%,transparent 100%);mask-image:linear-gradient(180deg,#000 0%,#000 45%,transparent 100%) }
+.env-ap .ap-backdrop::after { content:"";position:absolute;inset:-12%;background:var(--bd-bg);opacity:.9;will-change:transform;
+  -webkit-mask-image:linear-gradient(180deg,#000 0%,rgba(0,0,0,.6) 40%,transparent 85%);mask-image:linear-gradient(180deg,#000 0%,rgba(0,0,0,.6) 40%,transparent 85%) }
+.env-ap .ap-backdrop > span { position:absolute;pointer-events:none }
+.env-ap .bd-glow { inset:0;z-index:1;background:linear-gradient(180deg,color-mix(in srgb,var(--ga) 66%,transparent) 0%,color-mix(in srgb,var(--ga) 32%,transparent) 34%,color-mix(in srgb,var(--ga) 10%,transparent) 58%,transparent 80%) }
+.env-ap .bd-rays { display:none;inset:0;z-index:2;mix-blend-mode:screen;filter:blur(10px);
+  -webkit-mask-image:linear-gradient(180deg,#000 0%,transparent 80%);mask-image:linear-gradient(180deg,#000 0%,transparent 80%);
+  background:conic-gradient(from 110deg at 50% -15%,transparent 0deg,rgba(255,226,170,.09) 8deg,transparent 18deg,rgba(255,226,170,.06) 32deg,transparent 42deg,rgba(255,226,170,.1) 56deg,transparent 66deg,rgba(255,226,170,.1) 74deg,transparent 84deg,rgba(255,226,170,.06) 98deg,transparent 108deg,rgba(255,226,170,.09) 122deg,transparent 132deg,transparent 360deg) }
+.env-ap .ap-backdrop[data-bg="plain"] .bd-rays { display:block }
+.env-ap .bd-vig { inset:0;z-index:3;background:radial-gradient(130% 100% at 50% 0%,transparent 60%,rgba(7,7,7,.6) 100%) }
+/* a cover fills the background whole; a scrim on the left keeps the text readable */
+.env-ap .ap-backdrop[data-bg="cover"] { -webkit-mask-image:none;mask-image:none }
+.env-ap .ap-backdrop[data-bg="cover"]::after { inset:0;opacity:1;-webkit-mask-image:none;mask-image:none }
+.env-ap .ap-backdrop[data-bg="cover"] .bd-glow,.env-ap .ap-backdrop[data-bg="cover"] .bd-vig { display:none }
+.env-ap .ap-backdrop[data-bg="cover"]::before { content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,rgba(7,7,7,.88) 0%,rgba(7,7,7,.72) 30%,rgba(7,7,7,.25) 55%,rgba(7,7,7,0) 70%) }
+@media (max-width:760px) { .env-ap .ap-backdrop[data-bg="cover"]::before { background:rgba(7,7,7,.6) } }
+@media (prefers-reduced-motion:no-preference) and (min-width:761px) {
+  .env-ap .ap-backdrop[data-bg="glow"]::after { animation:bg-aurora 16s ease-in-out infinite alternate }
+  .env-ap .ap-backdrop[data-bg="rays"]::after { transform-origin:86% 86%;animation:bg-turn 22s ease-in-out infinite alternate }
+  .env-ap .ap-backdrop[data-bg="waves"]::after { transform-origin:86% 86%;animation:bg-ripple 10s ease-in-out infinite alternate }
+  .env-ap .ap-backdrop:is([data-bg="halftone"],[data-bg="grid"],[data-bg="custom"])::after { animation:bg-pan 18s ease-in-out infinite alternate }
+  .env-ap .ap-backdrop[data-bg="confetti"]::after { filter:blur(2px);animation:bd-bokeh 20s ease-in-out infinite alternate }
+  .env-ap .ap-backdrop[data-bg="spotlights"]::after { filter:blur(26px);animation:bd-leak 16s ease-in-out infinite alternate }
+}
+@keyframes bd-leak { 0% { transform:translate3d(-6%,0,0) skewX(-4deg) } 100% { transform:translate3d(6%,-2%,0) skewX(4deg) } }
+@keyframes bd-bokeh { 0% { transform:none } 50% { transform:translate3d(2%,-3%,0) scale(1.04) } 100% { transform:translate3d(-2%,-5%,0) scale(1.02) } }
+.env-ap > :not(.ap-backdrop) { position:relative;z-index:1 }
+.env-ap .ap-hero.env-full { background:transparent!important;padding-inline:0!important;overflow:visible;color:var(--e-ink);border-radius:0 }
+.env-ap .ap-hero.env-full::before,.env-ap .ap-hero.env-full::after { display:none!important }
+.env-ap .env-full h1 { color:var(--e-ink) }
+.env-ap .env-full .ap-desc { color:var(--e-ink-2) }
+.env-ap .env-full .btn.p { background:#F3EEE4!important;border-color:#F3EEE4!important;color:#15140F }
+/* Organized by · avatar · platform · name, one line */
+.env-ap .hc-row { gap:10px }
+.env-ap .hc-row .org { font-size:14px;color:var(--e-muted) }
+.env-ap .hc-row .hc-av { width:32px;height:32px;font-size:11px;color:#fff;font-weight:600 }
+.env-ap .hc-row b { font-size:16px;color:var(--e-ink) }
+.env-ap .hc-pf2 { font-size:0;margin-right:-4px }
+.env-ap .hc-pf2::before { width:16px!important;height:16px!important }
+/* partners: the SC logo as a logo, everyone else a dashed slot */
+.env-ap .env-full .ap-partners { gap:14px;margin-top:20px;color:var(--e-muted) }
+.env-ap .ap-pl { display:block;width:84px;height:22px;background:url("../envelope/sys/sc-light.svg") left center/contain no-repeat }
+.env-ap .env-full .ap-pl-slot { display:inline-flex;align-items:center;height:30px;padding:0 12px;border-radius:12px;border:1px dashed rgba(246,244,238,.28);font-size:12px;color:var(--e-muted);text-decoration:none }
+.env-ap .env-full .ap-ctas { margin-top:28px }
+/* status: dark glass */
+.env-ap .env-full .ap-status { background:rgba(20,19,16,.62)!important;color:var(--e-ink);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:0 24px 60px -30px rgba(0,0,0,.8),inset 0 0 0 1px rgba(246,244,238,.08)!important }
+.env-ap .env-full .ap-status :is(.ap-cd-l,.ap-stats dt,.ap-cd small),.env-ap .env-full .ap-share > span { color:var(--e-muted) }
+.env-ap .env-full .ap-when { color:var(--e-ink-2) }
+.env-ap .env-full .ap-status .state { color:var(--e-live) }
+.env-ap .env-full .ap-cd span { background:rgba(246,244,238,.06)!important }
+.env-ap .env-full .ap-cer { background:color-mix(in srgb,var(--ga,#C9A45C) 12%,transparent)!important;color:var(--e-ink) }
+.env-ap .env-full .ap-cer small { color:var(--e-ink)!important }
+.env-ap .env-full .ap-cer b { color:var(--e-ink)!important }
+.env-ap .env-full .ap-cer-i { background:rgba(246,244,238,.08)!important }
+.env-ap .env-full .ap-cal { background:#F3EEE4!important;color:#15140F!important }
+.env-ap .env-full .ap-sh { color:var(--e-ink-2)!important }
+.env-ap .env-full .ap-sh:hover { background:rgba(246,244,238,.08)!important;color:var(--e-ink)!important }
+/* host strip: brass, with an icon tile and the live dot */
+.env-ap .ap-host { background:linear-gradient(100deg,color-mix(in srgb,var(--ga,#C9A45C) 22%,transparent),color-mix(in srgb,var(--ga,#C9A45C) 7%,transparent) 55%,var(--e-s2))!important;padding:14px!important;justify-content:flex-start!important }
+.env-ap .ap-host-i { flex:none;width:44px;height:44px;border-radius:12px;background:color-mix(in srgb,var(--ga,#C9A45C) 22%,transparent);position:relative }
+.env-ap .ap-host-i::after { content:"";position:absolute;inset:12px;background:var(--e-brass-hi);-webkit-mask:url("../envelope/sys/user-stream.svg") center/contain no-repeat;mask:url("../envelope/sys/user-stream.svg") center/contain no-repeat }
+.env-ap .ap-host-l { display:grid!important;gap:3px;flex:1;min-width:0 }
+.env-ap .ap-host-l > b { font-size:16px }
+.env-ap .ap-host-l > span { font-size:13px;color:var(--e-ink-2)!important }
+.env-ap .ap-host-dot { display:inline-block;width:7px;height:7px;margin:-2px 8px 0 2px;vertical-align:middle;border-radius:50%;background:var(--e-live);box-shadow:0 0 0 3px rgba(76,200,130,.18) }
+.env-ap .ap-host-r { margin-left:auto }
+@media (max-width:560px) { .env-ap .ap-host { flex-wrap:wrap } .env-ap .ap-host-r { margin-left:0;width:100%;display:grid!important;grid-template-columns:1fr 1fr;gap:8px } }
+/* nominees: no second line - the platform sits on the avatar */
+.env-ap .ap-nm > span { display:none }
+.env-ap .ap-hero.env-full .hc-row b { color:var(--e-ink)!important }
+.env-ap .ap-hero.env-full .hc-row .org { color:var(--e-muted)!important }
+.env-ap .ap-backdrop[data-bg="cover"] { -webkit-mask-image:linear-gradient(180deg,#000 70%,transparent 100%);mask-image:linear-gradient(180deg,#000 70%,transparent 100%) }
+
+/* a partner with a link reads as one: hover lights it (2026-10-22) */
+.env-ap .env-full a[href].ap-pl-slot { cursor:pointer;transition:border-color .15s,color .15s }
+.env-ap .env-full a[href].ap-pl-slot:hover { border-color:rgba(246,244,238,.6);color:var(--e-ink) }
+.env-ap a[href].ap-pl:hover { opacity:.8 }
+
+/* the backdrop as the prototype settled it (html[data-aplook=page], 2026-10-22): the
+   theme at .75 under a radial mask from the top right, accent only as two low corner
+   glows, a vignette - the full-height wash of accent over-lit the hero */
+.env-ap .ap-backdrop::after { opacity:.75;-webkit-mask-image:radial-gradient(70% 85% at 62% 0%,#000 0%,rgba(0,0,0,.45) 45%,transparent 80%);mask-image:radial-gradient(70% 85% at 62% 0%,#000 0%,rgba(0,0,0,.45) 45%,transparent 80%) }
+.env-ap .bd-glow { inset:-15%;background:radial-gradient(30% 40% at 12% 90%,color-mix(in srgb,var(--ga) 22%,transparent),transparent 70%),radial-gradient(28% 36% at 92% 70%,color-mix(in srgb,var(--ga) 16%,transparent),transparent 70%) }
+.env-ap .bd-vig { background:radial-gradient(120% 90% at 50% 20%,transparent 55%,rgba(7,7,7,.75) 100%) }
+
+/* the backdrop, second pass (Ed, 2026-10-22: the first toned it down so far the themes
+   barely showed). The theme at full strength under a wider radial mask, a moderate
+   accent wash from the top - between the over-lit first version and the faint one. */
+.env-ap .ap-backdrop::after { opacity:1;-webkit-mask-image:radial-gradient(95% 100% at 60% 0%,#000 0%,rgba(0,0,0,.7) 45%,transparent 90%);mask-image:radial-gradient(95% 100% at 60% 0%,#000 0%,rgba(0,0,0,.7) 45%,transparent 90%) }
+.env-ap .ap-backdrop:not([data-bg="cover"]) .bd-glow { inset:0;background:linear-gradient(180deg,color-mix(in srgb,var(--ga) 30%,transparent) 0%,color-mix(in srgb,var(--ga) 12%,transparent) 35%,transparent 65%),radial-gradient(30% 40% at 12% 90%,color-mix(in srgb,var(--ga) 20%,transparent),transparent 70%) }
+
+/* themes fill the top the way a cover does (Ed, 2026-10-22: "I like the area the cover
+   fills"): the whole width, full strength, fading out only towards the bottom, with the
+   cover's darkening on the left so the name and the description read */
+.env-ap .ap-backdrop:not([data-bg="cover"]) { -webkit-mask-image:linear-gradient(180deg,#000 55%,transparent 100%);mask-image:linear-gradient(180deg,#000 55%,transparent 100%) }
+.env-ap .ap-backdrop:not([data-bg="cover"])::after { inset:-12%;opacity:1;-webkit-mask-image:none;mask-image:none }
+.env-ap .ap-backdrop:not([data-bg="cover"])::before { content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,rgba(7,7,7,.7) 0%,rgba(7,7,7,.45) 30%,rgba(7,7,7,.1) 55%,rgba(7,7,7,0) 70%) }
+@media (max-width:760px) { .env-ap .ap-backdrop:not([data-bg="cover"])::before { background:rgba(7,7,7,.45) } }

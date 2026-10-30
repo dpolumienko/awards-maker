@@ -25,7 +25,6 @@ import { emptyTally, phaseOf, resultsOf, useVoting, votesInOf } from '~/composab
 import { useBallot } from '~/composables/useBallot'
 import { useReveal } from '~/composables/useReveal'
 import { playCue } from '~/composables/useCue'
-import { themeCss, zineCoverCss } from '~/data/themes'
 import { accentText, accentOf, onAccent } from '~/utils/accent'
 import { nomineeName } from '~/utils/nominee'
 import { FREE } from '~/types/award'
@@ -33,7 +32,6 @@ import { awardOgImage } from '~/utils/og'
 import { formatInZone } from '#shared/time'
 import { isIndexable } from '#shared/indexable'
 import { useDisplayFonts } from '~/composables/useDisplayFonts'
-import BallotCounted from '~/components/ui/BallotCounted.vue'
 import ReportAbuse from '~/components/ui/ReportAbuse.vue'
 // the Envelope version's masthead and stepper ballot, split out of the other versions' bundle
 const EnvAwardHero = defineAsyncComponent(() => import('~/components/envelope/EnvAwardHero.vue'))
@@ -76,29 +74,24 @@ const phase = computed(() =>
     : 'open',
 )
 const accent = computed(() => accentOf(award.value?.look))
-const { isZine, isEnvelope, onPaper } = useVersion()
 // Fills keep the colour the streamer picked; type takes the readable version.
-const ink = computed(() => accentText(accent.value, onPaper.value))
+const ink = computed(() => accentText(accent.value))
 const headlineFont = computed(() =>
   award.value?.look?.font ? `'${award.value.look.font}', Archivo, sans-serif` : undefined,
 )
 
 // Voting: the state and the submit are shared by every version (composables/useBallot.ts)
 const voters = computed(() => data.value?.voters ?? 0)
-const done = ref<HTMLElement | null>(null)
 const ballotState = useBallot({
   slug,
   award,
   ballot: computed(() => data.value?.ballot ?? null),
   phase,
   refresh,
-  onCast: () =>
-    nextTick(() => {
-      done.value?.focus()
-      playCue(done.value, accent.value)
-    }),
+  // the ballot's own foot bar says "Your votes are in" - the cue lights it there
+  onCast: () => nextTick(() => playCue(document.querySelector<HTMLElement>('.env-bar'), accent.value)),
 })
-const { picks, voted, cast, shown, pickedCount, castCount, skipped, voteError, mode, submit } = ballotState
+const { picks, voted, cast, shown, pickedCount, skipped, voteError, mode, submit } = ballotState
 
 // Publishing the winners is the host's call, not a date - so it asks twice and
 // the second click is the one that does it.
@@ -345,24 +338,24 @@ if (award.value && !thin.value) {
       <p v-if="award.offline" class="relative z-10 border-b-2 border-warn bg-warn/10 px-4 py-3 text-center text-sm font-semibold text-warn" role="status">
         This awards is offline. Only you can see it; viewers get "not available". Put it back online from the dashboard.
       </p>
-      <!-- the Envelope version: the show on a cream ticket, the ballot as a stepper -->
-      <div v-if="isEnvelope" class="env-ap shell pt-6">
-        <nav class="crumbs ap-crumbs" aria-label="Breadcrumb">
+      <div class="env-ap shell pt-6" :style="{ '--ga': accent }">
+        <!-- Full page (Ed, 2026-10-22): the crumbs are the host's way back; a viewer has nowhere to go back to -->
+        <nav v-if="isHost" class="crumbs ap-crumbs" aria-label="Breadcrumb">
           <NuxtLink to="/">Awards Maker</NuxtLink><span aria-hidden="true">/</span>
-          <template v-if="catalogOpen"><NuxtLink to="/catalog">Catalog</NuxtLink><span aria-hidden="true">/</span></template>
+          <NuxtLink to="/my-awards">Your awards</NuxtLink><span aria-hidden="true">/</span>
           <span aria-current="page">{{ award.name }}</span>
         </nav>
         <div v-if="isHost" ref="hostPanel" class="ap-host" role="region" aria-label="Host tools">
           <span class="ap-host-i" aria-hidden="true" />
           <span class="ap-host-l">
             <b>You host this awards</b>
-            <span><i class="ap-host-dot" />{{ badge.text }} · <b class="tnum">{{ voters }}</b>{{ award.tier !== 'paid' ? ` of ${FREE.maxVoters}` : '' }} voters so far</span>
+            <span><i class="ap-host-dot" />{{ badge.text }} · <b class="tnum">{{ voters }}</b>{{ award.tier !== 'paid' ? ` of ${FREE.maxVoters}` : '' }} voters so far<template v-if="phase === 'open' && countdown"> · closes in {{ +countdown.days ? `${+countdown.days} ${+countdown.days === 1 ? 'day' : 'days'}` : `${+countdown.hrs} h` }}</template></span>
           </span>
           <span class="ap-host-r">
             <button v-if="phase === 'counting' || phase === 'capped'" class="btn sm" type="button" @click="onPublishResults">
               {{ publishArmed() ? 'Publish - sure?' : 'Publish the winners' }}
             </button>
-            <NuxtLink v-if="phase === 'counting' || phase === 'capped' || phase === 'revealed'" class="btn sm" :to="`/my-awards/${award.slug}/reveal`">Open the ceremony</NuxtLink>
+            <NuxtLink class="btn sm" :to="`/my-awards/${award.slug}/reveal`">Open the ceremony</NuxtLink>
             <NuxtLink class="btn sm p" :to="`/my-awards/${award.slug}`">Dashboard</NuxtLink>
           </span>
         </div>
@@ -398,15 +391,6 @@ if (award.value && !thin.value) {
           @pick="(c: string, n: string) => (picks[c] = n)"
           @submit="submit"
         />
-        <div v-if="voted && phase !== 'revealed'" ref="done" tabindex="-1" role="status" class="mt-8 rounded-card focus:outline-none">
-          <BallotCounted
-            :picked="castCount"
-            :total="award.nominations.length"
-            :ceremony="fmtDate(award.ceremonyAt)"
-            :closes="fmtDate(award.closesAt)"
-            :accent="ink"
-          />
-        </div>
         <section class="ap-info" aria-label="How voting works">
           <div class="ai-u"><b>One vote per account</b><span>Sign in with Twitch or Kick once, when you submit.</span></div>
           <div class="ai-l"><b>Picks lock on submit</b><span>One vote per category. Skipped ones stay open.</span></div>
@@ -415,291 +399,6 @@ if (award.value && !thin.value) {
         <ReportAbuse class="ap-report" :slug="slug" variant="line" />
       </div>
 
-      <template v-else>
-      <!-- cover band: the streamer's theme or their own cover, full width -->
-      <div class="relative h-48 sm:h-64">
-        <!-- the band runs up under the transparent header, so the page has no seam
-             where the navigation ends and the show begins -->
-        <span
-          aria-hidden="true"
-          class="absolute inset-x-0 -top-40 bottom-0"
-          :style="isZine ? zineCoverCss(accent, award.look?.coverUrl) : themeCss(award.look?.theme, accent, award.look?.coverUrl)"
-        />
-        <!-- fades into the page's own canvas, which is not pure black under SC Blue -->
-        <span aria-hidden="true" class="absolute inset-x-0 -top-40 bottom-0 bg-[linear-gradient(180deg,rgb(var(--canvas)/.35),rgb(var(--canvas)))]" />
-        <div class="shell relative flex h-full flex-col justify-end pb-5">
-          <nav aria-label="Breadcrumb" class="mb-auto pt-24">
-            <ol class="flex list-none flex-wrap items-center gap-2 p-0 text-[11px] font-semibold uppercase tracking-micro text-ink-muted">
-              <li><NuxtLink to="/" class="inline-block py-1.5 no-underline hover:text-ink">Awards Maker</NuxtLink></li>
-              <li aria-hidden="true">/</li>
-              <template v-if="catalogOpen">
-                <li><NuxtLink to="/catalog" class="inline-block py-1.5 no-underline hover:text-ink">Catalog</NuxtLink></li>
-                <li aria-hidden="true">/</li>
-              </template>
-              <li class="truncate text-ink-2" aria-current="page">{{ award.name }}</li>
-            </ol>
-          </nav>
-          <div class="flex flex-wrap items-center gap-3">
-            <span
-              v-if="!award.look?.hideLogo"
-              aria-hidden="true"
-              class="grid h-11 w-11 place-items-center rounded-pill text-sm font-bold"
-              :style="{ background: accent, color: onAccent(accent) }"
-            >
-              {{ award.host.name.slice(0, 2).toUpperCase() }}
-            </span>
-            <span class="font-semibold">{{ award.host.name }}</span>
-            <PlatformDot :platform="award.host.platform" />
-            <span class="ml-auto"><UiBadge :tone="badge.tone">{{ badge.text }}</UiBadge></span>
-          </div>
-        </div>
-      </div>
-
-      <div class="shell pt-8">
-        <!-- the masthead is a display moment: two plates in the Fanzine -->
-        <!-- one ink: the two-plate misprint went with the old Fanzine cover (review 2026-10-08) -->
-        <h1 class="display-2" :class="isZine && 'text-gold-text'" :style="{ fontFamily: headlineFont }">{{ award.name }}</h1>
-        <span aria-hidden="true" class="mt-4 block h-0.5 w-20" :style="{ background: accent }" />
-        <p class="mt-4 max-w-copy text-lg text-ink-2">{{ award.description }}</p>
-
-        <!-- partners sit with the title, not at the foot of the page: a sponsor
-             that only shows up under the ballot was never really on the page -->
-        <div v-if="partners.length" class="mt-5 flex flex-wrap items-center gap-2">
-          <span class="micro mr-1">Partners</span>
-          <PartnerChip v-for="p in partners" :key="p.id" :partner="p" :accent="accent" />
-        </div>
-
-        <!-- the facts a visitor checks before voting -->
-        <dl class="mt-6 flex flex-wrap gap-x-10 gap-y-4 border-y border-hair py-5">
-          <div>
-            <dt class="label">Categories</dt>
-            <dd class="tnum mt-1 text-lg font-semibold">{{ award.nominations.length }}</dd>
-          </div>
-          <div>
-            <dt class="label">Nominees</dt>
-            <dd class="tnum mt-1 text-lg font-semibold">{{ nomineeTotal }}</dd>
-          </div>
-          <div>
-            <dt class="label">Votes cast</dt>
-            <dd class="tnum mt-1 text-lg font-semibold">{{ voters }}</dd>
-          </div>
-          <div v-if="award.closesAt">
-            <dt class="label">Voting closes</dt>
-            <dd class="mt-1 text-lg font-semibold">{{ fmtDate(award.closesAt) }}</dd>
-          </div>
-          <div v-if="award.ceremonyAt">
-            <dt class="label">Ceremony</dt>
-            <dd class="mt-1 text-lg font-semibold">{{ fmtDate(award.ceremonyAt) }}</dd>
-          </div>
-        </dl>
-
-        <div class="mt-8 grid items-start gap-10 lg:grid-cols-[7fr_5fr]">
-          <!-- BALLOT -->
-          <div>
-            <!-- what state the page is in, said once, in words -->
-            <div
-              v-if="phase !== 'open' || voted"
-              class="rounded-card border p-5"
-              :class="phase === 'capped' ? 'border-warn/40 bg-warn/[0.06]' : 'border-hair bg-s1'"
-            >
-              <p class="font-semibold">
-                <template v-if="phase === 'soon'">Voting opens {{ fmtDate(award.opensAt) }}</template>
-                <template v-else-if="phase === 'capped'">Voting closed at the free limit</template>
-                <template v-else-if="phase === 'counting'">Voting is closed, winners are next</template>
-                <template v-else-if="phase === 'revealed'">The winners</template>
-                <template v-else>Your votes are in</template>
-              </p>
-              <p class="mt-1 text-sm text-ink-2">
-                <template v-if="phase === 'soon'">
-                  The ballot below is the one you will vote on. Nothing changes once voting starts.
-                </template>
-                <template v-else-if="phase === 'capped'">
-                  This awards reached {{ FREE.maxVoters }} voters, the ceiling on the free plan. Every vote already cast
-                  still counts and the winners are announced as planned.
-                </template>
-                <template v-else-if="phase === 'counting'">
-                  {{ voters }} {{ voters === 1 ? 'person' : 'people' }} voted. The winners appear here when
-                  {{ award.host.name }} announces them{{ award.ceremonyAt ? ', set for ' + fmtDate(award.ceremonyAt) : '' }} -
-                  results stay hidden until then, so the last hours cannot be played.
-                </template>
-                <template v-else-if="phase === 'revealed'">
-                  Counted from {{ voters }} {{ voters === 1 ? 'ballot' : 'ballots' }}, announced by
-                  {{ award.host.name }}. The page stays up at this address.
-                </template>
-                <template v-else-if="skipped > 0">
-                  Your picks are final. The {{ skipped === 1 ? 'category' : `${skipped} categories` }} you skipped
-                  {{ skipped === 1 ? 'stays' : 'stay' }} open to you until voting closes.
-                </template>
-                <template v-else>
-                  Counted, every category. Your picks are final - but you can still send the page on.
-                </template>
-              </p>
-
-              <CountdownRow
-                v-if="countdown"
-                class="mt-5"
-                :label="countdownLabel"
-                :days="countdown.days"
-                :hrs="countdown.hrs"
-                :mins="countdown.mins"
-                :ink="ink"
-              />
-
-              <div v-if="voted && phase !== 'revealed'" class="mt-5">
-                <ShareRow :url="shareUrl" :text="`I voted in ${award.name}. Your turn:`" />
-              </div>
-            </div>
-
-            <!-- open and not voted yet: the countdown lives above the ballot -->
-            <div v-else>
-              <CountdownRow
-                v-if="countdown"
-                :label="countdownLabel"
-                :days="countdown.days"
-                :hrs="countdown.hrs"
-                :mins="countdown.mins"
-                :ink="ink"
-              />
-              <p class="mt-3 text-sm text-ink-2">One vote per category. Twitch or Kick login on submit.</p>
-            </div>
-
-            <div class="mt-6 space-y-4">
-              <BallotNomination
-                v-for="(n, i) in award.nominations"
-                :key="n.id"
-                :nomination="n"
-                :index="i"
-                :accent="accent"
-                :mode="mode === 'vote' && cast[n.id] ? 'locked' : mode"
-                :picked="shown[n.id] ?? null"
-                :results="mode === 'results' ? resultsOf(tally, n) : []"
-                :numbers="!award.hideCounts"
-                :votes-in="votesInOf(tally, n)"
-                @pick="picks[n.id] = $event"
-              />
-            </div>
-
-            <!-- submit: sticky, because the ballot is longer than a screen -->
-            <div
-              v-if="mode === 'vote'"
-              class="sticky bottom-0 z-30 -mx-4 mt-6 border-t border-hair bg-canvas/95 px-4 py-3 backdrop-blur sm:-mx-8 sm:px-8 lg:mx-0 lg:rounded-card lg:border lg:px-5"
-            >
-              <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
-                <p class="text-sm" aria-live="polite">
-                  <b class="tnum">{{ pickedCount }} of {{ skipped }}</b>
-                  <span class="text-ink-2">{{ voted ? ' remaining categories picked' : ' categories picked' }}</span>
-                </p>
-                <p v-if="pickedCount < skipped" class="hidden text-sm text-ink-muted sm:block">
-                  Each pick is final. Skipped ones stay open until voting closes.
-                </p>
-                <!-- signed out: submitting is signing in, with either account; a
-                     disabled pair that does not say why reads as broken -->
-                <SignInButtons
-                  v-if="!signedIn"
-                  label="Vote with"
-                  :disabled="!pickedCount"
-                  block
-                  class="sm:ml-auto sm:w-auto"
-                  @choose="submit"
-                />
-                <UiButton v-else class="w-full sm:ml-auto sm:w-auto" :disabled="!pickedCount" @click="submit()">
-                  {{ pickedCount ? `Submit ${pickedCount} ${pickedCount === 1 ? 'vote' : 'votes'}` : 'Pick at least one' }}
-                </UiButton>
-              </div>
-              <!-- already voted, voting closed, ceiling reached: all things the
-                   ballot on screen still looks fine after, so they get said -->
-              <p v-if="voteError" class="mt-3 text-sm text-danger" role="alert">{{ voteError }}</p>
-            </div>
-
-            <!-- the confirmation the submit scrolls into: focusable, so a screen
-                 reader lands on it instead of losing the place -->
-            <div
-              v-if="voted && phase !== 'revealed'"
-              ref="done"
-              tabindex="-1"
-              role="status"
-              class="mt-6 rounded-card focus:outline-none"
-            >
-              <BallotCounted
-                :picked="castCount"
-                :total="award.nominations.length"
-                :ceremony="fmtDate(award.ceremonyAt)"
-                :closes="fmtDate(award.closesAt)"
-                :accent="ink"
-              />
-            </div>
-          </div>
-
-          <!-- SIDE -->
-          <aside class="space-y-6 lg:sticky lg:top-24">
-            <div v-if="isHost" ref="hostPanel" class="relative rounded-card border border-gold-24 bg-gold/[0.06] p-5">
-              <p class="micro text-gold-text">You host this awards</p>
-              <!-- a paid show has no voter ceiling, so no meter towards one -->
-              <LimitMeter
-                v-if="award.tier !== 'paid'"
-                class="mt-3"
-                label="Unique voters"
-                :used="voters"
-                :total="FREE.maxVoters"
-                note="Voting stops at the free ceiling. Votes already cast are kept."
-              />
-              <p v-else class="mt-3 flex items-baseline justify-between text-sm text-ink-2">
-                Unique voters <span class="tnum text-ink">{{ voters }}</span>
-              </p>
-              <div class="mt-4 flex flex-wrap gap-3">
-                <UiButton
-                  v-if="phase === 'counting' || phase === 'capped'"
-                  size="sm"
-                  @click="onPublishResults"
-                >
-                  <span class="grid">
-                    <span aria-hidden="true" class="col-start-1 row-start-1 invisible">Publish the winners</span>
-                    <span class="col-start-1 row-start-1">{{ publishArmed() ? 'Publish - sure?' : 'Publish the winners' }}</span>
-                  </span>
-                </UiButton>
-                <!-- announcing before the vote is closed would announce a number
-                     that is still moving -->
-                <UiButton
-                  v-if="phase === 'counting' || phase === 'capped' || phase === 'revealed'"
-                  :to="`/my-awards/${award.slug}/reveal`"
-                  variant="ghost"
-                  size="sm"
-                >Run the ceremony</UiButton>
-                <UiButton :to="`/my-awards/${award.slug}`" variant="ghost" size="sm">Your dashboard</UiButton>
-              </div>
-              <p v-if="phase === 'counting' || phase === 'capped'" class="mt-3 text-sm text-ink-muted">
-                Nobody sees the counts until you do this. It cannot be undone.
-              </p>
-            </div>
-            <PaywallNote v-if="isHost && award.tier !== 'paid' && voters / FREE.maxVoters >= 0.8" reason="voters" compact />
-
-            <div class="rounded-card border border-hair bg-s1 p-5">
-              <p class="label">How voting works</p>
-              <ul class="mt-3 list-none space-y-2.5 p-0 text-sm text-ink-2">
-                <li v-for="r in [
-                  'Any Twitch or Kick account can vote, one ballot each.',
-                  'One vote per category, locked once you submit.',
-                  'Counts stay hidden until the host announces the winners.',
-                  'The host sets the categories and the nominees.',
-                ]" :key="r" class="flex items-start gap-3">
-                  <span aria-hidden="true" class="mt-2 block h-1 w-1 flex-none rounded-pill" :style="{ background: accent }" />
-                  {{ r }}
-                </li>
-              </ul>
-            </div>
-
-            <div class="rounded-card border border-hair bg-s1 p-5">
-              <p class="label">Share it</p>
-              <p class="mt-2 text-sm text-ink-2">A show nobody knows about has no winners.</p>
-              <ShareRow class="mt-4" :url="shareUrl" :text="`Vote in ${award.name}:`" />
-            </div>
-
-            <ReportAbuse :slug="slug" />
-          </aside>
-        </div>
-
-      </div>
-      </template>
 
       <div class="shell">
         <!-- the cards: this is how the page finds the next voter -->

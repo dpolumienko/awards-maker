@@ -12,11 +12,18 @@
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import UiButton from './ui/UiButton.vue'
 import UiIcon from './ui/UiIcon.vue'
-import SignInButtons from './ui/SignInButtons.vue'
 import PlatformDot from './ui/PlatformDot.vue'
 import ScBrand from './ScBrand.vue'
 import { useCatalogOpen, useMyAwards } from '~/composables/useAwards'
 import { useAccount } from '~/composables/useAccount'
+import EnvSignIn from './envelope/EnvSignIn.vue'
+
+// Envelope (Ed, 2026-10-22): one quiet "Sign in" opens the platforms in a popup
+const signInOpen = ref(false)
+function chooseSignIn(p: Parameters<typeof signIn>[0]) {
+  signInOpen.value = false
+  signIn(p)
+}
 
 const route = useRoute()
 const stuck = ref(false)
@@ -117,7 +124,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
           </button>
 
           <!-- signed out: the one thing there is to do, with either account -->
-          <SignInButtons v-else label="" @choose="signIn" />
+          <button v-else type="button" class="env-signin" @click="signInOpen = true"><i aria-hidden="true" />Sign in</button>
 
           <div
             v-show="menuOpen && signedIn"
@@ -135,6 +142,10 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
               Your awards
               <span class="tnum text-xs text-ink-muted">{{ mine }}</span>
             </NuxtLink>
+            <NuxtLink
+              to="/my-awards/billing"
+              class="account-item block rounded-btn px-3 py-2 text-sm text-ink-2 no-underline transition-colors hover:bg-s2 hover:text-ink"
+            >Payments</NuxtLink>
             <NuxtLink
               to="/create"
               class="account-item block rounded-btn px-3 py-2 text-sm text-ink-2 no-underline transition-colors hover:bg-s2 hover:text-ink"
@@ -163,10 +174,9 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
            the action, so the header's builder link steps back; on /create it
            would point at the page you are on. -->
       <UiButton
-        v-if="route.path !== '/create'"
-        to="/create"
+                to="/create"
         size="sm"
-        :variant="route.path.startsWith('/a/') ? 'ghost' : 'primary'"
+        variant="ghost"
         class="hidden lg:inline-flex"
       >Create your awards</UiButton>
 
@@ -228,9 +238,10 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
             Sign out, {{ host }}
           </button>
         </template>
-        <SignInButtons v-else block class="mt-4" @choose="signIn" />
+        <button v-else type="button" class="env-signin mt-4 w-full" @click="signInOpen = true"><i aria-hidden="true" />Sign in</button>
       </ClientOnly>
       <UiButton to="/create" size="sm" class="mt-5 w-full">Create your awards</UiButton>
     </nav>
+    <ClientOnly><EnvSignIn :open="signInOpen" @close="signInOpen = false" @choose="chooseSignIn" /></ClientOnly>
   </header>
 </template>

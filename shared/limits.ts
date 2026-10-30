@@ -28,7 +28,8 @@ export const FIELD = {
 } as const
 
 export const PUBLISH = {
-  minNominations: 3,
+  // one category is enough to publish (Ed, 2026-10-22); search wants more (indexable.ts)
+  minNominations: 1,
   minNomineesPerNomination: 2,
 } as const
 

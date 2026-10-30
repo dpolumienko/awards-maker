@@ -8,17 +8,15 @@
 import { ref } from 'vue'
 import UiButton from '~/components/ui/UiButton.vue'
 import ClosingCta from '~/components/ui/ClosingCta.vue'
-import UiIcon from '~/components/ui/UiIcon.vue'
 import InteractiveAccordion from '~/components/ui/InteractiveAccordion.vue'
 import { useReveal } from '~/composables/useReveal'
 import { useCatalogOpen } from '~/composables/useAwards'
 
 const catalogOpen = useCatalogOpen()
-import { IDEA_GROUPS, IDEA_TOTAL, ideaEmoji } from '~/data/ideas'
+import { IDEA_GROUPS, IDEA_TOTAL } from '~/data/ideas'
+import '~/assets/css/envelope-pages.css'
 
 const root = ref<HTMLElement | null>(null)
-const SHOWN = 5
-const ideaRow = 'idea-row flex items-center gap-3 rounded-card border border-hair bg-canvas px-4 py-3 text-[15px] font-medium text-ink'
 useReveal(root, { stagger: 0.04 })
 
 const faq = [
@@ -65,85 +63,43 @@ useSchemaOrg([
 </script>
 
 <template>
-  <div ref="root" class="shell py-10">
-    <nav aria-label="Breadcrumb" class="mb-6">
-      <ol class="flex list-none flex-wrap items-center gap-2 p-0 text-[11px] font-semibold uppercase tracking-micro text-ink-muted">
-        <li><NuxtLink to="/" class="inline-block py-1.5 no-underline hover:text-ink">Awards Maker</NuxtLink></li>
-        <li aria-hidden="true">/</li>
-        <li class="text-ink-2" aria-current="page">Category ideas</li>
-      </ol>
+  <!-- drawn like the other plain pages (Your awards, Payments): crumbs, a title with
+       a sub line, flat panels; the ideas as the landing's chips, no emoji (Ed, 2026-10-22) -->
+  <div ref="root" class="shell env-pg ideas">
+    <nav class="pg-crumbs" aria-label="Breadcrumb">
+      <NuxtLink to="/">Awards Maker</NuxtLink><span aria-hidden="true">/</span><span aria-current="page">Category ideas</span>
     </nav>
-
-    <h1 class="heading max-w-[22ch]">Award Category Ideas for Streamers</h1>
-    <p class="mt-4 max-w-copy text-lg text-ink-2">
-      {{ IDEA_TOTAL }} categories for a streamer awards show, in four groups. Open a group as a draft,
-      keep the ones that fit your channel, rename the rest.
-    </p>
-
-    <div class="mt-6 flex flex-wrap gap-3">
-      <UiButton to="/create">Create your awards</UiButton>
-      <UiButton v-if="catalogOpen" to="/catalog" variant="ghost">See shows running now</UiButton>
+    <div class="pg-head">
+      <div>
+        <h1>Award category ideas for streamers</h1>
+        <p class="pg-sub">
+          {{ IDEA_TOTAL }} categories for a streamer awards show, in four groups. Open a group as a draft,
+          keep the ones that fit your channel, rename the rest.
+        </p>
+      </div>
+      <div class="db-acts">
+        <UiButton v-if="catalogOpen" to="/catalog" variant="ghost">See shows running now</UiButton>
+        <UiButton to="/create">Create your awards</UiButton>
+      </div>
     </div>
-
-    <!-- jump list: four groups is more than fits on one screen -->
-    <nav aria-label="Groups" class="mt-10 flex flex-wrap gap-2 border-y border-hair py-4">
-      <a
-        v-for="g in IDEA_GROUPS"
-        :key="g.id"
-        :href="`#${g.id}`"
-        class="idea-jump rounded-pill border border-hair px-4 py-2 text-sm text-ink-2 no-underline transition-colors hover:border-gold hover:text-ink"
-      >
-        <span aria-hidden="true" class="idea-emoji mr-1">{{ g.emoji }}</span>{{ g.title }}
-        <span class="tnum ml-1 text-ink-muted">{{ g.items.length }}</span>
-      </a>
-    </nav>
 
     <!-- A group is a starting draft, not a product: all of them open free, and
          the builder is where a show past the free ceiling finds out (review
          2026-09-24 - "paid labels here scare people off"). -->
-    <section
-      v-for="g in IDEA_GROUPS"
-      :id="g.id"
-      :key="g.id"
-      class="idea-group js-reveal mt-12 scroll-mt-24 rounded-card border border-hair bg-s1 p-5 sm:p-6"
-    >
-      <div class="flex flex-wrap items-center gap-4">
-        <span aria-hidden="true" class="idea-emoji grid h-14 w-14 flex-none place-items-center rounded-card border border-hair bg-s2 text-[30px] leading-none">{{ g.emoji }}</span>
-        <div class="min-w-0">
-          <h2 class="idea-title text-2xl font-bold">{{ g.title }}</h2>
-          <p class="m-0 mt-1 max-w-copy text-ink-2">{{ g.blurb }}</p>
-        </div>
-        <UiButton :to="`/create?ideas=${g.id}`" variant="ghost" size="sm" class="sm:ml-auto">
-          Use this template
-        </UiButton>
+    <section v-for="g in IDEA_GROUPS" :id="g.id" :key="g.id" class="id-group js-reveal" :aria-labelledby="`${g.id}-h`">
+      <!-- the name big on the left, the ideas on the right (Ed, 2026-10-22: one wide row was too stretched) -->
+      <div class="id-head">
+        <h2 :id="`${g.id}-h`">{{ g.title }}</h2>
+        <p>{{ g.blurb }}</p>
+        <p class="id-n tnum">{{ g.items.length }} ideas</p>
+        <UiButton :to="`/create?ideas=${g.id}`" variant="ghost" size="sm">Use this pack</UiButton>
       </div>
-
-      <!-- six on show, the rest one click away (review 2026-09-25: twelve at
-           once was a wall). The rest stay in the HTML - <details> is still
-           read by search engines. -->
-      <ul class="mt-6 grid list-none gap-2 p-0 sm:grid-cols-2 lg:grid-cols-3">
-        <li v-for="item in g.items.slice(0, SHOWN)" :key="item" :class="ideaRow">
-          <span aria-hidden="true" class="idea-emoji text-xl leading-none">{{ ideaEmoji(item, g) }}</span>
-          {{ item }}
-        </li>
+      <ul class="id-chips">
+        <li v-for="item in g.items" :key="item">{{ item }}</li>
       </ul>
-      <details v-if="g.items.length > SHOWN" class="group mt-2">
-        <summary
-          class="flex w-fit cursor-pointer list-none items-center gap-2 rounded-btn px-1 py-2 text-sm font-semibold text-ink-2 transition-colors hover:text-ink [&::-webkit-details-marker]:hidden"
-        >
-          <span class="group-open:hidden">Show {{ g.items.length - SHOWN }} more ideas</span>
-          <span class="hidden group-open:inline">Show fewer</span>
-          <UiIcon name="chevron-right" :size="12" class="rotate-90 transition-transform group-open:-rotate-90" />
-        </summary>
-        <ul class="mt-2 grid list-none gap-2 p-0 sm:grid-cols-2 lg:grid-cols-3">
-          <li v-for="item in g.items.slice(SHOWN)" :key="item" :class="ideaRow">
-            <span aria-hidden="true" class="idea-emoji text-xl leading-none">{{ ideaEmoji(item, g) }}</span>
-            {{ item }}
-          </li>
-        </ul>
-      </details>
     </section>
 
+    <!-- the same block as the FAQ on /create and /plans -->
     <section class="mt-16 border-t border-hair pt-12">
       <h2 class="heading">Picking the ones that work</h2>
       <div class="mt-6 border-t border-hair">

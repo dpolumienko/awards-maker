@@ -5,13 +5,12 @@ import { useVersion } from '~/composables/useVersion'
 // company - the review asked for SC's logo with Awards played next to it.
 const { size = 'md' } = defineProps<{ size?: 'md' | 'lg' }>()
 // white type on the dark stage and on Night's black, black ink on the Fanzine's paper
-const { onPaper } = useVersion()
 </script>
 
 <template>
   <NuxtLink to="/" class="flex items-center gap-3 no-underline" aria-label="Streams Charts Awards, home">
     <img
-      :src="asset(onPaper ? '/img/logos/streamscharts-dark.svg' : '/img/logos/streamscharts-light.svg')"
+      :src="asset('/img/logos/streamscharts-light.svg')"
       alt=""
       width="135"
       height="46"
