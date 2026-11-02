@@ -1,0 +1,1 @@
+import{P as s}from"./LpeWTu3_.js";const e=/streamer'?s?\s*awards/i,n={minDescription:80,minNominations:3};function t(i){return i.categories>=n.minNominations&&i.minNominees>=s.minNomineesPerNomination&&i.description.trim().length>=n.minDescription&&!e.test(i.name)}export{n as I,e as T,t as i};
